@@ -29,14 +29,14 @@ source("src/common/transformations.R")
 # returns: a matrix containing length(v) rows and vcount(g) columns, whose 
 #		   (i,j) element represents the straightness between nodes i and j.
 ############################################################################
-node.straightness <- function(graph, v=V(graph))
+straightness.nodes <- function(graph, v=V(graph))
 {	# process spatial distances
 	pos <- cbind(V(graph)$x,V(graph)$y)
 	m <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
 	m <- m[v,]
 	
 	# process geodesic distances
-	graph <- distances.as.weights(graph)
+#	graph <- distances.as.weights(graph)
 	sp <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
 	
 	# process the ratio
@@ -69,11 +69,11 @@ node.straightness <- function(graph, v=V(graph))
 #		   otherwise a matrix of length(v) rows and 2 columns (average straightnes and
 #		   standard deviation for each node specified in v).
 ############################################################################
-mean.node.straightness <- function(graph, v=NA, self=TRUE)
+mean.straightness.nodes <- function(graph, v=NA, self=TRUE)
 {	# global average
 	if(all(is.na(v)))
 	{	# process the straightness values
-		strn <- node.straightness(graph)
+		strn <- straightness.nodes(graph)
 		strn <- strn[upper.tri(strn,diag=self)]
 		# average them
 		res1 <- mean(strn)
@@ -86,7 +86,7 @@ mean.node.straightness <- function(graph, v=NA, self=TRUE)
 	# individual averages
 	else
 	{	# process the straightness values
-		strn <- node.straightness(graph,v)
+		strn <- straightness.nodes(graph,v)
 		# average them
 		result <- sapply(1:length(v),function(i)
 				{	vals <- strn[i,]

@@ -49,7 +49,7 @@ cat("Processing the average straightness for node",node,"\n")
 		{	prev.n <- vcount(g2)
 #			display.model(g2, large=FALSE, filename="graph", out.folder="data/", export=FALSE, formats=NA)
 			nbr <- vcount(g2)											# total number of nodes
-			str <- mean.node.straightness(g2,v=node)[1,1]				# process approximate straightness
+			str <- mean.straightness.nodes(g2,v=node)[1,1]				# process approximate straightness
 			end.time <- Sys.time()
 			duration <- end.time - start.time
 			est.nbr <- c(est.nbr,nbr)
