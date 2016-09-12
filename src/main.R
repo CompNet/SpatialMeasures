@@ -8,10 +8,12 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/main.R")
 ############################################################################
-library("igraph")
+source("src/common/misc.R")
+source("src/common/plot.R")
+source("src/common/transformations.R")
 
-source("src/measures.R")
-source("src/transformation.R")
+source("src/straightness/continuous.R")
+source("src/straightness/discrete.R")
 
 
 

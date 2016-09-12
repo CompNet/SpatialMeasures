@@ -1,17 +1,17 @@
 ############################################################################
 # Script used to produce the figure of the paper which illustrate the graph
-# distance between two non-node points.
+# distance between two non-node points. Some manual process was involved, it
+# doesn't directly generate the figure.
 #
 # Vincent Labatut 09/2016
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/figure.R")
+# source("src/common/figure.R")
 ############################################################################
 library("igraph")
 
-source("src/measures.R")
-source("src/transformation.R")
+source("src/common/transformations.R")
 
 
 

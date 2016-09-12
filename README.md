@@ -48,6 +48,7 @@ Here are the folders composing the project:
 1. Install the [`R` language](https://www.r-project.org/)
 2. Install the following R packages:
    * [`igraph`](http://igraph.org/r/)
+   * [`geometry`](https://cran.r-project.org/web/packages/geometry/index.html)
 3. Download (and possibly unzip) this project from GitHub.
 
 
@@ -94,6 +95,7 @@ with this source code, provided you define... <instructions here>
 
 # Dependencies
 * [`igraph`](http://igraph.org/r/) package: used to build and handle graphs.
+* [`geometry`](https://cran.r-project.org/web/packages/geometry/index.html) package: used to triangulate and generate planar random graphs.
 
 
 # To-do List

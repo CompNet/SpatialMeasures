@@ -5,9 +5,10 @@
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/transformation.R")
+# source("src/transformations.R")
 ############################################################################
 library("igraph")
+library("geometry")	# used for the triangulation when generating random planar graphs
 
 
 ############################################################################
@@ -40,8 +41,8 @@ distances.as.weights <- function(g)
 ############################################################################################
 # From the existing graph, builds a new one by adding extra nodes on existing edges. These
 # nodes are added so that the resulting edges are not longer than a given granularity value.
-# Note the original graph must have nodal parameters x and y indicating the spatial position 
-# of each node.
+# Note that if the original graph does not have the nodal attributes x and y indicating the 
+# spatial position of each node, these are automatically added.
 # 
 # g: the original graph.
 # granularity: approximate size of the edges in the returned graph (the smaller, the better). 
@@ -62,8 +63,6 @@ add.intermediate.nodes <- function(g, granularity)
 		n.from <- edgelist[r,1]
 		n.to <- edgelist[r,2]
 		d <- E(g)[n.from %--% n.to]$dist
-#if(length(E(g)[n.from %--% n.to])>1)		
-#print(E(g)[n.from %--% n.to])		
 		#cat(n.from,"-(",d,")-",n.to,"\n",sep="")
 		
 		# approximate the desired granularity
@@ -96,4 +95,37 @@ add.intermediate.nodes <- function(g, granularity)
 	}
 	
 	return(g2)
+}
+
+
+############################################################################################
+# Adds links in the graph using Delonay's triangulation, and possibly removing
+# extra links in order to meet the specified average degree k.
+#
+# g: existing graph (only nodes, no links).
+# k: approximate average degree of the returned graph,
+#    or NA to keep the full triangulation result.
+#
+# returns: the modified graph.
+############################################################################################
+connect.triangulation <- function(g, k=NA)
+{	# triangulation
+	pos <- cbind(V(g)$x,V(g)$y)
+	triangles <- delaunayn(p=pos)
+	links <- rbind(triangles[,1:2],triangles[,2:3],triangles[,c(3,1)])
+	
+	# add links to graph
+	links <- c(t(links))
+	g <- add.edges(graph=g, edges=links)
+	# remove multiple links
+	g <- simplify(graph=g,remove.multiple=TRUE)
+	
+	# remove surnumerary links
+	if(!is.na(k))
+	{	m <- vcount(g)*k/2
+		if(ecount(g)>m)
+			g <- delete.edges(graph=g,edges=sample(x=1:ecount(g),size=(ecount(g)-m)))
+	}
+	
+	return(g)
 }
