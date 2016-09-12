@@ -88,10 +88,10 @@ mean.node.straightness <- function(graph, v=NA, self=TRUE)
 	{	# process the straightness values
 		strn <- node.straightness(graph,v)
 		# average them
-		result <- sapply(v,function(i)
+		result <- sapply(1:length(v),function(i)
 				{	vals <- strn[i,]
 					if(!self)
-						vals <- vals[-i]
+						vals <- vals[-v[i]]
 					res1 <- mean(vals)
 					res2 <- sd(vals)
 					res <- c(res1,res2)

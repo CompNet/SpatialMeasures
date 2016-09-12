@@ -15,70 +15,123 @@ source("src/common/misc.R")
 source("src/common/transformations.R")
 
 
+
 ############################################################################
-# Auxilary function used during the processing of the exact straightness.
+node.straightness <- function(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2, lambdau, lambdav)
+{	# get the node coordinates
+	xu1 <- V(g)$x[u1]
+	yu1 <- V(g)$y[u1]
+	xu2 <- V(g)$x[u2]
+	yu2 <- V(g)$y[u2]
+	xv1 <- V(g)$x[v1]
+	yv1 <- V(g)$y[v1]
+	xv2 <- V(g)$x[v2]
+	yv2 <- V(g)$y[v2]
+	
+	# process the appropriate lambda2
+	lambda2 <- NA
+	if(ellp1<=lambdau && ell1<=lambdav)
+		lambda2 <- (g.dist[u1,v2] - g.dist[u1,u2] + e.dist[u2,v2])/2
+	else if(ellp1<=lambdau && ell1>lambdav)
+		lambda2 <- (g.dist[v1,v2] - g.dist[u1,u2] + e.dist[u1,v1] + e.dist[u2,v2] - 2*ellp1)/2
+	else if(ellp1>lambdau && ell1<=lambdav)
+		lambda2 <- (g.dist[u1,v2] - g.dist[v1,u2] - e.dist[u1,v1] + e.dist[u2,v2] + 2*ellp1)/2
+	else if(ellp1>lambdau && ell1>lambdav)
+		lambda2 <- (g.dist[v1,v2] - g.dist[v1,u2] + e.dist[u2,v2])/2
+	
+	# euclidean distance between the points
+	edp1p2 <- sqrt((xu2 + ellp2/e.dist[u2,v2]*(xv2-xu2) - xu1 - ellp1/E.dist[u1,v1]*(xv1-xu1))^2 
+				+ (yu2 + ellp2/e.dist[u2,v2]*(yv2-yu2) - yu1 - ellp1/E.dist[u1,v1]*(yv1-yu1))^2)
+	
+	# process the straightness
+	result <- NA
+	# if the points are disconnected
+	if(is.infinite(g.dist[u1,u2]))
+		result <- 0
+	# if p1 and p2 are lying on the same link
+	else if(setequal(c(u1,v1),c(u2,v2)))
+		result <- 1
+	# general case
+	else
+	{	# u1u2
+		if(ellp1<=lambdau && ell1<=lambdav && ellp2<=lambda2
+			|| ellp1<=lambdau && ell1>lambdav && ellp2<=lambda2)
+			result <- edp1p2 / (ellp1 + g.dist[u1,u2] + ellp2)
+		# u1v2
+		else if(ellp1<=lambdau && ell1<=lambdav && ellp2>lambda2
+			|| ellp1>lambdau && ell1<=lambdav && ellp2>lambda2)
+			result <- edp1p2 / (ellp1 + g.dist[u1,v2] + e.dist[u2,v2] - ellp2)
+		# v1u2
+		else if(ellp1>lambdau && ell1<=lambdav && ellp2<=lambda2
+			|| ellp1>lambdau && ell1>lambdav && ellp2<=lambda2)
+			result <- edp1p2 / (e.dist[u1,v1] - ellp1 + g.dist[v1,u2] + ellp2)
+		# v1v2
+		else if(ellp1<=lambdau && ell1>lambdav && ellp2>lambda2
+			|| ellp1>lambdau && ell1>lambdav && ellp2>lambda2)
+			result <- edp1p2 / (e.dist[u1,v1] - ellp1 + g.dist[v1,v2] + e.dist[u2,v2] - ellp2)
+	}
+		
+	return(result)
+}
+	
+
+
+
+
+############################################################################
+# Antiderivative of the auxiliary function used during the processing of the 
+# exact straightness. The auxiliary function is:
+# sqrt((a + b*ell)^2 + (c + d*ell)^2)
+# -----------------------------------
+# e + f*ell
 #
 # a,b,c,d,e,f: constants used as parameters of the integrated function.
 # ell: variable of the function. 
 # 
 # returns: value of the antiderivative needed to process the exact straightness.
 ############################################################################
-point.unilateral.straightness.antiderivative <- function(a,b,c,d,e,f,ell)
-{	
-#	cat("a=",a,"; b=",b,"; c=",c,"; d=",d,"; e=",e,"; f=",f,"; ell=",sprintf("%.25f",ell),"\n",sep="")
-#	
-#	# convert to higher precision
-#	a <- mpfr(a, 64)
-#	b <- mpfr(b, 64)
-#	c <- mpfr(c, 64)
-#	d <- mpfr(d, 64)
-#	e <- mpfr(e, 64)
-#	f <- mpfr(f, 64)
-#	ell <- mpfr(ell, 64)
-#	
-#	# process the value
-#	temp11 <- sqrt(b^2 + d^2)
-#	temp12 <- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-#	temp1311 <- b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f
-#	temp1312 <- (a^2 + c^2)*f^2
-#	temp1313 <- (e + f*ell)
-#	cat("\t","temp1311: ",as.numeric(temp1311)," temp1312: ",as.numeric(temp1312)," temp1313: ",as.numeric(temp1313),"\n",sep="")
-##	cat("\t","temp1311: ",temp1311," temp1312: ",temp1312," temp1313: ",temp1313,"\n",sep="")
-#	temp131 <- (temp1311+temp1312)^(3/2)*temp1313
-#	temp13 <- log(abs(temp131))
-#	temp1 <- temp11 * temp12 * temp13
-#	temp2 <- ((-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
-#				* log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)))))
-#	temp3log <- (2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
-#								+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-#								* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)))
-#	cat("temp3log: ",as.numeric(temp3log),"\n",sep="")
-#	temp3 <- (sqrt(b^2 + d^2)
-#				* (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
-#					- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-#					* log(abs(temp3log))))
-#	result <- (temp1 + temp2 + temp3) / (sqrt(b^2 + d^2)*f^2)
-#	cat("\t"," temp11: ",as.numeric(temp11)," temp12: ",as.numeric(temp12)," temp131: ",as.numeric(temp131)," temp13: ",as.numeric(temp13)," temp1: ",as.numeric(temp1)," temp2: ",as.numeric(temp2)," temp3: ",as.numeric(temp3)," result: ",as.numeric(result),"\n",sep="")
-##	cat("\t"," temp11: ",temp11," temp12: ",temp12," temp131: ",temp131," temp13: ",temp13," temp1: ",temp1," temp2: ",temp2," temp3: ",temp3," result: ",result,"\n",sep="")
-#	result <- as.numeric(result)
+point.straightness.antiderivative <- function(a,b,c,d,e,f,ell)
+{	result <- 
+			((sqrt(b^2 + d^2)
+					* sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+					* log(abs((b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)^(3/2)*(e + f*ell)))
+					+ (-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
+					* log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))
+					+ sqrt(b^2 + d^2)
+					* (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
+						- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+						* log(abs(2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
+													+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+													* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))))
+				/(sqrt(b^2 + d^2)*f^2))
 	
-	result <- 
-		((sqrt(b^2 + d^2)
-		   * sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-		   * log(abs((b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)^(3/2)*(e + f*ell)))
-		  + (-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
-		   * log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))
-		  + sqrt(b^2 + d^2)
-		   * (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
-			  - sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-			    * log(abs(2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
-					+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-					* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))))
-		 /(sqrt(b^2 + d^2)*f^2))
-	
-#	cat("\tresult: ",result,"\n",sep="")
 	return(result)
 }
+
+
+
+
+
+
+
+
+
+
+
+############################################################################
+total.point.straightness.point.link <- function(a,b,c,d,e,f,ell)
+{
+	
+}
+	
+
+
+
+
+
+
+
+
 
 
 ############################################################################
