@@ -76,7 +76,7 @@ process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lamb
 # 
 # returns: straightness value between p_1 and p_2. 
 ############################################################################
-straightness.points <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2, lambdau, lambdav, lambda2)
+straightness.point.point <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2, lambdau, lambdav, lambda2)
 {	# get the node coordinates
 	xu1 <- V(g)$x[u1]
 	yu1 <- V(g)$y[u1]
@@ -152,7 +152,7 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 	else
 	{	# define the function to integrate
 		fun <- Vectorize(function(x)
-		{	straightness.points(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2=x, lambdau, lambdav, lambda2)
+		{	res <- straightness.point.point(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2=x, lambdau, lambdav, lambda2)
 			return(res)
 		})
 		# perform the approximate integration
@@ -207,7 +207,7 @@ mean.straightness.nodes.link <- function(graph, u=V(graph), e)
 	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# get the second link
-	el <- get.edgelist(g)
+	el <- get.edgelist(graph)
 	u2 <- el[e,1]
 	v2 <- el[e,2]
 	
@@ -238,7 +238,7 @@ mean.straightness.nodes.link <- function(graph, u=V(graph), e)
 			lambdav <- temp[2]
 			
 			# get the total straightness between the point and the link
-			str <- mean.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+			str <- mean.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 		}
 		
 		# add to the result vector
@@ -265,7 +265,7 @@ mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1)
 	total.lgt <- 0
 	
 	# process each link
-	el <- get.edgelist(g)
+	el <- get.edgelist(graph)
 	for(i in 1:nrow(el))
 	{	# get the second link
 		u2 <- el[i,1]
@@ -277,7 +277,7 @@ mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1)
 		lambdav <- temp[2]
 		
 		# get the mean straightness between the point and the link
-		total.str <- total.str + total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+		total.str <- total.str + total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 		total.lgt <- total.lgt + e.dist[u2,v2]
 	}
 	
@@ -293,7 +293,7 @@ mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1)
 # and the graph (i.e. all the points constituting the graph). 
 # 
 # This can be interpreted as a centrality measure corresponding to the 
-# accessibility of the node from (or to) the rest of the graph.
+# average accessibility of the node from (or to) the rest of the graph.
 # 
 # graph: considered graph.
 # u: vector of nodes of interest.
@@ -311,28 +311,28 @@ mean.straightness.nodes.graph <- function(graph, u)
 	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# process each specified node
-	for(i in u)
+	for(i in 1:length(u))
 	{	# if the node is an isolate, no need to go further
-		if(degree(graph,u)==0)
+		if(degree(graph,u[i])==0)
 			str <- 0
 		
 		# otherwise, we process the mean straightness for the node
 		else
 		{	# get the relative position
-			tmp <- neighbors(g,1)[1]
-			if(tmp<u)
+			tmp <- neighbors(g,u[i])[1]
+			if(tmp<u[i])
 			{	u1 <- tmp
-				v1 <- u
+				v1 <- u[i]
 				ellp1 <- e.dist[u1,v1]
 			}
 			else
-			{	u1 <- u
+			{	u1 <- u[i]
 				v1 <- tmp
 				ellp1 <- 0
 			}
 			
 			# get the mean straightness between the point and the graph
-			str <- mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1)
+			str <- mean.straightness.point.graph(e.dist, g.dist, u1, v1, ellp1)
 		}
 		
 		# add to the result vector
@@ -343,495 +343,221 @@ mean.straightness.nodes.graph <- function(graph, u)
 }
 
 
-#TODO same thing with the second integration.
-
-
-
-
 ############################################################################
-# Antiderivative of the auxiliary function used during the processing of the 
-# exact straightness. The auxiliary function is:
-# sqrt((a + b*ell)^2 + (c + d*ell)^2)
-# -----------------------------------
-# e + f*ell
-#
-# a,b,c,d,e,f: constants used as parameters of the integrated function.
-# ell: variable of the function. 
+# Processes the total straightness between two links (i.e. all the pairs of points 
+# such that each point of the pair is located on a different link).
 # 
-# returns: value of the antiderivative needed to process the exact straightness.
-############################################################################
-point.straightness.antiderivative <- function(a,b,c,d,e,f,ell)
-{	result <- 
-			((sqrt(b^2 + d^2)
-					* sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-					* log(abs((b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)^(3/2)*(e + f*ell)))
-					+ (-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
-					* log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))
-					+ sqrt(b^2 + d^2)
-					* (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
-						- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-						* log(abs(2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
-													+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-													* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))))
-				/(sqrt(b^2 + d^2)*f^2))
-	
-	return(result)
-}
-
-
-
-
-
-
-
-
-
-
-
-############################################################################
-total.point.straightness.point.link <- function(a,b,c,d,e,f,ell)
-{
-	
-}
-	
-
-
-
-
-
-
-
-
-
-
-############################################################################
-# Auxilary function used during the processing of the exact straightness.
-#
-# xa,ya: coordinates of A, the first end point of the considered link.
-# xb,yb: coordinates of B, the second end point of the considered link.
-# xc,yc: coordinates of C, the node considered as the network center.
-# dgca: geodesic distance between C and A.
-# dgcb: geodesic distance between C and B.
-# ddab: Euclidean distance between A and B.
+# e.dist: pre-processed Euclidean distances for all pairs of nodes in the graph.
+# g.dist: pre-processed graph distances for all pairs of nodes in the graph.
+# u1,v1: end nodes of the first link.
+# u2,v2: end nodes of the second link.
+# lambda_u, lambda_v: pre-processed break-even distances.
 # 
-# returns: total unilateral straightness over the specified link.
+# returns: total straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
-point.unilateral.straightness.link <- function(xa, ya, xb, yb, xc, yc, dgca, dgcb, ddab)
-{	# process break-even point
-	ellp <- (dgcb - dgca + ddab) / 2
-#	cat("..ellp=",ellp,"\n",sep="")
-	
-	# common
-	a <- xa - xc
-	b <- (xb - xa) / ddab
-	c <- ya - yc
-	d <- (yb - ya) / ddab
-##if(pp!=0 && pp!=1)	# to generate the article figure representing all str break-even points
-#{	xpp <- xa + pp*b
-#	ypp <- ya + pp*d
-#	na <- which(V(g2)$x==xa & V(g2)$y==ya)[1]
-#	nb <- which(V(g2)$x==xb & V(g2)$y==yb)[1]
-#	g2 <<- delete.edges(g2,E(g2)[na %--% nb])
-#	g2 <<- add.vertices(g2,1)
-#	npp <- vcount(g2)
-#	print(na);print(nb);print(npp)
-#	V(g2)$type[npp] <<- "extra"
-#	V(g2)$x[npp] <<- xpp
-#	V(g2)$y[npp] <<- ypp
-#	g2 <<- add.edges(g2,c(na,npp,npp,nb))
-#}
-
-	# from 0 to p'
-	if(abs(ellp)>1e-10)
-	{	e <- dgca
-		f <- 1
-		part1 <- point.unilateral.straightness.antiderivative(a,b,c,d,e,f,ellp) - point.unilateral.straightness.antiderivative(a,b,c,d,e,f,0)
-	}
-	else
-		part1 <- 0
-	
-	# from p' to 1
-	if(abs(ellp-ddab)>1e-10)
-	{	e <- dgcb + ddab
-		f <- -1
-		part2 <- point.unilateral.straightness.antiderivative(a,b,c,d,e,f,ddab) - point.unilateral.straightness.antiderivative(a,b,c,d,e,f,ellp)
-	}
-	else
-		part2 <- 0
-	
-#	cat("..part1=",part1," part2=",part2,"\n",sep="")
-	result <- part1 + part2
-	return(result)
-}
-
-
-############################################################################
-# Processes the average point unilateral straightness, i.e. the average straightness 
-# between the center of the network and any point constituting the network, 
-# including those which are not nodes. In other words, we consider paths stopping on 
-# a link.
-#
-# g: the graph to process.
-# center: id of the node considered as the center.
-# 
-# returns: a numerical value (the mean straightness).
-############################################################################
-point.unilateral.straightness <- function(g, center=1)
-{	# init
-	el <- get.edgelist(g,names=FALSE)
-	g <- distances.as.weights(g)
-	sp <- shortest.paths(graph=g, weights=E(g)$dist)
-	xc <- V(g)$x[center]
-	yc <- V(g)$y[center]
-	
-	# process point straightness for all links in the network
-	total.straightness <- 0
-	total.length <- 0
-	for(e in 1:nrow(el))
-	{	# get the required data
-		na <- el[e,1]			# get node A
-		nb <- el[e,2]			# get node B
-		xa <- V(g)$x[na]		# get their spatial position
-		ya <- V(g)$y[na]
-		xb <- V(g)$x[nb]
-		yb <- V(g)$y[nb]
-		dgca <- sp[center,na] 	# geodesic distance between the center and A
-		dgcb <- sp[center,nb]	# same between the center and B
-		#TODO should check if these geodesic distances are defined (disconnected graph?)
-		ddab <- E(g)$dist[e]	# Euclidean distance between A and B
-		
-#		cat("Link (",na,",",nb,"):\n",sep="")
-		
-		# center must be processed separately (otherwise: undefined primitive)
-		if(na==center || nb==center)
-		{	# in this case (center and one of its neighbors), the straightness
-			# is by definition one over the whole link, so integrating it is trivial
-			pus <- ddab
-		}
-		# general case
-		else
-		{	pus <- point.unilateral.straightness.link(xa,ya,xb,yb,xc,yc,dgca,dgcb,ddab)
-		}
-		
-		# update both variables
-#		cat("..",pus," vs. ",ddab,"\n",sep="")
-		total.straightness <- total.straightness + pus
-		total.length <- total.length + ddab
-	}
-	
-	# divide to get average 
-	result <- total.straightness / total.length
-#	cat("Total: ",total.straightness,"/",total.length," = ",result,"\n",sep="")
-	
-	return(result)
-}
-
-
-############################################################################
-# Auxilary function used during the processing of the exact straightness.
-# 
-# a,b,c,d,e,f,g,h,i: constants used as parameters of the integrated function.
-# fell2a,fell2b: functions used to process ell2.
-# lb,ub: lower and upper bound of the integral to process.
-#
-# returns: value of the definite integral needed to process the exact straightness.
-############################################################################
-point.bilateral.straightness.integral <- function(a,b, c, d,e, f, g,h, i, fell2a, fell2b, lb, ub)
-{	#cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
-	
-	if(abs(lb-ub)<1e-10)
+total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+{	# process the straightness
+	result <- NA
+	# if the links are disconnected
+	if(is.infinite(g.dist[u1,u2]))
 		result <- 0
+	# if the links are the same
+	else if(setequal(c(u1,v1),c(u2,v2)))
+		result <- e.dist[u1,v1]^2/2
+	# general case
 	else
-	{	fun <- Vectorize(function(x)
-				{	f2lb <- fell2a(x)
-					f2ub <- fell2b(x)
-#					cat("........for x=",x,", from ",f2lb," to ",f2ub,"\n",sep="")
-					if(abs(f2ub-f2lb)<1e-10)
-						res <- 0
-					else
-					{	part1 <- point.unilateral.straightness.antiderivative(a+b*x,c,d+e*x,f,g+h*x,i,f2ub)
-						part2 <- point.unilateral.straightness.antiderivative(a+b*x,c,d+e*x,f,g+h*x,i,f2lb)
-						res <- part1 - part2
-#						cat("..........part1: ",part1," part2: ",part2,"\n",sep="")
-					}
+	{	# define the function to integrate
+		fun <- Vectorize(function(x)
+				{	res <- total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1=x, u2, v2, lambdau, lambdav)
 					return(res)
 				})
 		
-		result <- integrate(f=fun,lower=lb,upper=ub)$value
+		# define the integral bounds
+		b1 <- min(lambda_u,lmabda_v)
+		b2 <- max(lambda_u,lmabda_v)
 		
-		fun2 <- Vectorize(function(x) fell2b(x)-fell2a(x))
-		maxval <- integrate(f=fun2,lower=lb,upper=ub)$value
-#		cat("........",result," vs. ",maxval,"\n",sep="")
+		# perform the approximate integration
+		res1 <- integrate(f=fun,lower=0,upper=b1,abs.tol=1e-15)
+		res2 <- integrate(f=fun,lower=b1,upper=b2,abs.tol=1e-15)
+		res3 <- integrate(f=fun,lower=b2,upper=e.dist[u1,v1],abs.tol=1e-15)
+		result <- res1 + res2 + res3
 	}
 	
 	return(result)
 }
-point.bilateral.straightness.integral.bis <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, i2, fell2, ell2up, lb, ub)
-{	#cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
 	
-	if(abs(lb-ub)<1e-10)
-		result <- 0
-	else
-	{	fun <- Vectorize(function(x)
-				{	ell2mid <- fell2(x)
-#					cat("........for x=",x,", from 0 through ",ell2mid," to ",ell2up,"\n",sep="")
-					if(ell2mid<1e-10)
-						part1 <- 0
-					else
-					{	part11 <- point.unilateral.straightness.antiderivative(a+b*x,c,d+e*x,f,g1+h1*x,i1,ell2mid)
-						part12 <- point.unilateral.straightness.antiderivative(a+b*x,c,d+e*x,f,g1+h1*x,i1,0)
-						part1 <- part11 - part12
-#						cat("..........part1 = ",part11," - ",part12," = ",part1,"\n",sep="")
-#						cat(".......... max1 = ",ell2mid," >> ",part1<=ell2mid,"\n",sep="")
-						
-#						fun2 <- function(y) sqrt((a+b*x+c*y)^2 + (d+e*x+f*y)^2)/(g1+h1*x+i1*y)
-#						verif <- integrate(f=fun2,lower=0,upper=ell2mid)$value
-#						cat("..........verif = ",verif," >> ",abs(part1-verif)<1e-10,"\n",sep="")
-#						curve(fun2,0,ell2mid,ylim=c(0,4));stop()
-					}
-					if(abs(ell2up-ell2mid)<1e-10)
-						part2 <- 0
-					else
-					{	part21 <- point.unilateral.straightness.antiderivative(a+b*x,c,d+e*x,f,g2+h2*x,i2,ell2up)
-						part22 <- point.unilateral.straightness.antiderivative(a+b*x,c,d+e*x,f,g2+h2*x,i2,ell2mid)
-						part2 <- part21 - part22
-#						cat("..........part2 = ",part21," - ",part22," = ",part2,"\n",sep="")
-#						cat(".......... max2 = ",ell2up-ell2mid," >> ",part2<=(ell2up-ell2mid),"\n",sep="")
-						
-#						fun21 <- function(y) sqrt((a+b*x+c*y)^2 + (d+e*x+f*y)^2)
-#						fun22 <- function(y) g2+h2*x+i2*y
-#						fun2 <- function(y) fun21(y)/fun22(y)
-#						verif <- integrate(f=fun2,lower=ell2mid,upper=ell2up)$value
-#						cat("..........verif = ",verif," >> ",abs(part2-verif)<1e-10,"\n",sep="")
-						
-#						curve(fun2,ell2mid,ell2up,ylim=c(0,4),col="RED")
-#						curve(fun21,ell2mid,ell2up,add=TRUE,col="GREEN")
-#						curve(fun22,ell2mid,ell2up,add=TRUE,col="BLUE")
-#						stop()
-					}
-					res <- part1 + part2
-#					cat("..........res = ",part1," + ",part2," = ",res,"\n",sep="")
-					return(res)
-				})
-		
-		intres <- integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15)
-		result <- intres$value
-		
-#		cat("........",result," vs. ",ell2up*(ub-lb)," (",intres$abs.error,") \n",sep="")
-	}
-	
-	return(result)
-}
-
 
 ############################################################################
-# Auxilary function used during the processing of the exact straightness.
-#
-# xa1,ya1: coordinates of A1, the first end point of the first considered link.
-# xb1,yb1: coordinates of B1, the second end point of the first considered link.
-# xa2,ya2: coordinates of A2, the first end point of the second considered link.
-# xb2,yb2: coordinates of B2, the second end point of the second considered link.
-# dga1a2: geodesic distance between A1 and A2.
-# dga1b2: geodesic distance between A1 and B2.
-# dgb1a2: geodesic distance between B1 and A2.
-# dgb1b2: geodesic distance between B1 and B2.
-# dda1b1: Euclidean distance between A1 and B1.
-# dda2b2: Euclidean distance between A2 and B2.
+# Processes the average straightness between two links (i.e. all the pairs of 
+# points such that each point of the pair is located on a different link).
 # 
-# returns: total unilateral straightness over the specified link.
+# e.dist: pre-processed Euclidean distances for all pairs of nodes in the graph.
+# g.dist: pre-processed graph distances for all pairs of nodes in the graph.
+# u1,v1: end nodes of the first link.
+# u2,v2: end nodes of the second link.
+# lambda_u, lambda_v: pre-processed break-even distances.
+# 
+# returns: average straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
-point.bilateral.straightness.link <- function(xa1, ya1, xb1, yb1, xa2, ya2, xb2, yb2, dga1a2, dga1b2, dgb1a2, dgb1b2, dda1b1, dda2b2)
-{	TOLERANCE <- 1e-10
+mean.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+{	result <- NA
 	
-	# process break-even points
-	ell1p <- (dda1b1 + dgb1a2 - dga1a2) / 2
-	if(abs(ell1p)<TOLERANCE)
-		ell1p <- 0
-	else if(abs(dda1b1-ell1p)<TOLERANCE)
-		ell1p <- dda1b1
-	ell1pp <- (dda1b1 + dgb1b2 - dga1b2) / 2
-	if(abs(ell1pp)<TOLERANCE)
-		ell1pp <- 0
-	else if(abs(dda1b1-ell1pp)<TOLERANCE)
-		ell1pp <- dda1b1
-	fell2p1 <- function(ell1)
-		{	res <- (dga1b2 - dga1a2 + dda2b2) / 2
-			if(abs(res)<TOLERANCE)
-				res <- 0
-			else if(abs(dda2b2-res)<TOLERANCE)
-				res <- dda2b2
-			return(res)
-		}
-	fell2p2 <- function(ell1)
-		{	res <- (dgb1b2 - dga1a2 + dda1b1 + dda2b2 - 2*ell1) / 2
-			if(abs(res)<TOLERANCE)
-				res <- 0
-			else if(abs(dda2b2-res)<TOLERANCE)
-				res <- dda2b2
-			return(res)
-		}
-	fell2p3 <- function(ell1)
-		{	res <- (dga1b2 - dgb1a2 - dda1b1 + dda2b2 + 2*ell1) / 2
-			if(abs(res)<TOLERANCE)
-				res <- 0
-			else if(abs(dda2b2-res)<TOLERANCE)
-				res <- dda2b2
-			return(res)
-		}
-	fell2p4 <- function(ell1)
-		{	res <- (dgb1b2 - dgb1a2 + dda2b2) / 2
-			if(abs(res)<TOLERANCE)
-				res <- 0
-			else if(abs(dda2b2-res)<TOLERANCE)
-				res <- dda2b2
-			return(res)
-		}
-	
-	# debug
-#	cat("(",xa1,",",ya1,")-[",dda1b1,"]-(",xb1,",",yb1,")          (",xa2,",",ya2,")-[",dda2b2,"]-(",xb2,",",yb2,")\n",sep="")
-#	cat("dga1a2: ",dga1a2," dga1b2: ",dga1b2," dgb1a2: ",dgb1a2," dgb1b2: ",dgb1b2,"\n",sep="")
-#	cat("ell1p: ",ell1p," ell1pp: ",ell1pp,"\n",sep="")
-	
-	# common constants
-	a <- xa2 - xa1
-	b <- (xa1 - xb1) / dda1b1
-	c <- (xb2 - xa2) / dda2b2
-	d <- ya2 - ya1
-	e <- (ya1 - yb1) / dda1b1
-	f <- (yb2 - ya2) / dda2b2
-	
-	# specific cases
-	ga1a2 <- dga1a2						; ha1a2 <- 1	; ia1a2 <- 1
-	ga1b2 <- dga1b2 + dda2b2			; ha1b2 <- 1	; ia1b2 <- -1
-	gb1a2 <- dgb1a2 + dda1b1			; hb1a2 <- -1	; ib1a2 <- 1
-	gb1b2 <- dgb1b2 + dda1b1 + dda2b2	; hb1b2 <- -1	; ib1b2 <- -1
-	
-	if(ell1p <= ell1pp)
-	{	#cat(".from 0 through ell1p=",ell1p," through ell1pp=",ell1pp," to ",dda1b1,"\n",sep="")
-		# from 0 to l1'
-#		part1 <- (point.bilateral.straightness.integral(a,b, c, d,e, f, g=ga1a2,h=ha1a2, i=ia1a2, fell2a=function(x)0, fell2b=fell2p1, lb=0, ub=ell1p)
-#				+ point.bilateral.straightness.integral(a,b, c, d,e, f, g=ga1b2,h=ha1b2, i=ia1b2, fell2a=fell2p1, fell2b=function(x)dda2b2, lb=0, ub=ell1p))
-		part1 <- point.bilateral.straightness.integral.bis(a,b, c, d,e, f, g1=ga1a2,h1=ha1a2, i1=ia1a2, g2=ga1b2,h2=ha1b2, i2=ia1b2, fell2=fell2p1, ell2up=dda2b2, lb=0, ub=ell1p)
-		max1 <- ell1p*dda2b2
-		
-		# from l1' to l1''
-#		part2 <- (point.bilateral.straightness.integral(a,b, c, d,e, f, g=gb1a2,h=hb1a2, i=ib1a2, fell2a=function(x)0, fell2b=fell2p3, lb=ell1p, ub=ell1pp)
-#				+ point.bilateral.straightness.integral(a,b, c, d,e, f, g=ga1b2,h=ha1b2, i=ia1b2, fell2a=fell2p3, fell2b=function(x)dda2b2, lb=ell1p, ub=ell1pp))
-		part2 <- point.bilateral.straightness.integral.bis(a,b, c, d,e, f, g1=gb1a2,h1=hb1a2, i1=ib1a2, g2=ga1b2,h2=ha1b2, i2=ia1b2, fell2=fell2p3, ell2up=dda2b2, lb=ell1p, ub=ell1pp)
-		max2 <- (ell1pp - ell1p)*dda2b2
-		
-		# from l1'' to A1B1
-#		part3 <- (point.bilateral.straightness.integral(a,b, c, d,e, f, g=gb1a2,h=hb1a2, i=ib1a2, fell2a=function(x)0, fell2b=fell2p4, lb=ell1pp, ub=dda1b1)
-#				+ point.bilateral.straightness.integral(a,b, c, d,e, f, g=gb1b2,h=hb1b2, i=ib1b2, fell2a=fell2p4, fell2b=function(x)dda2b2, lb=ell1pp, ub=dda1b1))
-		part3 <- point.bilateral.straightness.integral.bis(a,b, c, d,e, f, g1=gb1a2,h1=hb1a2, i1=ib1a2, g2=gb1b2,h2=hb1b2, i2=ib1b2, fell2=fell2p4, ell2up=dda2b2, lb=ell1pp, ub=dda1b1)
-		max3 <- (dda1b1 - ell1pp)*dda2b2
-	}
+	# if the links are the same
+	if(setequal(c(u1,v1),c(u2,v2)))
+		result <- 1
+	# general case
 	else
-	{	#cat(".from 0 through ell1pp=",ell1pp," through ell1p=",ell1p," to ",dda1b1,"\n",sep="")
-		# from 0 to l1''
-#		part1 <- (point.bilateral.straightness.integral(a,b, c, d,e, f, g=ga1a2,h=ha1a2, i=ia1a2, fell2a=function(x)0, fell2b=fell2p1, lb=0, ub=ell1pp)
-#				+ point.bilateral.straightness.integral(a,b, c, d,e, f, g=ga1b2,h=ha1b2, i=ia1b2, fell2a=fell2p1, fell2b=function(x)dda2b2, lb=0, ub=ell1pp))
-		part1 <- point.bilateral.straightness.integral.bis(a,b, c, d,e, f, g1=ga1a2,h1=ha1a2, i1=ia1a2, g2=ga1b2,h2=ha1b2, i2=ia1b2, fell2=fell2p1, ell2up=dda2b2, lb=0, ub=ell1pp)
-		max1 <- ell1pp*dda2b2
-		
-		# from l1'' to l1'
-#		part2 <- (point.bilateral.straightness.integral(a,b, c, d,e, f, g=ga1a2,h=ha1a2, i=ia1a2, fell2a=function(x)0, fell2b=fell2p2, lb=ell1pp, ub=ell1p)
-#				+ point.bilateral.straightness.integral(a,b, c, d,e, f, g=gb1b2,h=hb1b2, i=ib1b2, fell2a=fell2p2, fell2b=function(x)dda2b2, lb=ell1pp, ub=ell1p))
-		part2 <- point.bilateral.straightness.integral.bis(a,b, c, d,e, f, g1=ga1a2,h1=ha1a2, i1=ia1a2, g2=gb1b2,h2=hb1b2, i2=ib1b2, fell2=fell2p2, ell2up=dda2b2, lb=ell1pp, ub=ell1p)
-		max2 <- (ell1p - ell1pp)*dda2b2
-		
-		# from l1' to A1B1
-#		part3 <- (point.bilateral.straightness.integral(a,b, c, d,e, f, g=gb1a2,h=hb1a2, i=ib1a2, fell2a=function(x)0, fell2b=fell2p4, lb=ell1p, ub=dda1b1)
-#				+ point.bilateral.straightness.integral(a,b, c, d,e, f, g=gb1b2,h=hb1b2, i=ib1b2, fell2a=fell2p4, fell2b=function(x)dda2b2, lb=ell1p, ub=dda1b1))
-		part3 <- point.bilateral.straightness.integral.bis(a,b, c, d,e, f, g1=gb1a2,h1=hb1a2, i1=ib1a2, g2=gb1b2,h2=hb1b2, i2=ib1b2, fell2=fell2p4, ell2up=dda2b2, lb=ell1p, ub=dda1b1)
-		max3 <- (dda1b1 - ell1p)*dda2b2
+	{	# get the total straightness between the links
+		total <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+		# normalize to get the mean
+		result <- total / (e.dist[u2,v2]*e.dist[u1,v1])
 	}
 	
-#	cat("..part1=",part1," part2=",part2," part3=",part3,"\n",sep="")
-#	cat(".. max1=",max1, "  max2=", max2,"  max3=", max3,"\n",sep="")
-	result <- part1 + part2 + part3
 	return(result)
 }
 
 
 ############################################################################
-# Processes the average point bilateral straightness, i.e. the average straightness 
-# between any pair of points constituting the network (including, but not limited to
-# nodes). In other words, we also consider paths stopping anywhere on a link.
-#
-# g: the graph to process.
+# Processes the average straightness between a link and the whole graph (i.e. 
+# all the pairs of points such that one point is on the link and the other is
+# on the graph).
 # 
-# returns: a numerical value (the mean straightness).
+# e.dist: pre-processed Euclidean distances for all pairs of nodes in the graph.
+# g.dist: pre-processed graph distances for all pairs of nodes in the graph.
+# u1,v1: end nodes of the link of interest.
+# u2,v2: end nodes of the second link.
+# exclude.self: whether or not the straightness between the link and itself 
+#				should be considered in the average.
+# 
+# returns: average straightness between (u_1,v_1) and the rest of the graph.
 ############################################################################
-point.bilateral.straightness <- function(g)
-{	# init
-	el <- get.edgelist(g,names=FALSE)
-	g <- distances.as.weights(g)
-	sp <- shortest.paths(graph=g, weights=E(g)$dist)
+mean.straightness.link.graph <- function(e.dist, g.dist, u1, v1, exclude.self=FALSE)
+{	el <- get.edgelist(graph)
 	
-	# process point straightness for all pairs of links in the network
-	total.straightness <- 0
+	# process all links (possibly excluding (u_1,v_1)
+	total.str <- 0
 	total.length <- 0
-	for(e1 in 1:nrow(el))
-	{	# get the required data
-		na1 <- el[e1,1]			# get node A1
-		nb1 <- el[e1,2]			# get node B1
-		xa1 <- V(g)$x[na1]		# get their spatial position
-		ya1 <- V(g)$y[na1]
-		xb1 <- V(g)$x[nb1]
-		yb1 <- V(g)$y[nb1]
-		dda1b1 <- E(g)$dist[e1]	# Euclidean distance between A1 and B1
+	for(i in 1:nrow(el))
+	{	# get the second link end-nodes
+		u2 <- el[i,1]
+		v2 <- el[i,2]
 		
-		for(e2 in e1:nrow(el))
-		{	# get the required data
-			na2 <- el[e2,1]			# get node A2
-			nb2 <- el[e2,2]			# get node B2
-			xa2 <- V(g)$x[na2]		# get their spatial position
-			ya2 <- V(g)$y[na2]
-			xb2 <- V(g)$x[nb2]
-			yb2 <- V(g)$y[nb2]
-			dda2b2 <- E(g)$dist[e2]	# Euclidean distance between A2 and B2
-			
-			# debug
-#			cat("Link (",na1,",",nb1,") vs. (",na2,",",nb2,"):\n",sep="")
-			
-			# geodesic distances
-			dga1a2 <- sp[na1,na2] 	# geodesic distance between A1 and A2
-			dga1b2 <- sp[na1,nb2]	# geodesic distance between A1 and B2
-			dgb1a2 <- sp[nb1,na2] 	# geodesic distance between B1 and A2
-			dgb1b2 <- sp[nb1,nb2]	# geodesic distance between B1 and B2
-			
-			# the case "one link over the same link" must be processed separately (otherwise: undefined primitive)
-			if(e1==e2)
-			{	# in this case, the straightness is by definition one 
-				# for all pairs of points over both links, so integrating it is trivial
-				# we divide by 2 because the graph is undirected, so we don't want to count paths twice
-				pbs <- dda1b1 * dda2b2 / 2
-				length <- dda1b1 * dda2b2 / 2
-			}
-			# general case
-			else
-			{	pbs <- point.bilateral.straightness.link(xa1, ya1, xb1, yb1, xa2, ya2, xb2, yb2, dga1a2, dga1b2, dgb1a2, dgb1b2, dda1b1, dda2b2)
-				# test using python instead, to integrate
-				#pbs <- python.call(
-				#		py.foo="point_bilateral_straightness_link", 
-				#		xa1, ya1, xb1, yb1, xa2, ya2, xb2, yb2, dga1a2, dga1b2, dgb1a2, dgb1b2, dda1b1, dda2b2
-				#)
-				length <- dda1b1*dda2b2
-			}
-			
-			# update both variables
-#			cat("..",pbs," vs. ",dda1b1*dda2b2,"\n",sep="")
-#			if(pbs>dda1b1*dda2b2)
-#				cat("..ERRRRRRRROR\n")
-			total.straightness <- total.straightness + pbs
-			total.length <- total.length + length
+		# process the lambdas
+		temp <- process.lambdauv(e.dist, g.dist, u1, v1, u2, v2)
+		lambdau <- temp[1]
+		lambdav <- temp[2]
+		
+		# check if the same than (u_1,v_1)
+		if(!setequal(c(u1,v1),c(u2,v2)) || !exclude.self)
+		{	# process the total straightness
+			str <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+			# add to result
+			total.str <- total.str + str
+			total.length <- total.length + e.dist[u1,v1]*e.dist[u2,v2]
 		}
 	}
 	
-	# divide to get average 
-	result <- total.straightness / total.length
-#	cat("Total: ",total.straightness,"/",total.length," = ",result,"\n",sep="")
+	# process the normalizing value
+	if(exclude.self)
+		denom <- total.length
+	else
+		denom <- total.length - e.dist[u1,v1]^2/2
 	
+	# process the average
+	result <- total.str / denom
+	return(result)
+}
+	
+	
+############################################################################
+# Processes the average straightness between each one of the specified links 
+# and the graph (i.e. all the points constituting the graph). 
+# 
+# This can be interpreted as a centrality measure corresponding to the 
+# average accessibility of the link from (or to) the rest of the graph.
+# 
+# graph: considered graph.
+# e: vector of nodes of interest.
+# exclude.self: whether or not the straightness between one link and itself 
+#				should be considered in the average.
+# 
+# returns: vector containing the average straightness between each node of u
+#          and the points constituting the graph.
+############################################################################
+mean.straightness.links.graph <- function(graph, e, exclude.self=FALSE)
+{	# init the result vector
+	result <- c()
+	
+	# init the distances
+	pos <- cbind(V(graph)$x,V(graph)$y)
+	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
+	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	
+	# process averages based on the previous totals
+	for(i in e)
+	{	# get the link end-nodes
+		u1 <- el[i,1]
+		v1 <- el[i,2]
+		
+		# get the total straightness between the point and the link
+		str <- mean.straightness.link.graph(e.dist, g.dist, u1, v1, exclude.self)
+		
+		# add to the result vector
+		result <- c(result,str)
+	}
+	
+	return(result)
+}
+
+
+mean.straightness.graph <- function(graph, exclude.self=FALSE)
+{	result <- NA
+	el <- get.edgelist(graph)
+	
+	# init the distances
+	pos <- cbind(V(graph)$x,V(graph)$y)
+	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
+	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	
+	# process all pairs of links
+	total.str <- 0
+	total.length <- 0
+	for(i in 1:nrow(el))
+	{	# get the first link end-nodes
+		u1 <- el[i,1]
+		v1 <- el[i,2]
+		
+		for(j in i:nrow(el))
+		{	# check if the links are the same one
+			if(i!=j || !exclude.self)
+			{	# get the second link end-nodes
+				u2 <- el[j,1]
+				v2 <- el[j,2]
+				
+				# process the lambdas
+				temp <- process.lambdauv(e.dist, g.dist, u1, v1, u2, v2)
+				lambdau <- temp[1]
+				lambdav <- temp[2]
+				
+				# process straightness
+				str <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+				# add to result
+				total.str <- total.str + str
+				total.length <- total.length + e.dist[u1,v1]*e.dist[u2,v2]
+			}
+		}
+	}
+	
+	# possibly substract superfluous values
+	if(exclude.self)
+		denom <- total.length
+	else
+	{	denom <- total.length
+		temp <- sapply(1:nrow(el), function(i) e.dist[el[i,1],el[i,2]]^2/2)
+		denom <- denom - sum(temp)
+	}
+	
+	# process the average
+	result <- total.str / denom
 	return(result)
 }
