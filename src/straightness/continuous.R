@@ -63,6 +63,34 @@ process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lamb
 
 
 ############################################################################
+# Auxilary function used during the processing of the exact straightness.
+#
+# a,b,c,d,e,f: constants used as parameters of the integrated function.
+# ell: variable of the function. 
+# 
+# returns: value of the antiderivative needed to process the straightness.
+############################################################################
+process.antiderivative <- function(a,b,c,d,e,f,ell)
+{	result <- 
+			((sqrt(b^2 + d^2)
+					* sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+					* log(abs((b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)^(3/2)*(e + f*ell)))
+					+ (-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
+					* log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))
+					+ sqrt(b^2 + d^2)
+					* (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
+						- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+						* log(abs(2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
+													+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+													* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))))
+				/(sqrt(b^2 + d^2)*f^2))
+	
+#	cat("\tresult: ",result,"\n",sep="")
+	return(result)
+}
+
+
+############################################################################
 # Processes the straightness between two points (not necessarily nodes).
 # 
 # e.dist: pre-processed Euclidean distances for all pairs of nodes in the graph.
@@ -133,10 +161,12 @@ straightness.point.point <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp
 # ellp1: position of p_1 on the first link.
 # u2,v2: end nodes of the second link.
 # lambdau, lambdav: pre-processed break-even distances.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: total straightness between p_1 and (u_2,v_2). 
 ############################################################################
-total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive=TRUE)
 {	# process the appropriate lambda2
 	lambda2 <- process.lambda2(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 			
@@ -150,13 +180,45 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 		result <- e.dist[u2,v2]
 	# general case
 	else
-	{	# define the function to integrate
-		fun <- Vectorize(function(x)
-		{	res <- straightness.point.point(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2=x, lambdau, lambdav, lambda2)
-			return(res)
-		})
-		# perform the approximate integration
-		result <- integrate(f=fun,lower=0,upper=e.dist[u2,v2],abs.tol=1e-15)$value
+	{	if(use.primitive)
+		{	# get the node coordinates
+			xu1 <- V(g)$x[u1]
+			yu1 <- V(g)$y[u1]
+			xu2 <- V(g)$x[u2]
+			yu2 <- V(g)$y[u2]
+			xv1 <- V(g)$x[v1]
+			yv1 <- V(g)$y[v1]
+			xv2 <- V(g)$x[v2]
+			yv2 <- V(g)$y[v2]
+			
+			# set the common parameters
+			a <- xu2 - xu1 - ellp1*(xv1-xu1)/e.dist[u1,v1]
+			b <- (xv2-xu2)/e.dist[u2,v2]
+			c <- yu2 - yu1 - ellp1*(yv1-yu1)/e.dist[u1,v1]
+			d <- (yv2-yu2)/e.dist[u2,v2]
+			
+			# process the first part
+			e <- 
+			f <- 
+			part1 <- process.antiderivative(a,b,c,d,e,f,lambda2) - process.antiderivative(a,b,c,d,e,f,0)
+			
+			# process the second part
+			e <- 
+			f <- 
+			part2 <- process.antiderivative(a,b,c,d,e,f,e.dist[u2,v2]) - process.antiderivative(a,b,c,d,e,f,lambda2)
+			
+			# combine to get the result
+			result <- part1 + part2
+		}
+		else
+		{	# define the function to integrate
+			fun <- Vectorize(function(x)
+			{	res <- straightness.point.point(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2=x, lambdau, lambdav, lambda2)
+				return(res)
+			})
+			# perform the approximate integration
+			result <- integrate(f=fun,lower=0,upper=e.dist[u2,v2],abs.tol=1e-15)$value
+		}
 	}
 	
 #	cat("total.straightness.point.link:\n");print(result)
