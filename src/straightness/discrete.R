@@ -37,13 +37,14 @@ straightness.nodes <- function(graph, v=V(graph))
 	
 	# process geodesic distances
 #	graph <- distances.as.weights(graph)
-	sp <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
+	msp <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
 	
 	# process the ratio
-	res <- m / sp
+	res <- m / msp
 	
 	# straightness between a node and itself must be 1
-	diag(res) <- 1
+	for(i in 1:length(v))
+		res[i,v[i]] <- 1
 	
 	# unconnected nodes get a 0 straightness
 	res[is.na(res)] <- 0
@@ -61,7 +62,7 @@ straightness.nodes <- function(graph, v=V(graph))
 # g: graph to consider.
 # v: if NA, then the average is processed over all pairs of nodes. If a numerical
 #    vector, then the average straightness is processed for each node, over the rest
-#	 of the graph.
+#	 of the graph nodes.
 # self: whether or not to consider the straightness between a node and itself, 
 #       when processing the average.
 # 

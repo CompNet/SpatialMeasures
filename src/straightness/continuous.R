@@ -44,19 +44,19 @@ process.lambdauv <- function(e.dist, g.dist, u1, v1, u2, v2)
 # u1,v1: end nodes of the first link.
 # ellp1: position of p_1 on the first link.
 # u2,v2: end nodes of the second link.
-# lambda_u, lambda_v: pre-processed break-even distances.
+# lambdau, lambdav: pre-processed break-even distances.
 #
 # returns: the lambda_2 break-even distance.
 ############################################################################
 process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 {	result <- NA
-	if(ellp1<=lambdau && ell1<=lambdav)
+	if(ellp1<=lambdau && ellp1<=lambdav)
 		result <- (g.dist[u1,v2] - g.dist[u1,u2] + e.dist[u2,v2])/2
-	else if(ellp1<=lambdau && ell1>lambdav)
+	else if(ellp1<=lambdau && ellp1>lambdav)
 		result <- (g.dist[v1,v2] - g.dist[u1,u2] + e.dist[u1,v1] + e.dist[u2,v2] - 2*ellp1)/2
-	else if(ellp1>lambdau && ell1<=lambdav)
+	else if(ellp1>lambdau && ellp1<=lambdav)
 		result <- (g.dist[u1,v2] - g.dist[v1,u2] - e.dist[u1,v1] + e.dist[u2,v2] + 2*ellp1)/2
-	else if(ellp1>lambdau && ell1>lambdav)
+	else if(ellp1>lambdau && ellp1>lambdav)
 		result <- (g.dist[v1,v2] - g.dist[v1,u2] + e.dist[u2,v2])/2
 	return(result)
 }
@@ -71,8 +71,8 @@ process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lamb
 # ellp1: position of p_1 on the first link.
 # u2,v2: end nodes of the second link.
 # ellp2: position of p_2 on the second link.
-# lambda_u, lambda_v: pre-processed break-even distances.
-# lambda_2: pre-processed break-even distance.
+# lambdau, lambdav: pre-processed break-even distances.
+# lambda2: pre-processed break-even distance.
 # 
 # returns: straightness value between p_1 and p_2. 
 ############################################################################
@@ -88,8 +88,8 @@ straightness.point.point <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp
 	yv2 <- V(g)$y[v2]
 	
 	# euclidean distance between the points
-	edp1p2 <- sqrt((xu2 + ellp2/e.dist[u2,v2]*(xv2-xu2) - xu1 - ellp1/E.dist[u1,v1]*(xv1-xu1))^2 
-				+ (yu2 + ellp2/e.dist[u2,v2]*(yv2-yu2) - yu1 - ellp1/E.dist[u1,v1]*(yv1-yu1))^2)
+	edp1p2 <- sqrt((xu2 + ellp2/e.dist[u2,v2]*(xv2-xu2) - xu1 - ellp1/e.dist[u1,v1]*(xv1-xu1))^2 
+				+ (yu2 + ellp2/e.dist[u2,v2]*(yv2-yu2) - yu1 - ellp1/e.dist[u1,v1]*(yv1-yu1))^2)
 	
 	# process the straightness
 	result <- NA
@@ -102,20 +102,20 @@ straightness.point.point <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp
 	# general case
 	else
 	{	# u1u2
-		if(ellp1<=lambdau && ell1<=lambdav && ellp2<=lambda2
-			|| ellp1<=lambdau && ell1>lambdav && ellp2<=lambda2)
+		if(ellp1<=lambdau && ellp1<=lambdav && ellp2<=lambda2
+			|| ellp1<=lambdau && ellp1>lambdav && ellp2<=lambda2)
 			result <- edp1p2 / (ellp1 + g.dist[u1,u2] + ellp2)
 		# u1v2
-		else if(ellp1<=lambdau && ell1<=lambdav && ellp2>lambda2
-			|| ellp1>lambdau && ell1<=lambdav && ellp2>lambda2)
+		else if(ellp1<=lambdau && ellp1<=lambdav && ellp2>lambda2
+			|| ellp1>lambdau && ellp1<=lambdav && ellp2>lambda2)
 			result <- edp1p2 / (ellp1 + g.dist[u1,v2] + e.dist[u2,v2] - ellp2)
 		# v1u2
-		else if(ellp1>lambdau && ell1<=lambdav && ellp2<=lambda2
-			|| ellp1>lambdau && ell1>lambdav && ellp2<=lambda2)
+		else if(ellp1>lambdau && ellp1<=lambdav && ellp2<=lambda2
+			|| ellp1>lambdau && ellp1>lambdav && ellp2<=lambda2)
 			result <- edp1p2 / (e.dist[u1,v1] - ellp1 + g.dist[v1,u2] + ellp2)
 		# v1v2
-		else if(ellp1<=lambdau && ell1>lambdav && ellp2>lambda2
-			|| ellp1>lambdau && ell1>lambdav && ellp2>lambda2)
+		else if(ellp1<=lambdau && ellp1>lambdav && ellp2>lambda2
+			|| ellp1>lambdau && ellp1>lambdav && ellp2>lambda2)
 			result <- edp1p2 / (e.dist[u1,v1] - ellp1 + g.dist[v1,v2] + e.dist[u2,v2] - ellp2)
 	}
 		
@@ -132,7 +132,7 @@ straightness.point.point <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp
 # u1,v1: end nodes of the first link.
 # ellp1: position of p_1 on the first link.
 # u2,v2: end nodes of the second link.
-# lambda_u, lambda_v: pre-processed break-even distances.
+# lambdau, lambdav: pre-processed break-even distances.
 # 
 # returns: total straightness between p_1 and (u_2,v_2). 
 ############################################################################
@@ -156,9 +156,10 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 			return(res)
 		})
 		# perform the approximate integration
-		result <- integrate(f=fun,lower=0,upper=e.dist[u2,v2],abs.tol=1e-15)
+		result <- integrate(f=fun,lower=0,upper=e.dist[u2,v2],abs.tol=1e-15)$value
 	}
 	
+#	cat("total.straightness.point.link:\n");print(result)
 	return(result)
 }
 
@@ -172,7 +173,7 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 # u1,v1: end nodes of the first link.
 # ellp1: position of p_1 on the first link.
 # u2,v2: end nodes of the second link.
-# lambda_u, lambda_v: pre-processed break-even distances.
+# lambdau, lambdav: pre-processed break-even distances.
 # 
 # returns: average straightness between p_1 and (u_2,v_2). 
 ############################################################################
@@ -253,6 +254,7 @@ mean.straightness.nodes.link <- function(graph, u=V(graph), e)
 # Processes the average straightness between a point and the graph (i.e. all 
 # the points constituting the graph).
 # 
+# graph: considered graph.
 # e.dist: pre-processed Euclidean distances for all pairs of nodes in the graph.
 # g.dist: pre-processed graph distances for all pairs of nodes in the graph.
 # u1,v1: end nodes of the first link.
@@ -332,7 +334,7 @@ mean.straightness.nodes.graph <- function(graph, u)
 			}
 			
 			# get the mean straightness between the point and the graph
-			str <- mean.straightness.point.graph(e.dist, g.dist, u1, v1, ellp1)
+			str <- mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1)
 		}
 		
 		# add to the result vector
@@ -351,7 +353,7 @@ mean.straightness.nodes.graph <- function(graph, u)
 # g.dist: pre-processed graph distances for all pairs of nodes in the graph.
 # u1,v1: end nodes of the first link.
 # u2,v2: end nodes of the second link.
-# lambda_u, lambda_v: pre-processed break-even distances.
+# lambdau, lambdav: pre-processed break-even distances.
 # 
 # returns: total straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
@@ -373,13 +375,13 @@ total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau
 				})
 		
 		# define the integral bounds
-		b1 <- min(lambda_u,lmabda_v)
-		b2 <- max(lambda_u,lmabda_v)
+		b1 <- min(lambdau,lambdav)
+		b2 <- max(lambdau,lambdav)
 		
 		# perform the approximate integration
-		res1 <- integrate(f=fun,lower=0,upper=b1,abs.tol=1e-15)
-		res2 <- integrate(f=fun,lower=b1,upper=b2,abs.tol=1e-15)
-		res3 <- integrate(f=fun,lower=b2,upper=e.dist[u1,v1],abs.tol=1e-15)
+		res1 <- integrate(f=fun,lower=0,upper=b1,abs.tol=1e-15)$value
+		res2 <- integrate(f=fun,lower=b1,upper=b2,abs.tol=1e-15)$value
+		res3 <- integrate(f=fun,lower=b2,upper=e.dist[u1,v1],abs.tol=1e-15)$value
 		result <- res1 + res2 + res3
 	}
 	
@@ -395,7 +397,7 @@ total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau
 # g.dist: pre-processed graph distances for all pairs of nodes in the graph.
 # u1,v1: end nodes of the first link.
 # u2,v2: end nodes of the second link.
-# lambda_u, lambda_v: pre-processed break-even distances.
+# lambdau, lambdav: pre-processed break-even distances.
 # 
 # returns: average straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
