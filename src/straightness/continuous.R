@@ -63,15 +63,41 @@ process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lamb
 
 
 ############################################################################
-# Auxilary function used during the processing of the exact straightness.
+# Auxilary function used during the processing of the straightness, corresponds
+# to the antiderivative of the f function from the article.
 #
 # a,b,c,d,e,f: constants used as parameters of the integrated function.
 # ell: variable of the function. 
 # 
 # returns: value of the antiderivative needed to process the straightness.
 ############################################################################
-process.antiderivative <- function(a,b,c,d,e,f,ell)
-{	result <- 
+process.straightness.antiderivative <- function(a,b,c,d,e,f,ell)
+{	#cat("a=",a,"; b=",b,"; c=",c,"; d=",d,"; e=",e,"; f=",f,"; ell=",sprintf("%.25f",ell),"\n",sep="")
+	
+#	temp11 <- sqrt(b^2 + d^2)
+#	temp12 <- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+#	temp1311 <- b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f
+#	temp1312 <- (a^2 + c^2)*f^2
+#	temp1313 <- (e + f*ell)
+#	cat("\t","temp1311: ",temp1311," temp1312: ",temp1312," temp1313: ",temp1313,"\n",sep="")
+#	temp131 <- (temp1311+temp1312)^(3/2)*temp1313
+#	temp13 <- log(abs(temp131))
+#	temp1 <- temp11 * temp12 * temp13
+#	temp2 <- ((-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
+#				* log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)))))
+#	temp3log <- (2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
+#								+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+#								* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)))
+#	cat("temp3log: ",as.numeric(temp3log),"\n",sep="")
+#	temp3 <- (sqrt(b^2 + d^2)
+#				* (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
+#					- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
+#					* log(abs(temp3log))))
+#	result <- (temp1 + temp2 + temp3) / (sqrt(b^2 + d^2)*f^2)
+#	cat("\t"," temp11: ",temp11," temp12: ",temp12," temp131: ",temp131," temp13: ",temp13," temp1: ",temp1," temp2: ",temp2," temp3: ",temp3," result: ",result,"\n",sep="")
+#	stop()	
+	
+	result <- 
 			((sqrt(b^2 + d^2)
 					* sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
 					* log(abs((b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)^(3/2)*(e + f*ell)))
@@ -84,8 +110,58 @@ process.antiderivative <- function(a,b,c,d,e,f,ell)
 													+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
 													* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2))))))
 				/(sqrt(b^2 + d^2)*f^2))
-	
+
 #	cat("\tresult: ",result,"\n",sep="")
+	return(result)
+}
+
+
+############################################################################
+# Auxilary function used during the processing of the straightness, corresponds
+# to the double integral of the f function performed in the article.
+# 
+# a,b,c,d,e,f,g1,h1,i1,g2,h2,i2: constants used as parameters of the integrated 
+#								 function.
+# fellp2: functions used to process ellp2.
+# ellp2up: upper bound of ellp2.
+# lb,ub: lower and upper bound of the integral to process.
+#
+# returns: value of the double integral needed to process the straightness.
+############################################################################
+process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, i2, fellp2, ell2pup, lb, ub)
+{	#cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
+	
+	if(abs(lb-ub)<1e-10)
+		result <- 0
+	else
+	{	fun <- Vectorize(function(x)
+				{	ell2mid <- fellp2(x)
+#					cat("........for x=",x,", from 0 through ",ell2mid," to ",ell2up,"\n",sep="")
+					if(ell2mid<1e-10)
+						part1 <- 0
+					else
+					{	part11 <- process.straightness.antiderivative(a+b*x,c,d+e*x,f,g1+h1*x,i1,ell2mid)
+						part12 <- process.straightness.antiderivative(a+b*x,c,d+e*x,f,g1+h1*x,i1,0)
+						part1 <- part11 - part12
+					}
+					if(abs(ell2pup-ell2mid)<1e-10)
+						part2 <- 0
+					else
+					{	part21 <- process.straightness.antiderivative(a+b*x,c,d+e*x,f,g2+h2*x,i2,ell2pup)
+						part22 <- process.straightness.antiderivative(a+b*x,c,d+e*x,f,g2+h2*x,i2,ell2mid)
+						part2 <- part21 - part22
+					}
+					res <- part1 + part2
+#					cat("..........res = ",part1," + ",part2," = ",res,"\n",sep="")
+					return(res)
+				})
+		
+		intres <- integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15)
+		result <- intres$value
+		
+#		cat("........",result," vs. ",ell2up*(ub-lb)," (",intres$abs.error,") \n",sep="")
+	}
+	
 	return(result)
 }
 
@@ -125,7 +201,11 @@ straightness.point.point <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp
 	if(is.infinite(g.dist[u1,u2]))
 		result <- 0
 	# if p1 and p2 are lying on the same link
-	else if(setequal(c(u1,v1),c(u2,v2)))
+	else if(setequal(c(u1,v1),c(u2,v2)) 
+			|| ellp1==0 && u1 %in% c(u2,v2)
+			|| ellp1==e.dist[u1,v1] && v1 %in% c(u2,v2)
+			|| ellp2==0 && u2 %in% c(u1,v1)
+			|| ellp2==e.dist[u2,v2] && v2 %in% c(u1,v1))
 		result <- 1
 	# general case
 	else
@@ -175,13 +255,17 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 	# if the points are disconnected
 	if(is.infinite(g.dist[u1,u2]))
 		result <- 0
-	# if p1 and p2 are lying on the same link
-	else if(setequal(c(u1,v1),c(u2,v2)))
+	# if p1 lies on link (u_2,v_2)
+	else if(setequal(c(u1,v1),c(u2,v2))
+			|| ellp1==0 && u1 %in% c(u2,v2)
+			|| ellp1==e.dist[u1,v1] && v1 %in% c(u2,v2))
 		result <- e.dist[u2,v2]
 	# general case
 	else
 	{	if(use.primitive)
-		{	# get the node coordinates
+		{	#cat("(u1,v1)=(",u1,",",v1,") - ellp1=",ellp1," - (u2,v2)=(",u2,",",v2,") - lambda2=",lambda2,"\n",sep="")
+			
+			# get the node coordinates
 			xu1 <- V(g)$x[u1]
 			yu1 <- V(g)$y[u1]
 			xu2 <- V(g)$x[u2]
@@ -197,15 +281,53 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 			c <- yu2 - yu1 - ellp1*(yv1-yu1)/e.dist[u1,v1]
 			d <- (yv2-yu2)/e.dist[u2,v2]
 			
-			# process the first part
-			e <- 
-			f <- 
-			part1 <- process.antiderivative(a,b,c,d,e,f,lambda2) - process.antiderivative(a,b,c,d,e,f,0)
+			# set the variable parameters
+			e1 <-  ellp1 + g.dist[u1,u2]	; e2 <- ellp1 + g.dist[u1,v2] + e.dist[u2,v2]	; e3 <- e.dist[u1,v1] - ellp1 + g.dist[v1,u2]	; e4 <- e.dist[u1,v1] - ellp1 + g.dist[v1,v2] + e.dist[u2,v2]
+			f1 <- 1							; f2 <- -1										; f3 <- 1										; f4 <- -1
 			
-			# process the second part
-			e <- 
-			f <- 
-			part2 <- process.antiderivative(a,b,c,d,e,f,e.dist[u2,v2]) - process.antiderivative(a,b,c,d,e,f,lambda2)
+			# process the integral
+			part1 <- 0
+			part2 <- 0
+			if(lambdau <= lambdav)
+			{	if(ellp1 <= lambdau)
+				{	if(!tol.eq(lambda2,0))
+						part1 <- process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	process.straightness.antiderivative(a,b,c,d,e1,f1,0)
+					if(!tol.eq(lambda2,e.dist[u2,v2]))
+						part2 <- process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
+				}
+				else if(ellp1 <= lambdav)
+				{	if(!tol.eq(lambda2,0))
+						part1 <- process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	process.straightness.antiderivative(a,b,c,d,e3,f3,0)
+					if(!tol.eq(lambda2,e.dist[u2,v2]))
+						part2 <- process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
+				}
+				else
+				{	if(!tol.eq(lambda2,0))
+						part1 <- process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	process.straightness.antiderivative(a,b,c,d,e3,f3,0)
+					if(!tol.eq(lambda2,e.dist[u2,v2]))
+						part2 <- process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
+				}
+			}
+			else
+			{	if(ellp1 <= lambdav)
+				{	if(!tol.eq(lambda2,0))
+						part1 <- process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	process.straightness.antiderivative(a,b,c,d,e1,f1,0)
+					if(!tol.eq(lambda2,e.dist[u2,v2]))
+						part2 <- process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
+				}
+				else if(ellp1 <= lambdau)
+				{	if(!tol.eq(lambda2,0))
+						part1 <- process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	process.straightness.antiderivative(a,b,c,d,e1,f1,0)
+					if(!tol.eq(lambda2,e.dist[u2,v2]))
+						part2 <- process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
+				}
+				else
+				{	if(!tol.eq(lambda2,0))
+						part1 <- process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	process.straightness.antiderivative(a,b,c,d,e3,f3,0)
+					if(!tol.eq(lambda2,e.dist[u2,v2]))
+						part2 <- process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
+				}
+			}
 			
 			# combine to get the result
 			result <- part1 + part2
@@ -236,12 +358,14 @@ total.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2,
 # ellp1: position of p_1 on the first link.
 # u2,v2: end nodes of the second link.
 # lambdau, lambdav: pre-processed break-even distances.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: average straightness between p_1 and (u_2,v_2). 
 ############################################################################
-mean.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+mean.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive=TRUE)
 {	# get the total straightness between the point and the link
-	total <- total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+	total <- total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
 	# normalize to get the mean
 	result <- total / e.dist[u2,v2]
 	
@@ -256,11 +380,13 @@ mean.straightness.point.link <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, 
 # graph: considered graph.
 # u: vector of nodes of interest.
 # e: link of interest.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: vector containing the average straightness between each node of u
 #          and the link e=(u_2,v_2). 
 ############################################################################
-mean.straightness.nodes.link <- function(graph, u=V(graph), e)
+mean.straightness.nodes.link <- function(graph, u=V(graph), e, use.primitive=TRUE)
 {	# init the result vector
 	result <- c()
 	
@@ -301,7 +427,7 @@ mean.straightness.nodes.link <- function(graph, u=V(graph), e)
 			lambdav <- temp[2]
 			
 			# get the total straightness between the point and the link
-			str <- mean.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+			str <- mean.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
 		}
 		
 		# add to the result vector
@@ -321,10 +447,12 @@ mean.straightness.nodes.link <- function(graph, u=V(graph), e)
 # g.dist: pre-processed graph distances for all pairs of nodes in the graph.
 # u1,v1: end nodes of the first link.
 # ellp1: position of p_1 on the first link.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: average straightness between p_1 and all the points constituting the graph. 
 ############################################################################
-mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1)
+mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1, use.primitive=TRUE)
 {	total.str <- 0
 	total.lgt <- 0
 	
@@ -341,7 +469,7 @@ mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1)
 		lambdav <- temp[2]
 		
 		# get the mean straightness between the point and the link
-		total.str <- total.str + total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+		total.str <- total.str + total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
 		total.lgt <- total.lgt + e.dist[u2,v2]
 	}
 	
@@ -361,11 +489,13 @@ mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ellp1)
 # 
 # graph: considered graph.
 # u: vector of nodes of interest.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: vector containing the average straightness between each node of u
 #          and the points constituting the graph.
 ############################################################################
-mean.straightness.nodes.graph <- function(graph, u)
+mean.straightness.nodes.graph <- function(graph, u, use.primitive=TRUE)
 {	# init the result vector
 	result <- c()
 	
@@ -396,7 +526,7 @@ mean.straightness.nodes.graph <- function(graph, u)
 			}
 			
 			# get the mean straightness between the point and the graph
-			str <- mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1)
+			str <- mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1, use.primitive)
 		}
 		
 		# add to the result vector
@@ -416,10 +546,12 @@ mean.straightness.nodes.graph <- function(graph, u)
 # u1,v1: end nodes of the first link.
 # u2,v2: end nodes of the second link.
 # lambdau, lambdav: pre-processed break-even distances.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: total straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
-total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive=TRUE)
 {	# process the straightness
 	result <- NA
 	# if the links are disconnected
@@ -430,21 +562,71 @@ total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau
 		result <- e.dist[u1,v1]^2/2
 	# general case
 	else
-	{	# define the function to integrate
-		fun <- Vectorize(function(x)
-				{	res <- total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1=x, u2, v2, lambdau, lambdav)
-					return(res)
-				})
-		
-		# define the integral bounds
-		b1 <- min(lambdau,lambdav)
-		b2 <- max(lambdau,lambdav)
-		
-		# perform the approximate integration
-		res1 <- integrate(f=fun,lower=0,upper=b1,abs.tol=1e-15)$value
-		res2 <- integrate(f=fun,lower=b1,upper=b2,abs.tol=1e-15)$value
-		res3 <- integrate(f=fun,lower=b2,upper=e.dist[u1,v1],abs.tol=1e-15)$value
-		result <- res1 + res2 + res3
+	{	# use the pre-processed antiderivative of function f (faster)
+		if(use.primitive)
+		{	# get the node coordinates
+			xu1 <- V(g)$x[u1]
+			yu1 <- V(g)$y[u1]
+			xu2 <- V(g)$x[u2]
+			yu2 <- V(g)$y[u2]
+			xv1 <- V(g)$x[v1]
+			yv1 <- V(g)$y[v1]
+			xv2 <- V(g)$x[v2]
+			yv2 <- V(g)$y[v2]
+			
+			# function used to process lambda2
+			fellp2 <- function(ellp1) process.lambda2(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+			
+			# common constants
+			a <- xu2 - xu1
+			b <- (xu1 - xv1) / e.dist[u1,v1]
+			c <- (xv2 - xu2) / e.dist[u2,v2]
+			d <- yu2 - yu1
+			e <- (yu1 - yv1) / e.dist[u1,v1]
+			f <- (yv2 - yu2) / e.dist[u2,v2]
+			
+			# specific cases
+			gu1u2 <- g.dist[u1,u2]									; hu1u2 <- 1	; iu1u2 <- 1
+			gu1v2 <- g.dist[u1,v2] + e.dist[u2,v2]					; hu1v2 <- 1	; iu1v2 <- -1
+			gv1u2 <- g.dist[v1,u2] + e.dist[u1,v1]					; hv1u2 <- -1	; iv1u2 <- 1
+			gv1v2 <- g.dist[v1,v2] + e.dist[u1,v1] + e.dist[u2,v2]	; hv1v2 <- -1	; iv1v2 <- -1
+			
+			if(lambdau <= lambdav)
+			{	# from 0 to lambda_u
+				part1 <- process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdau)
+				# from lambda_u to lambda_v
+				part2 <- process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=lambdav)
+				# from lambda_v to ||u1v1||
+				part3 <- process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=e.dist[u1,v1])
+			}
+			else
+			{	# from 0 to lambda_v
+				part1 <- process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdav)
+				# from lambda_v to lambda_u
+				part2 <- process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=lambdau)
+				# from lambda_u to ||u1v1||
+				part3 <- process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=e.dist[u1,v1])
+			}
+			result <- part1 + part2 + part3
+		}
+		# use an approximate numerical integration instead of the antiderivative
+		else
+		{	# define the function to integrate
+			fun <- Vectorize(function(x)
+					{	res <- total.straightness.point.link(e.dist, g.dist, u1, v1, ellp1=x, u2, v2, lambdau, lambdav, use.primitive)
+						return(res)
+					})
+			
+			# define the integral bounds
+			b1 <- min(lambdau,lambdav)
+			b2 <- max(lambdau,lambdav)
+			
+			# perform the approximate integration
+			res1 <- integrate(f=fun,lower=0,upper=b1,abs.tol=1e-15)$value
+			res2 <- integrate(f=fun,lower=b1,upper=b2,abs.tol=1e-15)$value
+			res3 <- integrate(f=fun,lower=b2,upper=e.dist[u1,v1],abs.tol=1e-15)$value
+			result <- res1 + res2 + res3
+		}
 	}
 	
 	return(result)
@@ -460,10 +642,12 @@ total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau
 # u1,v1: end nodes of the first link.
 # u2,v2: end nodes of the second link.
 # lambdau, lambdav: pre-processed break-even distances.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: average straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
-mean.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+mean.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive=TRUE)
 {	result <- NA
 	
 	# if the links are the same
@@ -472,7 +656,7 @@ mean.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau,
 	# general case
 	else
 	{	# get the total straightness between the links
-		total <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+		total <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 		# normalize to get the mean
 		result <- total / (e.dist[u2,v2]*e.dist[u1,v1])
 	}
@@ -492,10 +676,12 @@ mean.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau,
 # u2,v2: end nodes of the second link.
 # exclude.self: whether or not the straightness between the link and itself 
 #				should be considered in the average.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: average straightness between (u_1,v_1) and the rest of the graph.
 ############################################################################
-mean.straightness.link.graph <- function(e.dist, g.dist, u1, v1, exclude.self=FALSE)
+mean.straightness.link.graph <- function(e.dist, g.dist, u1, v1, exclude.self=FALSE, use.primitive=TRUE)
 {	el <- get.edgelist(graph)
 	
 	# process all links (possibly excluding (u_1,v_1)
@@ -511,10 +697,10 @@ mean.straightness.link.graph <- function(e.dist, g.dist, u1, v1, exclude.self=FA
 		lambdau <- temp[1]
 		lambdav <- temp[2]
 		
-		# check if the same than (u_1,v_1)
+		# check if the link is the same than (u_1,v_1)
 		if(!setequal(c(u1,v1),c(u2,v2)) || !exclude.self)
 		{	# process the total straightness
-			str <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+			str <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 			# add to result
 			total.str <- total.str + str
 			total.length <- total.length + e.dist[u1,v1]*e.dist[u2,v2]
@@ -544,11 +730,13 @@ mean.straightness.link.graph <- function(e.dist, g.dist, u1, v1, exclude.self=FA
 # e: vector of nodes of interest.
 # exclude.self: whether or not the straightness between one link and itself 
 #				should be considered in the average.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
 # 
 # returns: vector containing the average straightness between each node of u
 #          and the points constituting the graph.
 ############################################################################
-mean.straightness.links.graph <- function(graph, e, exclude.self=FALSE)
+mean.straightness.links.graph <- function(graph, e, exclude.self=FALSE, use.primitive=TRUE)
 {	# init the result vector
 	result <- c()
 	
@@ -564,7 +752,7 @@ mean.straightness.links.graph <- function(graph, e, exclude.self=FALSE)
 		v1 <- el[i,2]
 		
 		# get the total straightness between the point and the link
-		str <- mean.straightness.link.graph(e.dist, g.dist, u1, v1, exclude.self)
+		str <- mean.straightness.link.graph(e.dist, g.dist, u1, v1, exclude.self, use.primitive)
 		
 		# add to the result vector
 		result <- c(result,str)
@@ -574,7 +762,20 @@ mean.straightness.links.graph <- function(graph, e, exclude.self=FALSE)
 }
 
 
-mean.straightness.graph <- function(graph, exclude.self=FALSE)
+############################################################################
+# Processes the average straightness between each one pair of points constituting
+# the graph of interest. 
+# 
+# graph: considered graph.
+# exclude.self: whether or not the straightness between one link and itself 
+#				should be considered in the average.
+# use.primitive: whether to use the pre-processed primitive (faster), or to
+# 				 to integrate numerically.
+# 
+# returns: a single value representing the average straightness for the whole
+#		   graph.
+############################################################################
+mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRUE)
 {	result <- NA
 	el <- get.edgelist(graph)
 	
@@ -604,7 +805,7 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE)
 				lambdav <- temp[2]
 				
 				# process straightness
-				str <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav)
+				str <- total.straightness.link.link(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 				# add to result
 				total.str <- total.str + str
 				total.length <- total.length + e.dist[u1,v1]*e.dist[u2,v2]

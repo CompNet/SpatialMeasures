@@ -34,38 +34,6 @@ total.length <- function(g)
 
 
 ############################################################################
-# Checks if the three specified points are aligned.
-#
-# x1,y1: coordinates of the first point.
-# x2,y2: coordinates of the second point.
-# x3,y3: coordinates of the third point.
-#
-# returns: TRUE iff the points are aligned (colinear).
-############################################################################
-check.alignment <- function(x1, y1, x2, y2, x3, y3)
-{	result <- FALSE
-	
-#cat("x1==x2: ",abs(x1-x2)<1e-10," x1==x3: ",abs(x1-x3)<1e-10,"\n",sep="")	
-
-	# possibly vertical
-	if(abs(x1-x2)<1e-10)
-		result <- (abs(x1-x3)<1e-10)
-	
-	# not vertical
-	else
-	{	if(abs(x1-x3)>=1e-10)
-		{	slope1 <- (y1-y2)/(x1-x2)
-			slope2 <- (y1-y3)/(x1-x3)
-			result <- abs(slope1-slope2)<1e-10
-#cat("slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
-		}
-	}
-	
-	return(result)
-}
-
-
-############################################################################
 # Processes the Euclidean distance between the two specified nodes (not
 # necessarily neighbors).
 # 
@@ -108,3 +76,50 @@ mean.distance <- function(g, connected=FALSE)
 	result <- c(mean(dists),sd(dists))
 	return(result)
 }
+
+
+############################################################################
+# Checks if the specified floats are equal, for a given tolerance. Useful for
+# certain rounding bugs.
+#
+# x,y: the values to compare.
+# tolerance: the tolerance (optional, default=10^-10).
+############################################################################
+tol.eq <- function(x,y,tolerance=1e-10)
+{	abs(x-y)<tolerance
+}
+
+
+############################################################################
+# Checks if the three specified points are aligned. 
+#
+# Note: uses function tol.eq to compare the points positions.
+#
+# x1,y1: coordinates of the first point.
+# x2,y2: coordinates of the second point.
+# x3,y3: coordinates of the third point.
+#
+# returns: TRUE iff the points are aligned (colinear).
+############################################################################
+check.alignment <- function(x1, y1, x2, y2, x3, y3)
+{	result <- FALSE
+	
+#cat("x1==x2: ",abs(x1-x2)<1e-10," x1==x3: ",abs(x1-x3)<1e-10,"\n",sep="")	
+	
+	# possibly vertical
+	if(tol.eq(x1,x2))
+		result <- tol.eq(x1,x3)
+	
+	# not vertical
+	else
+	{	if(!tol.eq(x1,x3))
+		{	slope1 <- (y1-y2)/(x1-x2)
+			slope2 <- (y1-y3)/(x1-x3)
+			result <- tol.eq(slope1,slope2)
+#cat("slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
+		}
+	}
+	
+	return(result)
+}
+

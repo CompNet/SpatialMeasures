@@ -20,7 +20,7 @@ source("src/straightness/discrete.R")
 ############################################################################
 # init the graph
 cat("Initializing the graph\n")
-g <- graph.empty(n=10, directed=FALSE)									# create empty graph
+g <- graph.empty(n=25, directed=FALSE)									# create empty graph
 V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 V(g)$y <- runif(vcount(g),min=-1,max=1)
 g <- connect.triangulation(g)											# use triangulation to init the links
@@ -28,28 +28,29 @@ g <- distances.as.weights(g)											# add inter-node distances as link attrib
 V(g)$label <- 1:vcount(g)
 graph.file <- paste("n=",vcount(g),"-graph",sep="")						# display network
 display.model(g, large=TRUE, filename=graph.file, out.folder="data/", export=TRUE, formats=c("pdf",NA))
+node <- sample(1:vcount(g),1)	
 
 
 
 ############################################################################
 # average straightness for a given node
-mode <- "graph" # node graph
-if(mode=="node")
-{	node <- sample(1:vcount(g),1)	
-	cat("Processing the average straightness for node",node,"\n")
-}else
-	cat("Processing the average straightness for the whole graph\n")
-
+#mode <- "graph" # node graph
+for(mode in c("node","graph"))
+{	if(mode=="node")
+		cat("Processing the average straightness for node",node,"\n")
+	else
+		cat("Processing the average straightness for the whole graph\n")
+	
 	cat("..Processing the continuous average\n")
 	start.time <- Sys.time()
 	if(mode=="node")
-	{	pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
-	}else
+		pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
+	else
 		pus <- mean.straightness.graph(graph=g)									# process graph straightness
 	end.time <- Sys.time()
 	pus.duration <- end.time - start.time
 	cat("....Average point straightness:",pus," - Time needed: ",pus.duration,"\n")
-
+	
 	cat("..Processing the discrete approximations\n")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
 	prev.n <- 0
@@ -97,3 +98,4 @@ if(mode=="node")
 	legend(x="bottomright",legend=c("Approximation","Exact value"),
 			fill=c("BLUE","RED"))
 	dev.off()
+}
