@@ -129,14 +129,14 @@ process.straightness.antiderivative <- function(a,b,c,d,e,f,ell)
 # returns: value of the double integral needed to process the straightness.
 ############################################################################
 process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, i2, fellp2, ell2pup, lb, ub)
-{	#cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
+{	cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
 	
 	if(abs(lb-ub)<1e-10)
 		result <- 0
 	else
 	{	fun <- Vectorize(function(x)
 				{	ell2mid <- fellp2(x)
-#					cat("........for x=",x,", from 0 through ",ell2mid," to ",ell2up,"\n",sep="")
+					cat("........for x=",x,", from 0 through ",ell2mid," to ",ell2pup,"\n",sep="")
 					if(ell2mid<1e-10)
 						part1 <- 0
 					else
@@ -152,14 +152,14 @@ process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, i2, 
 						part2 <- part21 - part22
 					}
 					res <- part1 + part2
-#					cat("..........res = ",part1," + ",part2," = ",res,"\n",sep="")
+					cat("..........res = ",part1," + ",part2," = ",res,"\n",sep="")
 					return(res)
 				})
 		
 		intres <- integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15)
 		result <- intres$value
 		
-#		cat("........",result," vs. ",ell2up*(ub-lb)," (",intres$abs.error,") \n",sep="")
+		cat("........",result," vs. ",ell2pup*(ub-lb)," (",intres$abs.error,") \n",sep="")
 	}
 	
 	return(result)
@@ -552,7 +552,9 @@ mean.straightness.nodes.graph <- function(graph, u, use.primitive=TRUE)
 # returns: total straightness between (u_1,v_1) and (u_2,v_2). 
 ############################################################################
 total.straightness.link.link <- function(e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive=TRUE)
-{	# process the straightness
+{	cat("Processing links (",u1,",",v1,") and (",u2,",",v2,")\n",sep="")
+    
+    # process the straightness
 	result <- NA
 	# if the links are disconnected
 	if(is.infinite(g.dist[u1,u2]))

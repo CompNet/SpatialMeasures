@@ -17,10 +17,12 @@ source("src/straightness/discrete.R")
 
 
 
+for(n in c(10,25,50,100,250,500))
+{   cat("++++++++++++++++++++++ Processing a network of size n=",n,"\n",sep="")
 ############################################################################
 # init the graph
 cat("Initializing the graph\n")
-g <- graph.empty(n=250, directed=FALSE)									# create empty graph
+g <- graph.empty(n=n, directed=FALSE)									# create empty graph
 V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 V(g)$y <- runif(vcount(g),min=-1,max=1)
 g <- connect.triangulation(g)											# use triangulation to init the links
@@ -94,7 +96,9 @@ for(mode in c("node","graph"))
 	pdf(file=paste("data/n=",vcount(g),"-",mode,"-time",".pdf",sep=""))				# open PDF file
 	plot(x=est.nbr, y=est.duration,													# plot approximations
 			xlab="Number of nodes", ylab="Time (s)",
-			col="BLUE")
+			col="BLUE"
+			,ylim=c(min(c(est.duration,pus.duration)),max(c(est.duration,pus.duration)))
+    )
 	lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus.duration,2),col="RED")			# plot exact value
 	legend(x="bottomright",legend=c("Approximation","Exact value"),
 			fill=c("BLUE","RED"))
@@ -109,3 +113,7 @@ for(mode in c("node","graph"))
 	colnames(data) <- c("Granularity","Nodes","Straightness","Duration")
 	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
 }
+}
+
+#TODO check if the tolerance is really necessary
+#TODO check how it works when some points are aligned (use addpoints function)
