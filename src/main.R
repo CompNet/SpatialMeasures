@@ -20,7 +20,7 @@ source("src/straightness/discrete.R")
 ############################################################################
 # init the graph
 cat("Initializing the graph\n")
-g <- graph.empty(n=25, directed=FALSE)									# create empty graph
+g <- graph.empty(n=250, directed=FALSE)									# create empty graph
 V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 V(g)$y <- runif(vcount(g),min=-1,max=1)
 g <- connect.triangulation(g)											# use triangulation to init the links
@@ -48,13 +48,13 @@ for(mode in c("node","graph"))
 	else
 		pus <- mean.straightness.graph(graph=g)									# process graph straightness
 	end.time <- Sys.time()
-	pus.duration <- end.time - start.time
+	pus.duration <- difftime(end.time,start.time,units="s")
 	cat("....Average point straightness:",pus," - Time needed: ",pus.duration,"\n")
 	
 	cat("..Processing the discrete approximations\n")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
 	prev.n <- 0
-	est.str <- c(); est.nbr <- c(); est.duration <- c()
+	est.str <- c(); est.nbr <- c(); est.duration <- c() ; used.grans <- c()
 	i <- 1
 	for(d in 1:length(grans))
 	{	cat("....Iteration ",d,"/",length(grans)," granularity: ",grans[d],"\n",sep="")
@@ -69,9 +69,10 @@ for(mode in c("node","graph"))
 			else
 				str <- mean.straightness.nodes(graph=g2, v=NA)[1]		# process nodal approximate graph straightness
 			end.time <- Sys.time()
-			duration <- end.time - start.time
+			duration <- difftime(end.time,start.time,units="s")
 			est.nbr <- c(est.nbr,nbr)
 			est.str <- c(est.str,str)
+			used.grans <- c(used.grans,grans[d])
 			cat("......Number of nodes: ",nbr," - Duration: ",duration," Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
 			est.duration <- c(est.duration,duration)
 			gc()
@@ -98,4 +99,13 @@ for(mode in c("node","graph"))
 	legend(x="bottomright",legend=c("Approximation","Exact value"),
 			fill=c("BLUE","RED"))
 	dev.off()
+	# record the data as a text file
+	table.file <- paste("data/n=",vcount(g),"-",mode,"-continuous",".txt",sep="")
+	data <- matrix(c(pus,pus.duration),ncol=2)
+	colnames(data) <- c("Straightness","Duration")
+	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
+	table.file <- paste("data/n=",vcount(g),"-",mode,"-discrete",".txt",sep="")
+	data <- cbind(used.grans,est.nbr,est.str,est.duration)
+	colnames(data) <- c("Granularity","Nodes","Straightness","Duration")
+	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
 }
