@@ -75,7 +75,7 @@ for(mode in c("node","graph"))
 			used.grans <- c(used.grans,grans[d])
 			cat("......Number of nodes: ",nbr," - Duration: ",duration," Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
 			est.duration <- c(est.duration,duration)
-			gc()
+			g2 <- NULL; gc()
 		}
 	}
 	
