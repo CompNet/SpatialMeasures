@@ -26,7 +26,7 @@ source("src/common/transformations.R")
 # v: ids of the nodes whose straightness must be returned. The values are
 #    processed by considering all the nodes in the graph, though.
 # 
-# returns: a matrix containing length(v) rows and vcount(g) columns, whose 
+# returns: a matrix containing length(v) rows and vcount(graph) columns, whose 
 #		   (i,j) element represents the straightness between nodes i and j.
 ############################################################################
 straightness.nodes <- function(graph, v=V(graph))
