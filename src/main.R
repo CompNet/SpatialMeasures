@@ -17,15 +17,19 @@ source("src/straightness/discrete.R")
 
 
 
-for(n in c(10,25,50,100,250,500))
+#for(n in c(10,25,50,100,250,500))
+for(n in c(50))
 {   cat("++++++++++++++++++++++ Processing a network of size n=",n,"\n",sep="")
 ############################################################################
 # init the graph
 cat("Initializing the graph\n")
-g <- graph.empty(n=n, directed=FALSE)									# create empty graph
-V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-V(g)$y <- runif(vcount(g),min=-1,max=1)
-g <- connect.triangulation(g)											# use triangulation to init the links
+#g <- graph.empty(n=n, directed=FALSE)									# create empty graph
+#V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
+#V(g)$y <- runif(vcount(g),min=-1,max=1)
+#g <- connect.triangulation(g)											# use triangulation to init the links
+	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
+	V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
+	V(g)$y <- runif(vcount(g),min=-1,max=1)	
 g <- distances.as.weights(g)											# add inter-node distances as link attributes
 V(g)$label <- 1:vcount(g)
 graph.file <- paste("n=",vcount(g),"-graph",sep="")						# display network
@@ -37,7 +41,7 @@ node <- sample(1:vcount(g),1)
 ############################################################################
 # average straightness for a given node
 #mode <- "graph" # node graph
-for(mode in c("node","graph"))
+for(mode in c("graph","node"))
 {	if(mode=="node")
 		cat("Processing the average straightness for node",node,"\n")
 	else
@@ -51,12 +55,13 @@ for(mode in c("node","graph"))
 		pus <- mean.straightness.graph(graph=g)									# process graph straightness
 	end.time <- Sys.time()
 	pus.duration <- difftime(end.time,start.time,units="s")
-	cat("....Average point straightness:",pus," - Time needed: ",pus.duration,"\n")
+	pus.mem <- sum(gc(reset=TRUE)[,6])
+	cat("....Average point straightness:",pus," - Duration: ",pus.duration," - Memory:",pus.mem,"\n")
 	
 	cat("..Processing the discrete approximations\n")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
 	prev.n <- 0
-	est.str <- c(); est.nbr <- c(); est.duration <- c() ; used.grans <- c()
+	est.str <- c(); est.nbr <- c(); est.duration <- c() ; used.grans <- c() ; est.mem <- c()
 	i <- 1
 	for(d in 1:length(grans))
 	{	cat("....Iteration ",d,"/",length(grans)," granularity: ",grans[d],"\n",sep="")
@@ -75,9 +80,11 @@ for(mode in c("node","graph"))
 			est.nbr <- c(est.nbr,nbr)
 			est.str <- c(est.str,str)
 			used.grans <- c(used.grans,grans[d])
-			cat("......Number of nodes: ",nbr," - Duration: ",duration," Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
+			mem <- sum(gc(reset=TRUE)[,6])
+			cat("......Number of nodes: ",nbr," - Duration: ",duration," - Memory: ",mem," - Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
 			est.duration <- c(est.duration,duration)
-			g2 <- NULL; gc()
+			g2 <- NULL; 
+			est.mem <- c(est.mem,mem)
 		}
 	}
 	
@@ -103,17 +110,29 @@ for(mode in c("node","graph"))
 	legend(x="bottomright",legend=c("Approximation","Exact value"),
 			fill=c("BLUE","RED"))
 	dev.off()
+	# generate memory cost plot
+	pdf(file=paste("data/n=",vcount(g),"-",mode,"-mem",".pdf",sep=""))				# open PDF file
+	plot(x=est.nbr, y=est.mem,														# plot approximations
+			xlab="Number of nodes", ylab="Max Memory (MB)",
+			col="BLUE"
+			,ylim=c(min(c(est.mem,pus.mem)),max(c(est.mem,pus.mem)))
+	)
+	lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus.mem,2),col="RED")				# plot exact value
+	legend(x="bottomright",legend=c("Approximation","Exact value"),
+			fill=c("BLUE","RED"))
+	dev.off()
 	# record the data as a text file
 	table.file <- paste("data/n=",vcount(g),"-",mode,"-continuous",".txt",sep="")
-	data <- matrix(c(pus,pus.duration),ncol=2)
-	colnames(data) <- c("Straightness","Duration")
+	data <- matrix(c(pus,pus.duration,pus.mem),ncol=3)
+	colnames(data) <- c("Straightness","Duration","Memory")
 	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
 	table.file <- paste("data/n=",vcount(g),"-",mode,"-discrete",".txt",sep="")
-	data <- cbind(used.grans,est.nbr,est.str,est.duration)
-	colnames(data) <- c("Granularity","Nodes","Straightness","Duration")
+	data <- cbind(used.grans,est.nbr,est.str,est.duration,est.mem)
+	colnames(data) <- c("Granularity","Nodes","Straightness","Duration","Memory")
 	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
 }
 }
 
 #TODO check if the tolerance is really necessary
-#TODO check how it works when some points are aligned (use addpoints function)
+#TODO check how it works when some points are aligned (use addpoints function or just build a simple 3-node graph)
+#TODO compare completely numerical and partially numerical integrations
