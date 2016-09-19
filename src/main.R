@@ -17,8 +17,11 @@ source("src/straightness/discrete.R")
 
 
 mymain <- function(){
+	
+mem.file <- "data/profiling.txt"
+	
 #for(n in c(10,25,50,100,250,500))
-for(n in c(100))
+for(n in c(10))
 {   cat("++++++++++++++++++++++ Processing a network of size n=",n,"\n",sep="")
 ############################################################################
 # init the graph
@@ -48,15 +51,19 @@ for(mode in c("graph","node"))
 		cat("Processing the average straightness for the whole graph\n")
 	
 	cat("..Processing the continuous average\n")
+	Rprof(mem.file, memory.profiling=TRUE)
+	Sys.sleep(time=1)															# otherwise, too fast for Rprof
 	start.time <- Sys.time()
 	if(mode=="node")
 		pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
 	else
 		pus <- mean.straightness.graph(graph=g)									# process graph straightness
 	end.time <- Sys.time()
+	Rprof(NULL);
+	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE)
+	pus.mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20) 	# used memory, in MB 
 	pus.duration <- difftime(end.time,start.time,units="s")
-	pus.mem <- sum(gc(reset=TRUE)[,6])
-	cat("....Average point straightness:",pus," - Duration: ",pus.duration," - Memory:",pus.mem,"\n")
+	cat("....Average point straightness:",pus," - Duration: ",pus.duration," s - Memory:",pus.mem," MB\n")
 	
 	cat("..Processing the discrete approximations\n")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
@@ -65,6 +72,8 @@ for(mode in c("graph","node"))
 	i <- 1
 	for(d in 1:length(grans))
 	{	cat("....Iteration ",d,"/",length(grans)," granularity: ",grans[d],"\n",sep="")
+		Rprof(mem.file, memory.profiling=TRUE)
+		Sys.sleep(time=1)												# otherwise, too fast for Rprof
 		start.time <- Sys.time()
 		g2 <- add.intermediate.nodes(g, granularity=grans[d])			# create additional nodes
 		if(vcount(g2)!=prev.n)											# check that the number of nodes is at least different compared to the previous graph
@@ -77,13 +86,15 @@ for(mode in c("graph","node"))
 				str <- mean.straightness.nodes(graph=g2, v=NA)[1]		# process nodal approximate graph straightness
 			end.time <- Sys.time()
 			duration <- difftime(end.time,start.time,units="s")
+			Rprof(NULL);
+			mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE)
+			mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20) 
 			est.nbr <- c(est.nbr,nbr)
 			est.str <- c(est.str,str)
 			used.grans <- c(used.grans,grans[d])
-			mem <- sum(gc(reset=TRUE)[,6])
-			cat("......Number of nodes: ",nbr," - Duration: ",duration," - Memory: ",mem," - Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
+			cat("......Number of nodes: ",nbr," - Duration: ",duration," s - Memory: ",mem," MB - Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
 			est.duration <- c(est.duration,duration)
-			g2 <- NULL; 
+			g2 <- NULL; gc();
 			est.mem <- c(est.mem,mem)
 		}
 	}
@@ -140,5 +151,7 @@ for(mode in c("graph","node"))
 
 # setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/main.R")
-# Rprof("data/profiling.txt", memory.profiling=TRUE)
-# mymain();Rprof(NULL);summaryRprof("data/profiling.txt", memory="both") #tseries stats
+# Rprof(mem.file, memory.profiling=TRUE)
+# mymain();Rprof(NULL);
+# mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE) #tseries stats both
+# mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20)
