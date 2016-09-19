@@ -16,9 +16,9 @@ source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
-
+mymain <- function(){
 #for(n in c(10,25,50,100,250,500))
-for(n in c(50))
+for(n in c(100))
 {   cat("++++++++++++++++++++++ Processing a network of size n=",n,"\n",sep="")
 ############################################################################
 # init the graph
@@ -136,3 +136,9 @@ for(mode in c("graph","node"))
 #TODO check if the tolerance is really necessary
 #TODO check how it works when some points are aligned (use addpoints function or just build a simple 3-node graph)
 #TODO compare completely numerical and partially numerical integrations
+}
+
+# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
+# source("src/main.R")
+# Rprof("data/profiling.txt", memory.profiling=TRUE)
+# mymain();Rprof(NULL);summaryRprof("data/profiling.txt", memory="both") #tseries stats
