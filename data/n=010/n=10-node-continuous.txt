@@ -1,2 +1,0 @@
-"Straightness" "Duration" "Memory"
-0.808134181529514 0.0240011215209961 27.5
