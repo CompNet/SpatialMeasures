@@ -16,7 +16,7 @@ source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
-MIN.DURATION <- 0.5
+MIN.DURATION <- 0.05	# sleep needed for the Rprof workaround
 
 mymain <- function(){
 
@@ -62,12 +62,12 @@ for(mode in c("graph","node"))
 	end.time <- Sys.time()
 	pus.duration <- difftime(end.time,start.time,units="s")
 	if(pus.duration<MIN.DURATION)
-		Sys.sleep(time=MIN.DURATION)														# otherwise, too fast for Rprof
+		Sys.sleep(time=MIN.DURATION)											# otherwise, too fast for Rprof
 	Rprof(NULL);
-	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE)
-	pus.mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20) 	# used memory, in MB 
+	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]]
+	pus.mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20		 	# used memory, in MB 
 	cat("....Average point straightness:",pus," - Duration: ",pus.duration," s - Memory:",pus.mem," MB\n")
-	gc()
+	gc(); gc()
 	
 	cat("..Processing the discrete approximations\n")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
@@ -90,16 +90,16 @@ for(mode in c("graph","node"))
 			end.time <- Sys.time()
 			duration <- difftime(end.time,start.time,units="s")
 			if(duration<MIN.DURATION)
-				Sys.sleep(time=MIN.DURATION)												# otherwise, too fast for Rprof
+				Sys.sleep(time=MIN.DURATION)							# otherwise, too fast for Rprof
 			Rprof(NULL);
-			mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE)
-			mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20) 
+			mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]]
+			mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 			est.nbr <- c(est.nbr,nbr)
 			est.str <- c(est.str,str)
 			used.grans <- c(used.grans,grans[d])
 			cat("......Number of nodes: ",nbr," - Duration: ",duration," s - Memory: ",mem," MB - Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
 			est.duration <- c(est.duration,duration)
-			g2 <- NULL; gc()
+			g2 <- NULL; gc(); gc()
 			est.mem <- c(est.mem,mem)
 		}
 	}
@@ -158,5 +158,5 @@ for(mode in c("graph","node"))
 # source("src/main.R")
 # Rprof(mem.file, memory.profiling=TRUE)
 # mymain();Rprof(NULL);
-# mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE) #tseries stats both
+# mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1) #tseries stats both
 # mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20)
