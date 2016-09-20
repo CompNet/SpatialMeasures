@@ -16,23 +16,25 @@ source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
+MIN.DURATION <- 0.5
+
 mymain <- function(){
-	
+
 mem.file <- "data/profiling.txt"
 	
-#for(n in c(10,25,50,100,250,500))
-for(n in c(10))
+for(n in c(10,25,50,100,250,500))
+#for(n in c(10))
 {   cat("++++++++++++++++++++++ Processing a network of size n=",n,"\n",sep="")
 ############################################################################
 # init the graph
 cat("Initializing the graph\n")
-#g <- graph.empty(n=n, directed=FALSE)									# create empty graph
-#V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-#V(g)$y <- runif(vcount(g),min=-1,max=1)
-#g <- connect.triangulation(g)											# use triangulation to init the links
-	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
-	V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-	V(g)$y <- runif(vcount(g),min=-1,max=1)	
+g <- graph.empty(n=n, directed=FALSE)									# create empty graph
+V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
+V(g)$y <- runif(vcount(g),min=-1,max=1)
+g <- connect.triangulation(g)											# use triangulation to init the links
+#	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
+#	V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
+#	V(g)$y <- runif(vcount(g),min=-1,max=1)	
 g <- distances.as.weights(g)											# add inter-node distances as link attributes
 V(g)$label <- 1:vcount(g)
 graph.file <- paste("n=",vcount(g),"-graph",sep="")						# display network
@@ -52,18 +54,20 @@ for(mode in c("graph","node"))
 	
 	cat("..Processing the continuous average\n")
 	Rprof(mem.file, memory.profiling=TRUE)
-	Sys.sleep(time=1)															# otherwise, too fast for Rprof
 	start.time <- Sys.time()
 	if(mode=="node")
 		pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
 	else
 		pus <- mean.straightness.graph(graph=g)									# process graph straightness
 	end.time <- Sys.time()
+	pus.duration <- difftime(end.time,start.time,units="s")
+	if(pus.duration<MIN.DURATION)
+		Sys.sleep(time=MIN.DURATION)														# otherwise, too fast for Rprof
 	Rprof(NULL);
 	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE)
 	pus.mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20) 	# used memory, in MB 
-	pus.duration <- difftime(end.time,start.time,units="s")
 	cat("....Average point straightness:",pus," - Duration: ",pus.duration," s - Memory:",pus.mem," MB\n")
+	gc()
 	
 	cat("..Processing the discrete approximations\n")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
@@ -73,7 +77,6 @@ for(mode in c("graph","node"))
 	for(d in 1:length(grans))
 	{	cat("....Iteration ",d,"/",length(grans)," granularity: ",grans[d],"\n",sep="")
 		Rprof(mem.file, memory.profiling=TRUE)
-		Sys.sleep(time=1)												# otherwise, too fast for Rprof
 		start.time <- Sys.time()
 		g2 <- add.intermediate.nodes(g, granularity=grans[d])			# create additional nodes
 		if(vcount(g2)!=prev.n)											# check that the number of nodes is at least different compared to the previous graph
@@ -86,6 +89,8 @@ for(mode in c("graph","node"))
 				str <- mean.straightness.nodes(graph=g2, v=NA)[1]		# process nodal approximate graph straightness
 			end.time <- Sys.time()
 			duration <- difftime(end.time,start.time,units="s")
+			if(duration<MIN.DURATION)
+				Sys.sleep(time=MIN.DURATION)												# otherwise, too fast for Rprof
 			Rprof(NULL);
 			mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE)
 			mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20) 
@@ -94,7 +99,7 @@ for(mode in c("graph","node"))
 			used.grans <- c(used.grans,grans[d])
 			cat("......Number of nodes: ",nbr," - Duration: ",duration," s - Memory: ",mem," MB - Straightness: ",str," (Error: ",abs(str-pus),")","\n",sep="")
 			est.duration <- c(est.duration,duration)
-			g2 <- NULL; gc();
+			g2 <- NULL; gc()
 			est.mem <- c(est.mem,mem)
 		}
 	}
