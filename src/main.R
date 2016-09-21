@@ -102,6 +102,10 @@ for(mode in c("graph","node"))
 			g2 <- NULL; gc(); gc()
 			est.mem <- c(est.mem,mem)
 		}
+		else
+		{	Rprof(NULL);
+			g2 <- NULL; gc(); gc()
+		}
 	}
 	
 	# generate straightness plot
