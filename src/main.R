@@ -78,7 +78,7 @@ for(mode in c("graph","node"))
 	while(again)
 	{	again <- FALSE
 		Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
-		Sys.sleep(SLEEP.DURATION)
+#		Sys.sleep(SLEEP.DURATION)
 		start.time <- Sys.time()
 		if(mode=="node")
 			pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
@@ -86,22 +86,21 @@ for(mode in c("graph","node"))
 			pus <- mean.straightness.graph(graph=g)									# process graph straightness
 		end.time <- Sys.time()
 		pus.duration <- difftime(end.time,start.time,units="s")
-		Sys.sleep(SLEEP.DURATION)
+#		Sys.sleep(SLEEP.DURATION)
 		Rprof(NULL)
-		Sys.sleep(SLEEP.DURATION)
+#		Sys.sleep(SLEEP.DURATION)
 		pus.mem <- tryCatch(
 				{	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]]
 					mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 					return(mem)
-				},error={NA})
-		pus.mem <- tryCatch(
+				},error=function(e){again <<- TRUE})
+		pus.mem2 <- tryCatch(
 				{	mem <- as.vector(summaryRprof(mem.file, memory="both")$by.total["\"mymain\"","mem.total"])
 					return(mem)
-				},error={NA})
+				},error=function(e){again <<- TRUE})
 		tlog(4,"stats: ",pus.mem," both: ",pus.mem2)
-		again <- is.na(pus.mem2)
 		if(again)
-			stop() #tlog(4,"Error while trying to process memory usage. Trying again.")
+			tlog(4,"Error while trying to process memory usage. Trying again.")
 		gc()
 	}
 	tlog(4,"Average point straightness: ",pus," - Duration: ",pus.duration," s - Memory: ",pus.mem," MB")
