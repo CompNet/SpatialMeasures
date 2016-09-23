@@ -417,7 +417,7 @@ mean.straightness.nodes.link <- function(graph, u=V(graph), e, use.primitive=TRU
 		# otherwise, we process the mean straightness for the node
 		else
 		{	# get the relative position
-			tmp <- neighbors(graph,1)[1]
+			tmp <- as_ids(neighbors(graph,1))[1]
 			if(tmp<u)
 			{	u1 <- tmp
 				v1 <- u
@@ -521,7 +521,7 @@ mean.straightness.nodes.graph <- function(graph, u, use.primitive=TRUE)
 		# otherwise, we process the mean straightness for the node
 		else
 		{	# get the relative position
-			tmp <- neighbors(graph,u[i])[1]
+			tmp <- as_ids(neighbors(graph,u[i]))[1]
 			if(tmp<u[i])
 			{	u1 <- tmp
 				v1 <- u[i]
