@@ -19,10 +19,11 @@ source("src/straightness/discrete.R")
 
 mem.file <- "data/profiling.txt"
 planar <- TRUE
+SLEEP.DURATION <- 0.5
 
 mymain <- function(){
 	
-for(n in c(25,50,100,250,500))
+for(n in c(50,100,250,500))
 #for(n in c(10))
 {   tlog("++++++++++++++++++++++ Processing a network of size n=",n)
 	gc()
@@ -77,6 +78,7 @@ for(mode in c("graph","node"))
 	while(again)
 	{	again <- FALSE
 		Rprof(mem.file, memory.profiling=TRUE, interval=0.0002)
+		Sys.sleep(SLEEP.DURATION)
 		start.time <- Sys.time()
 		if(mode=="node")
 			pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
@@ -84,17 +86,24 @@ for(mode in c("graph","node"))
 			pus <- mean.straightness.graph(graph=g)									# process graph straightness
 		end.time <- Sys.time()
 		pus.duration <- difftime(end.time,start.time,units="s")
-		Sys.sleep(1)
+		Sys.sleep(SLEEP.DURATION)
 		Rprof(NULL)
-		mem.stats <- tryCatch(summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]],
+		Sys.sleep(SLEEP.DURATION)
+		pus.mem <- tryCatch(
+				{	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]]
+					mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
+					print(mem)
+					return(mem)
+				},
 				error=function(e)
 				{	#print(e)
-					again<<-TRUE
+					temp <- tryCatch(as.vector(summaryRprof(mem.file, memory="both")$by.total["\"mymain\"","mem.total"]),
+						error=again<<-TRUE)
+					print(temp)
+					return(temp)
 				})
 		if(again)
-			tlog(4,"Error while trying to process memory usage. Trying again.")
-		else
-			pus.mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20		 	# used memory, in MB
+			stop() #tlog(4,"Error while trying to process memory usage. Trying again.")
 		gc()
 	}
 	tlog(4,"Average point straightness: ",pus," - Duration: ",pus.duration," s - Memory: ",pus.mem," MB")
@@ -120,8 +129,7 @@ for(mode in c("graph","node"))
 			start.time <- Sys.time()
 			g2 <- add.intermediate.nodes(g, granularity=grans[d])			# create additional nodes
 			if(vcount(g2)!=prev.n)											# check that the number of nodes is at least different compared to the previous graph
-			{	prev.n <- vcount(g2)
-				nbr <- vcount(g2)											# total number of nodes
+			{	nbr <- vcount(g2)											# total number of nodes
 #if(d==1)
 #	Sys.sleep(1)							# otherwise, too fast for Rprof
 				if(mode=="node")
@@ -146,6 +154,7 @@ tlog(6,"xxxxxxxx")
 					used.grans <- c(used.grans,grans[d])
 					est.duration <- c(est.duration,duration)
 					est.mem <- c(est.mem,mem)
+					prev.n <- nbr
 					tlog(6,"Number of nodes: ",nbr," - Duration: ",duration," s - Memory: ",mem," MB - Straightness: ",str," (Difference: ",abs(str-pus),")")
 				}
 				g2 <- NULL
