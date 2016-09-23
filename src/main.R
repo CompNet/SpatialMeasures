@@ -22,8 +22,8 @@ planar <- TRUE
 
 mymain <- function(){
 	
-#for(n in c(10,25,50,100,250,500))
-for(n in c(10))
+for(n in c(25,50,100,250,500))
+#for(n in c(10))
 {   tlog("++++++++++++++++++++++ Processing a network of size n=",n)
 	gc()
 	
@@ -31,22 +31,30 @@ for(n in c(10))
 # init the graph
 tlog("Initializing the graph")
 graph.file <- paste("n=",n,"-graph",sep="")						# graph file name
-if(file.exists(graph.file))
-	g <- read.graph(graph.file,format="graphml")
+gf <- paste("data/",graph.file,".graphml",sep="")
+if(file.exists(gf))
+{	tlog(2,"The graph already exists: loading file \"",gf,"\"")
+	g <- read.graph(gf,format="graphml")
+}
 else
-{	# create a planar graph
+{	tlog(2,"The graph is generated and recorded in file \"",gf,"\"")
+	
+	# create a planar graph
 	if(planar)
 	{	g <- graph.empty(n=n, directed=FALSE)									# create empty graph
 		V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 		V(g)$y <- runif(vcount(g),min=-1,max=1)
 		g <- connect.triangulation(g)											# use triangulation to init the links
 	}
+	
 	# create an Erdös-Rényi graph
 	else
 	{	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
 		V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 		V(g)$y <- runif(vcount(g),min=-1,max=1)
 	}
+	
+	# common init steps
 	g <- distances.as.weights(g)											# add inter-node distances as link attributes
 	V(g)$label <- 1:vcount(g)
 	display.model(g, large=TRUE, filename=graph.file, out.folder="data/", export=TRUE, formats=c("pdf",NA))
@@ -59,10 +67,11 @@ node <- sample(1:vcount(g),1)												# randomly draw a node for later proces
 #mode <- "graph" # node graph
 for(mode in c("graph","node"))
 {	if(mode=="node")
-		tlog("Processing the average straightness for node",node)
+		tlog("Processing the average straightness for node ",node)
 	else
 		tlog("Processing the average straightness for the whole graph")
 	
+	########## continuous version
 	tlog(2,"Processing the continuous average")
 	again <- TRUE
 	while(again)
@@ -90,6 +99,13 @@ for(mode in c("graph","node"))
 	}
 	tlog(4,"Average point straightness: ",pus," - Duration: ",pus.duration," s - Memory: ",pus.mem," MB")
 	
+	# record the data as a text file
+	table.file <- paste("data/n=",vcount(g),"-",mode,"-continuous",".txt",sep="")
+	data <- matrix(c(pus,pus.duration,pus.mem),ncol=3)
+	colnames(data) <- c("Straightness","Duration","Memory")
+	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
+	
+	########## discrete version
 	tlog(2,"Processing the discrete approximations")
 	grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
 	prev.n <- 0
@@ -144,10 +160,6 @@ tlog(6,"xxxxxxxx")
 	}
 	
 	# record the data as a text file
-	table.file <- paste("data/n=",vcount(g),"-",mode,"-continuous",".txt",sep="")
-	data <- matrix(c(pus,pus.duration,pus.mem),ncol=3)
-	colnames(data) <- c("Straightness","Duration","Memory")
-	write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
 	table.file <- paste("data/n=",vcount(g),"-",mode,"-discrete",".txt",sep="")
 	data <- cbind(used.grans,est.nbr,est.str,est.duration,est.mem)
 	colnames(data) <- c("Granularity","Nodes","Straightness","Duration","Memory")
