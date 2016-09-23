@@ -5,7 +5,7 @@
 # Vincent Labatut 09/2016
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
-# setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/main.R")
 ############################################################################
 source("src/common/misc.R")
@@ -77,7 +77,7 @@ for(mode in c("graph","node"))
 	again <- TRUE
 	while(again)
 	{	again <- FALSE
-		Rprof(mem.file, memory.profiling=TRUE, interval=0.0002)
+		Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
 		Sys.sleep(SLEEP.DURATION)
 		start.time <- Sys.time()
 		if(mode=="node")
@@ -92,16 +92,14 @@ for(mode in c("graph","node"))
 		pus.mem <- tryCatch(
 				{	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]]
 					mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
-					print(mem)
 					return(mem)
-				},
-				error=function(e)
-				{	#print(e)
-					temp <- tryCatch(as.vector(summaryRprof(mem.file, memory="both")$by.total["\"mymain\"","mem.total"]),
-						error=again<<-TRUE)
-					print(temp)
-					return(temp)
-				})
+				},error={NA})
+		pus.mem <- tryCatch(
+				{	mem <- as.vector(summaryRprof(mem.file, memory="both")$by.total["\"mymain\"","mem.total"])
+					return(mem)
+				},error={NA})
+		tlog(4,"stats: ",pus.mem," both: ",pus.mem2)
+		again <- is.na(pus.mem2)
 		if(again)
 			stop() #tlog(4,"Error while trying to process memory usage. Trying again.")
 		gc()
@@ -125,7 +123,7 @@ for(mode in c("graph","node"))
 		again <- TRUE
 		while(again)
 		{	again <- FALSE
-			Rprof(mem.file, memory.profiling=TRUE, interval=0.0002)
+			Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
 			start.time <- Sys.time()
 			g2 <- add.intermediate.nodes(g, granularity=grans[d])			# create additional nodes
 			if(vcount(g2)!=prev.n)											# check that the number of nodes is at least different compared to the previous graph
