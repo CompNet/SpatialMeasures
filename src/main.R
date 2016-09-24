@@ -21,9 +21,9 @@ mem.file <- "data/profiling.txt"
 planar <- TRUE
 SLEEP.DURATION <- 0.5
 
-mymain <- function(){
+mymain <- function(mem.mon=TRUE){
 	
-for(n in c(50,100,250,500))
+for(n in c(10,25,50,100,250,500))
 #for(n in c(10))
 {   tlog("++++++++++++++++++++++ Processing a network of size n=",n)
 	gc()
@@ -74,11 +74,14 @@ for(mode in c("graph","node"))
 	
 	########## continuous version
 	tlog(2,"Processing the continuous average")
+	pus.mem <- NA
 	again <- TRUE
 	while(again)
 	{	again <- FALSE
-		Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
-#		Sys.sleep(SLEEP.DURATION)
+		if(mem.mon)
+		{	Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
+			#Sys.sleep(SLEEP.DURATION)
+		}
 		start.time <- Sys.time()
 		if(mode=="node")
 			pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
@@ -86,21 +89,17 @@ for(mode in c("graph","node"))
 			pus <- mean.straightness.graph(graph=g)									# process graph straightness
 		end.time <- Sys.time()
 		pus.duration <- difftime(end.time,start.time,units="s")
-#		Sys.sleep(SLEEP.DURATION)
-		Rprof(NULL)
-#		Sys.sleep(SLEEP.DURATION)
-		pus.mem <- tryCatch(
-				{	mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]]
-					mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
-					return(mem)
-				},error=function(e){again <<- TRUE})
-		pus.mem2 <- tryCatch(
-				{	mem <- as.vector(summaryRprof(mem.file, memory="both")$by.total["\"mymain\"","mem.total"])
-					return(mem)
-				},error=function(e){again <<- TRUE})
-		tlog(4,"stats: ",pus.mem," both: ",pus.mem2)
-		if(again)
-			tlog(4,"Error while trying to process memory usage. Trying again.")
+		if(mem.mon)
+		{	#Sys.sleep(SLEEP.DURATION)
+			Rprof(NULL)
+			#Sys.sleep(SLEEP.DURATION)
+			mem.stats <- tryCatch(summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]],
+				error=function(e){again <<- TRUE})
+			if(again)
+				tlog(4,"Error while trying to process memory usage. Trying again.")
+			else
+				pus.mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
+		}
 		gc()
 	}
 	tlog(4,"Average point straightness: ",pus," - Duration: ",pus.duration," s - Memory: ",pus.mem," MB")
@@ -120,32 +119,36 @@ for(mode in c("graph","node"))
 	for(d in 1:length(grans))
 	{	tlog(4,"Iteration "	,d,"/",length(grans)," granularity: ",grans[d])
 		again <- TRUE
+		mem <- NA
 		while(again)
 		{	again <- FALSE
-			Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
+			if(mem.mon)
+				Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
 			start.time <- Sys.time()
 			g2 <- add.intermediate.nodes(g, granularity=grans[d])			# create additional nodes
 			if(vcount(g2)!=prev.n)											# check that the number of nodes is at least different compared to the previous graph
 			{	nbr <- vcount(g2)											# total number of nodes
-#if(d==1)
-#	Sys.sleep(1)							# otherwise, too fast for Rprof
+				if(mem.mon)
+				{	#if(d==1)
+					#	Sys.sleep(1)							# otherwise, too fast for Rprof
+				}
 				if(mode=="node")
 					str <- mean.straightness.nodes(graph=g2,v=node)[1,1]	# process approximate node straightness
 				else
 					str <- mean.straightness.nodes(graph=g2, v=NA)[1]		# process nodal approximate graph straightness
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s")
-				Rprof(NULL)
-tlog(6,"xxxxxxxx")
-				mem.stats <- tryCatch(summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]],
-						error=function(e)
-						{	#print(e)
-							again<<-TRUE
-						})
+				if(mem.mon)
+				{	Rprof(NULL)
+					#tlog(6,"xxxxxxxx")
+					mem.stats <- tryCatch(summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]],
+						error=function(e){again<<-TRUE})
+				}
 				if(again)
 					tlog(6,"Error while trying to process memory usage. Trying again.")
 				else
-				{	mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
+				{	if(mem.mon)
+						mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 					est.nbr <- c(est.nbr,nbr)
 					est.str <- c(est.str,str)
 					used.grans <- c(used.grans,grans[d])
@@ -158,7 +161,8 @@ tlog(6,"xxxxxxxx")
 				gc()
 			}
 			else
-			{	Rprof(NULL)
+			{	if(mem.mon)
+					Rprof(NULL)
 				g2 <- NULL
 				gc()
 			}
@@ -194,16 +198,18 @@ tlog(6,"xxxxxxxx")
 			fill=c("BLUE","RED"))
 	dev.off()
 	# generate memory cost plot
-	pdf(file=paste("data/n=",vcount(g),"-",mode,"-mem",".pdf",sep=""))				# open PDF file
-	plot(x=est.nbr, y=est.mem,														# plot approximations
-			xlab="Number of nodes", ylab="Max Memory (MB)",
-			col="BLUE"
-			,ylim=c(min(c(est.mem,pus.mem)),max(c(est.mem,pus.mem)))
-	)
-	lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus.mem,2),col="RED")				# plot exact value
-	legend(x="bottomright",legend=c("Approximation","Exact value"),
-			fill=c("BLUE","RED"))
-	dev.off()
+	if(mem.mon)
+	{	pdf(file=paste("data/n=",vcount(g),"-",mode,"-mem",".pdf",sep=""))				# open PDF file
+		plot(x=est.nbr, y=est.mem,														# plot approximations
+				xlab="Number of nodes", ylab="Max Memory (MB)",
+				col="BLUE"
+				,ylim=c(min(c(est.mem,pus.mem)),max(c(est.mem,pus.mem)))
+		)
+		lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus.mem,2),col="RED")				# plot exact value
+		legend(x="bottomright",legend=c("Approximation","Exact value"),
+				fill=c("BLUE","RED"))
+		dev.off()
+	}
 	
 	gc()
 }
@@ -213,6 +219,8 @@ tlog(6,"xxxxxxxx")
 #TODO check how it works when some points are aligned (use addpoints function or just build a simple 3-node graph)
 #TODO compare completely numerical and partially numerical integrations
 }
+
+mymain(mem.mon=FALSE)
 
 # setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/main.R")
