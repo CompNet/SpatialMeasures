@@ -136,9 +136,8 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 {	disp <- F
 	if(disp) cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
 	
-	if(tol.eq(lb,ub))
-		result <- 0
-	else
+	result <- 0
+	if(!tol.eq(lb,ub))
 	{	fun <- Vectorize(function(x)
 				{	ell2mid <- fellp2(x)
 					if(disp) cat("........for x=",x,", from 0 through ",ell2mid," to ",ell2pup,"\n",sep="")
