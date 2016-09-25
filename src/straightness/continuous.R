@@ -163,7 +163,10 @@ aux.process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, 
 		
 		intres <- NA
 		intres <- tryCatch(integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15),
-				error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",",fellp2,",",ell2pup,",",lb,",",ub,",",disp,"\n"))
+				error=function(e) 
+				{	cat(a,",",b,",",c,",",d,",",e,",",f,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,",",disp,"\n")
+					print(fellp2)
+				})
 		if(!is.na(intres))
 		{	result <- intres$value
 			if(disp) cat("........",result," vs. ",ell2pup*(ub-lb)," (",intres$abs.error,") \n",sep="")
@@ -618,25 +621,19 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 			part1 <- 0 ; part2 <- 0 ; part3 <- 0
 			if(lambdau <= lambdav)
 			{	# from 0 to lambda_u
-				part1 <- tryCatch(aux.process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdau, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77))),
-						error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",gu1u2,",",hu1u2,",",iu1u2,",",gu1v2,",",hu1v2,",",iu1v2,",",fellp2,",",e.dist[u2,v2],",",0,",",lambdau,",TRUE\n"))
+				part1 <- aux.process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdau, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77)))
 				# from lambda_u to lambda_v
-				part2 <- tryCatch(aux.process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=lambdav, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77))),
-						error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",gv1u2,",",hv1u2,",",iv1u2,",",gu1v2,",",hu1v2,",",iu1v2,",",fellp2,",",e.dist[u2,v2],",",lambdau,",",lambdav,",TRUE\n"))
+				part2 <- aux.process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=lambdav, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77)))
 				# from lambda_v to ||u1v1||
-				part3 <- tryCatch(aux.process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=e.dist[u1,v1], disp=all(c(u1,v1,u2,v2)==c(8,77,49,77))),
-						error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",gv1u2,",",hv1u2,",",iv1u2,",",gv1v2,",",hv1v2,",",iv1v2,",",fellp2,",",e.dist[u2,v2],",",lambdav,",",e.dist[u1,v1],",TRUE\n"))
+				part3 <- aux.process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=e.dist[u1,v1], disp=all(c(u1,v1,u2,v2)==c(8,77,49,77)))
 			}
 			else
 			{	# from 0 to lambda_v
-				part1 <- tryCatch(aux.process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdav, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77))),
-						error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",gu1u2,",",hu1u2,",",iu1u2,",",gu1v2,",",hu1v2,",",iu1v2,",",fellp2,",",e.dist[u2,v2],",",0,",",lambdav,",TRUE\n"))
+				part1 <- aux.process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdav, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77)))
 				# from lambda_v to lambda_u
-				part2 <- tryCatch(aux.process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=lambdau, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77))),
-						error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",gu1u2,",",hu1u2,",",iu1u2,",",gv1v2,",",hv1v2,",",iv1v2,",",fellp2,",",e.dist[u2,v2],",",lambdav,",",lambdau,",TRUE\n"))
+				part2 <- aux.process.straightness.integral(a,b, c, d,e, f, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=lambdau, disp=all(c(u1,v1,u2,v2)==c(8,77,49,77)))
 				# from lambda_u to ||u1v1||
-				part3 <- tryCatch(aux.process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=e.dist[u1,v1], disp=all(c(u1,v1,u2,v2)==c(8,77,49,77))),
-						error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",gv1u2,",",hv1u2,",",iv1u2,",",gv1v2,",",hv1v2,",",iv1v2,",",fellp2,",",e.dist[u2,v2],",",lambdau,",",e.dist[u1,v1],",TRUE\n"))
+				part3 <- aux.process.straightness.integral(a,b, c, d,e, f, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=e.dist[u1,v1], disp=all(c(u1,v1,u2,v2)==c(8,77,49,77)))
 			}
 			result <- part1 + part2 + part3
 		}
