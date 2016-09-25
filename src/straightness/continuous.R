@@ -124,7 +124,7 @@ aux.process.straightness.antiderivative <- function(a,b,c,d,e,f,ell,disp)
 # Auxilary function used during the processing of the straightness, corresponds
 # to the double integral of the f function performed in the article.
 # 
-# a,b,c,d,e,f,g1,h1,i1,g2,h2,i2: constants used as parameters of the integrated 
+# a0,b0,c0,d0,e0,f0,g1,h1,i1,g2,h2,i2: constants used as parameters of the integrated 
 #								 function.
 # fellp2: functions used to process ellp2.
 # ellp2up: upper bound of ellp2.
@@ -132,7 +132,7 @@ aux.process.straightness.antiderivative <- function(a,b,c,d,e,f,ell,disp)
 #
 # returns: value of the double integral needed to process the straightness.
 ############################################################################
-aux.process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, i2, fellp2, ell2pup, lb, ub, disp)
+aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g2,h2, i2, fellp2, ell2pup, lb, ub, disp)
 {	disp <- F
 	if(disp) cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
 	
@@ -145,15 +145,15 @@ aux.process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, 
 					if(tol.eq(ell2mid,0))
 						part1 <- 0
 					else
-					{	part11 <- aux.process.straightness.antiderivative(a+b*x,c,d+e*x,f,g1+h1*x,i1,ell2mid,disp)
-						part12 <- aux.process.straightness.antiderivative(a+b*x,c,d+e*x,f,g1+h1*x,i1,0,disp)
+					{	part11 <- aux.process.straightness.antiderivative(a0+b0*x,c0,d0+e0*x,f0,g1+h1*x,i1,ell2mid,disp)
+						part12 <- aux.process.straightness.antiderivative(a0+b0*x,c0,d0+e0*x,f0,g1+h1*x,i1,0      ,disp)
 						part1 <- part11 - part12
 					}
 					if(tol.eq(ell2pup,ell2mid))
 						part2 <- 0
 					else
-					{	part21 <- aux.process.straightness.antiderivative(a+b*x,c,d+e*x,f,g2+h2*x,i2,ell2pup,disp)
-						part22 <- aux.process.straightness.antiderivative(a+b*x,c,d+e*x,f,g2+h2*x,i2,ell2mid,disp)
+					{	part21 <- aux.process.straightness.antiderivative(a0+b0*x,c0,d0+e0*x,f0,g2+h2*x,i2,ell2pup,disp)
+						part22 <- aux.process.straightness.antiderivative(a0+b0*x,c0,d0+e0*x,f0,g2+h2*x,i2,ell2mid,disp)
 						part2 <- part21 - part22
 					}
 					res <- part1 + part2
@@ -164,7 +164,7 @@ aux.process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, 
 		intres <- NA
 		intres <- tryCatch(integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15),
 				error=function(e) 
-				{	cat(a,",",b,",",c,",",d,",",e,",",f,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,",",disp,"\n")
+				{	cat(a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,",",disp,"\n",sep="")
 					print(fellp2)
 				})
 		if(!is.na(intres))
