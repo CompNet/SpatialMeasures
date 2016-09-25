@@ -161,10 +161,13 @@ aux.process.straightness.integral <- function(a,b, c, d,e, f, g1,h1, i1, g2,h2, 
 					return(res)
 				})
 		
-		intres <- integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15)
-		result <- intres$value
-		
-		if(disp) cat("........",result," vs. ",ell2pup*(ub-lb)," (",intres$abs.error,") \n",sep="")
+		intres <- NA
+		intres <- tryCatch(integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15),
+				error=function(e) cat(a,",",b,",",c,",",d,",",e,",",f,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",",fellp2,",",ell2pup,",",lb,",",ub,",",disp,"\n"))
+		if(!is.na(intres))
+		{	result <- intres$value
+			if(disp) cat("........",result," vs. ",ell2pup*(ub-lb)," (",intres$abs.error,") \n",sep="")
+		}
 	}
 	
 	return(result)
