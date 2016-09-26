@@ -47,7 +47,7 @@ Here are the folders composing the project:
 # Installation
 1. Install the [`R` language](https://www.r-project.org/)
 2. Install the following R packages:
-   * [`igraph`](http://igraph.org/r/) (tested with versions 0.7.1 and 1.0.1)
+   * [`igraph`](http://igraph.org/r/) (tested with version 1.0.1)
    * [`geometry`](https://cran.r-project.org/web/packages/geometry/index.html) (tested with versions 0.3.5 and 0.3.6)
 3. Download (and possibly unzip) this project from GitHub.
 
