@@ -324,7 +324,7 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 ############################################################################
 ############################################################################
 generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table, cont.tables, disc.tables)
-{	tlog("Generating plots and tables for the iteration ",r)
+{	tlog("Generating plots and tables for the iteration ",iteration)
 	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
 	nm <- paste0("d=",0:(nrow(disc.table)-1))
 	
@@ -468,8 +468,12 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			# graph plots
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
-					xlab=xlab, ylab=ylab,
+			plot(NULL,ylim=c(min(graph.yvals),max(graph.yvals)),
+					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					xlab=xlab, ylab=ylab
+			)
+			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
+			points(x=xvals, y=graph.yvals,
 					col="BLUE"
 			)
 			dev.off()
@@ -477,9 +481,13 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			# node plots
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
+			plot(NULL,ylim=c(min(nodes.yvals),max(nodes.yvals)),
+					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					xlab=xlab, ylab=ylab
+			)
+			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
+			points(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
 					pch=20,
-					xlab=xlab, ylab=ylab,
 					col=rgb(0, 0, 1, 0.25)
 			)
 			dev.off()
@@ -528,20 +536,6 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 		nodes <- c(nodes,discretizations[[r]][,"Nodes"])
 		avgseg <- c(avgseg,discretizations[[r]][,"AverageSegmentation"])
 	}
-#	graph.disc.durations <- t(graph.disc.durations)
-#	colnames(graph.disc.durations) <- colnames(nodes.disc.durations)
-#	graph.disc.differences <- t(graph.disc.differences)
-#	colnames(graph.disc.differences) <- colnames(nodes.disc.differences)
-#	
-#	# recording the data
-#	table.file <- file.path(folder,paste0("discrete-graph-durations.txt"))
-#	write.table(graph.disc.durations,file=table.file,col.names=TRUE,row.names=FALSE)
-#	table.file <- file.path(folder,paste0("discrete-graph-differences.txt"))
-#	write.table(graph.disc.differences,file=table.file,col.names=TRUE,row.names=FALSE)
-#	table.file <- file.path(folder,paste0("discrete-nodes-durations.txt"))
-#	write.table(nodes.disc.durations,file=table.file,col.names=TRUE,row.names=FALSE)
-#	table.file <- file.path(folder,paste0("discrete-nodes-differences.txt"))
-#	write.table(nodes.disc.differences,file=table.file,col.names=TRUE,row.names=FALSE)
 	
 	# generating the plots
 	tlog(2,"Generating the plots for all iterations")
