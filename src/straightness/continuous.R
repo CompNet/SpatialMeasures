@@ -9,6 +9,7 @@
 # source("src/straightness/continuous.R")
 ############################################################################
 library("igraph")
+#library("pracma") # test for another integration library (was not faster than the default method)
 
 
 source("src/common/misc.R")
@@ -160,6 +161,7 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 					return(res)
 				})
 		
+		# default integration method
 		error.flag <- FALSE
 		intres <- tryCatch(integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15), error=function(e) error.flag <<- TRUE)
 		if(error.flag)
@@ -170,6 +172,8 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 		{	result <- intres$value
 			if(disp) cat("........",result," vs. ",ell2pup*(ub-lb)," (",intres$abs.error,") \n",sep="")
 		}
+		# test using the pracma package (not faster, so not used)
+		#result <- integral(fun=fun, xmin=lb, xmax=ub, method="Kronrod",vectorized=TRUE)
 	}
 	
 	return(result)
