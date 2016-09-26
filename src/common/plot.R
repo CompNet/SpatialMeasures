@@ -74,9 +74,9 @@ vertex.label <- 1:vcount(g) #TODO remove this after debug
 	for(format in formats)
 	{	if(!is.na(format) & !is.na(filename) & !is.na(out.folder))
 		{	if(format=="pdf")
-				pdf(file=paste(out.folder,filename,".pdf",sep=""))
+				pdf(file=file.path(out.folder,paste0(filename,".pdf")))
 			else if(format=="png")
-				png(filename=paste(out.folder,filename,".png",sep=""),
+				png(filename=file.path(out.folder,paste0(filename,".png")),
 						width=800,height=800,units="px",pointsize=20,bg="white"
 				)
 		}
@@ -175,8 +175,8 @@ vertex.label <- 1:vcount(g) #TODO remove this after debug
 	
 	# produce network files
 	if(!is.na(filename) & !is.na(out.folder) & export)
-	{	write.graph(graph=g, file=paste(out.folder,filename,".graphml",sep=""), format="graphml")
-		write.graph(graph=g, file=paste(out.folder,filename,".net",sep=""), format="pajek")
-		write.graph(graph=g, file=paste(out.folder,filename,".edgelist",sep=""), format="edgelist")
+	{	write.graph(graph=g, file=file.path(out.folder,paste0(filename,".graphml")), format="graphml")
+		write.graph(graph=g, file=file.path(out.folder,paste0(filename,".net")), format="pajek")
+		write.graph(graph=g, file=file.path(out.folder,paste0(filename,".edgelist")), format="edgelist")
 	}
 }
