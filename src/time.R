@@ -69,7 +69,7 @@ init.graph <- function(n=5, type="RAND_PLANAR", iteration=1)
 		g$size <- vcount(g)
 		g$granularity <- NA
 		g$avgseg <- 0
-		display.model(g, large=TRUE, filename=graph.filename, out.folder=graph.folder, export=TRUE, formats=c("pdf",NA))
+		myplot.graph(g, node.str=NA, link.str=NA, large=TRUE, filename=graph.filename, out.folder=graph.folder, export=TRUE, formats=c("pdf",NA))
 	}
 	
 	return(g)
@@ -445,13 +445,13 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
 					pch=20,
 					xlab=xlab, ylab=ylab,
-					col=rgb(0, 0, 1, 0.25),
+					col=add.alpha("BLUE", 0.25),
 					ylim=c(min(c(nodes.yvals,nodes.cont.vals)),max(c(nodes.yvals,nodes.cont.vals)))
 			)
 			for(j in 1:length(nodes.cont.vals))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(nodes.cont.vals[j],2),
-						col=rgb(1, 0, 0, 0.25)
+						col=add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
@@ -488,7 +488,7 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
 			points(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
 					pch=20,
-					col=rgb(0, 0, 1, 0.25)
+					col=add.alpha("BLUE", 0.25)
 			)
 			dev.off()
 		}
@@ -508,8 +508,6 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, data.cont, data.disc)
 {	tlog("Generating plots and tables for all the repetitions")
 	folder <- file.path("data",type,paste0("n=",n))
-	
-	disc.table
 	
 	# collecting the data
 	ngran <- nrow(data.disc[[1]]$graph)
@@ -563,13 +561,13 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			plot(x=xvals, y=graph.disc.durations,
 					pch=20,
 					xlab=xlab, ylab=ylab,
-					col=rgb(0, 0, 1, 0.25),
+					col=add.alpha("BLUE", 0.25),
 					ylim=c(min(c(graph.disc.durations,graph.cont.durations)),max(c(graph.disc.durations,graph.cont.durations)))
 			)
 			for(j in 1:length(graph.cont.durations))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(graph.cont.durations[j],2),
-						col=rgb(1, 0, 0, 0.25)
+						col=add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
@@ -582,13 +580,13 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			plot(x=rep(xvals,nrow(nodes.disc.durations)), y=c(t(nodes.disc.durations)),
 					pch=20,
 					xlab=xlab, ylab=ylab,
-					col=rgb(0, 0, 1, 0.25),
+					col=add.alpha("BLUE", 0.25),
 					ylim=c(min(c(nodes.disc.durations,nodes.cont.durations)),max(c(nodes.disc.durations,nodes.cont.durations)))
 			)
 			for(j in 1:length(nodes.cont.durations))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(nodes.cont.durations[j],2),
-						col=rgb(1, 0, 0, 0.25)
+						col=add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
@@ -610,7 +608,7 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
 			points(x=xvals, y=graph.disc.differences,
 					pch=20,
-					col=rgb(0, 0, 1, 0.25)
+					col=add.alpha("BLUE", 0.25)
 			)
 			dev.off()
 			
@@ -624,7 +622,7 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
 			points(x=rep(xvals,nrow(nodes.disc.differences)), y=c(t(nodes.disc.differences)),
 					pch=20,
-					col=rgb(0, 0, 1, 0.25)
+					col=add.alpha("BLUE", 0.25)
 			)
 			dev.off()
 		}

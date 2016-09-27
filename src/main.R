@@ -57,7 +57,7 @@ mymain <- function(mem.mon=TRUE)
 			# common init steps
 			g <- distances.as.weights(g)											# add inter-node distances as link attributes
 			V(g)$label <- 1:vcount(g)
-			display.model(g, large=TRUE, filename=graph.file, out.folder="data/", export=TRUE, formats=c("pdf",NA))
+			myplot.graph(g, node.str=NA, link.str=NA, large=TRUE, filename=graph.file, out.folder="data/", export=TRUE, formats=c("pdf",NA))
 		}
 		node <- sample(1:vcount(g),1)												# randomly draw a node for later processing	
 		

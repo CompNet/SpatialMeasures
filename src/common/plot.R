@@ -33,6 +33,8 @@ add.alpha <- function(col, alpha=1)
 # links, polygons, etc.
 #
 # g: the graph to process.
+# node.str: the straightness values associated to the links.
+# link.str: the straightness values associated to the links.
 # large: whether to use (graphically) large nodes containing their id, or small ones.
 # filename: the base name of the various files to generate.
 # out.folder: folder containing the generated files.
@@ -40,17 +42,23 @@ add.alpha <- function(col, alpha=1)
 # formats: formats of the produced plot files (NA for onscreen plotting).
 # ...: other parameters, passed to the regular plot function.
 ############################################################################################
-display.model <- function(g, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), ...)
+myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), ...)
 {	# plot parameters
 	vertex.sizes <- 1
 	vertex.label <- ""
+	vertex.color <- "BEIGE"
 	if("type" %in% list.vertex.attributes(g))
 	{	vertex.sizes[V(g)$type=="original"] <- 15
 		vertex.label[V(g)$type=="original"] <- V(g)$label[V(g)$type=="original"]
 		vertex.sizes[V(g)$type=="extra"] <- 5
 		vertex.label[V(g)$type=="extra"] <- ""
 	}
-vertex.label <- 1:vcount(g) #TODO remove this after debug
+#vertex.label <- 1:vcount(g)
+	# set node colors
+	if(!all(is.na(node.str)))
+	{	cscale <- colorRamp(c("BLUE","CYAN","YELLOW","RED"))
+		vertex.color <- apply(cscale(node.str), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255))
+	}
 	
 	# possibly create output folder
 	if(!is.na(filename) & !is.na(out.folder))
@@ -65,11 +73,16 @@ vertex.label <- 1:vcount(g) #TODO remove this after debug
 #	print(lm)
 	
 	# set link colors
-	link.cols <- rep("BLACK",ecount(g))
-	link.cols[E(g)$added] <- "GREEN"
-	link.widths <- rep(1,ecount(g))
-	link.widths[E(g)$added] <- 6
-	
+	if(all(is.na(link.str)))
+	{	link.cols <- rep("BLACK",ecount(g))
+		link.widths <- rep(1,ecount(g))
+	}
+	else
+	{	cscale <- colorRamp(c("BLUE","CYAN","YELLOW","RED"))
+		link.cols <- apply(cscale(link.str), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255))
+		link.widths <- 4*link.str
+	}
+		
 	# generate plots
 	for(format in formats)
 	{	if(!is.na(format) & !is.na(filename) & !is.na(out.folder))
@@ -84,84 +97,25 @@ vertex.label <- 1:vcount(g) #TODO remove this after debug
 		if(is.na(format) | (!is.na(filename) & !is.na(out.folder)))
 		{	if(large) 
 				plot(g,main=g$title,
-						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
+						vertex.color=vertex.color,
 						edge.color=link.cols,edge.width=link.widths,
+						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
 						...
 				) 
 			else 
 				plot(g,main=g$title,
-						vertex.size=vertex.sizes,vertex.label=vertex.label,vertex.label.cex=0.5,
+						vertex.size=vertex.sizes,vertex.color=vertex.color,vertex.label=vertex.label,vertex.label.cex=0.5,
 						edge.color=link.cols,edge.width=link.widths,
 						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
 						...
 				)
 		}
 		
-		# add removed links
-		if(!is.null(g$removed))
-		{	print(g$removed)
-			segments(V(g)$x[g$removed[,1]],V(g)$y[g$removed[,1]],
-					V(g)$x[g$removed[,2]],V(g)$y[g$removed[,2]],
-					col="RED",lty="dashed",lwd=4
-			)
-		}
-		
-		# add arrows to represent move vectors
-		idx <- (1:vcount(g))[V(g)$sx!=0 |  V(g)$sy!=0]
-		if(length(idx>0))
-			arrows(V(g)$x[idx],V(g)$y[idx],
-					V(g)$x[idx]+V(g)$sx[idx],V(g)$y[idx]+V(g)$sy[idx],
-					length=0.1,col="BLUE",lwd=2
-			)
-		idx <- (1:vcount(g))[V(g)$ax!=0 |  V(g)$ay!=0]
-		if(length(idx>0))
-			arrows(V(g)$x[idx],V(g)$y[idx],
-					V(g)$x[idx]+V(g)$ax[idx],V(g)$y[idx]+V(g)$ay[idx],
-					length=0.1,col="RED",lwd=2
-			)
-		idx <- (1:vcount(g))[V(g)$cx!=0 |  V(g)$cy!=0]
-		if(length(idx>0))
-			arrows(V(g)$x[idx],V(g)$y[idx],
-					V(g)$x[idx]+V(g)$cx[idx],V(g)$y[idx]+V(g)$cy[idx],
-					length=0.1,col="GREEN",lwd=2
-			)
-		
-		# add virtual links (possibly produced during cover processing)
-		if(!is.null(g$virt.links) && nrow(g$virt.links)>0)
-		{	for(i in 1:nrow(g$virt.links))
-			{	n1 = g$virt.links[i, 1]
-				n2 = g$virt.links[i, 2]
-				
-				segments(V(g)$x[n1], V(g)$y[n1], 
-							V(g)$x[n2], V(g)$y[n2],
-							col="GREY",lty="dashed",lwd=4
-				)
-			}
-		}
-		
-		# add polygons (possibly produced during cover processing)
-		if(!is.null(g$polygons) && length(g$polygons)>0)
-		{	for(i in 1:length(g$polygons))
-			{	for(j in 1:length(g$polygons[[i]]))
-				{	# get the triangle
-					triangle <- g$polygons[[i]][[j]]
-					# get its three vertices
-					a <- triangle[1]
-					b <- triangle[2]
-					c <- triangle[3]
-					# get their positions
-					ax <- V(g)$x[a]; ay <- V(g)$y[a]
-					bx <- V(g)$x[b]; by <- V(g)$y[b]
-					cx <- V(g)$x[c]; cy <- V(g)$y[c]
-					# draw the polygon
-					polygon(c(ax, bx, cx), c(ay,by,cy),
-							density=NA,
-							col=add.alpha(i, 0.2),
-							lty="blank", lwd=1
-					)
-				}
-			}
-		}
+		# add the legend
+#		if(!all(is.na(link.str)) || !all(is.na(node.str)))
+#			legend.gradient(pnts=, cols=c("BLUE","CYAN","YELLOW","RED"), 
+#					limits=c(0,1), title="Straightness"
+#			)
 		
 		# add the plot title
 		if(!is.null(g$name))

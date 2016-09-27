@@ -403,7 +403,7 @@ aux.mean.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ellp
 # returns: vector containing the average straightness between each node of u
 #          and the link e=(u_2,v_2). 
 ############################################################################
-mean.straightness.nodes.link <- function(graph, u=V(graph), e, use.primitive=TRUE)
+mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primitive=TRUE)
 {	# init the result vector
 	result <- c()
 	
@@ -512,7 +512,7 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 # returns: vector containing the average straightness between each node of u
 #          and the points constituting the graph.
 ############################################################################
-mean.straightness.nodes.graph <- function(graph, u, use.primitive=TRUE)
+mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitive=TRUE)
 {	# init the result vector
 	result <- c()
 	
@@ -808,7 +808,7 @@ aux.mean.straightness.link.graph <- function(graph, e.dist, g.dist, u1, v1, excl
 # returns: vector containing the average straightness between each node of u
 #          and the points constituting the graph.
 ############################################################################
-mean.straightness.links.graph <- function(graph, e, exclude.self=FALSE, use.primitive=TRUE)
+mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self=FALSE, use.primitive=TRUE)
 {	# init the result vector
 	result <- c()
 	el <- get.edgelist(graph)
