@@ -291,10 +291,9 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 			|| ellp1==0 && u1 %in% c(u2,v2)
 			|| ellp1==e.dist[u1,v1] && v1 %in% c(u2,v2))
 		result <- e.dist[u2,v2]
-	# if both links are aligned and connected by optimal paths
-	else if(check.alignment(xu1,yu1,xv1,yv1,xu2,yu2) 
-			&& check.alignment(xu1,yu1,xv1,yv1,xv2,yv2)
-			&& tol.eq(e.dist[u1,u2],g.dist[u1,u2]))
+	# if the point is aligned with the link and optimally connected to it
+	else if(tol.eq(ellp1,0) && check.alignment(xu1,yu1,xu2,yu2,xv2,yv2) && tol.eq(e.dist[u1,u2],g.dist[u1,u2])
+			|| tol.eq(ellp1,e.dist[u1,v1]) && check.alignment(xv1,yv1,xu2,yu2,xv2,yv2) && tol.eq(e.dist[v1,u2],g.dist[v1,u2]))
 		result <- e.dist[u2,v2]
 	# general case
 	else
@@ -489,7 +488,7 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 	{	# get the second link
 		u2 <- el[i,1]
 		v2 <- el[i,2]
-		#cat("(",u1,",",v1," ;",ellp1,") vs (",u2,",",v2,")\n",sep="")
+		cat("(",u1,",",v1," ;",ellp1,") vs (",u2,",",v2,")\n",sep="")
 		
 		# process the lambdas
 		temp <- aux.process.lambdauv(e.dist, g.dist, u1, v1, u2, v2)
@@ -498,7 +497,7 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 		
 		# get the mean straightness between the point and the link
 		part.str <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
-		#cat("part.str: ",part.str,"\n",sep="")
+		cat("part.str: ",part.str,"\n",sep="")
 		total.str <- total.str + part.str
 		total.lgt <- total.lgt + e.dist[u2,v2]
 	}
