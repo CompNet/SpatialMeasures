@@ -28,6 +28,11 @@ link.str <- mean.straightness.links.graph(graph=g)
 tlog("Process the average straightness of each node")
 node.str <- mean.straightness.nodes.graph(graph=g)
 
+# record them 
+tlog("Record these results")
+write.table(x=link.str,file="data/figures/graph2-link-str.txt",row.names=FALSE,col.names=FALSE)
+write.table(x=node.str,file="data/figures/graph2-node-str.txt",row.names=FALSE,col.names=FALSE)
+
 # plot them
 tlog("Generate the corresponding plots")
 myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="graph2-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
@@ -46,6 +51,11 @@ link.str2 <- mean.straightness.links.graph(graph=g2)
 tlog("Process the average straightness of each node")
 node.str2 <- mean.straightness.nodes.graph(graph=g2)
 
+# record them 
+tlog("Record these results")
+write.table(x=link.str2,file="data/figures/graph3-link-str.txt",row.names=FALSE,col.names=FALSE)
+write.table(x=node.str2,file="data/figures/graph3-node-str.txt",row.names=FALSE,col.names=FALSE)
+
 # plot them
 tlog("Generate the corresponding plots")
 myplot.graph(g2, node.str=NA, link.str=link.str2, large=FALSE, filename="graph3-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
@@ -63,6 +73,11 @@ tlog("Process the average straightness of each link")
 link.str3 <- mean.straightness.links.graph(graph=g3)
 tlog("Process the average straightness of each node")
 node.str3 <- mean.straightness.nodes.graph(graph=g3)
+
+# record them 
+tlog("Record these results")
+write.table(x=link.str3,file="data/figures/graph4-link-str.txt",row.names=FALSE,col.names=FALSE)
+write.table(x=node.str3,file="data/figures/graph4-node-str.txt",row.names=FALSE,col.names=FALSE)
 
 # plot them
 tlog("Generate the corresponding plots")

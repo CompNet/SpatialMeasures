@@ -7,6 +7,9 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/common/generation.R")
 ############################################################################
+library("splancs") # used to process polygon areas
+
+
 source("src/common/transformations.R")
 
 
