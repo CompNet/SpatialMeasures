@@ -17,7 +17,7 @@ source("src/straightness/discrete.R")
 
 
 
-#######################################
+########################################
 # generate a square graph
 tlog("Generate a square graph")
 g <- produce.square.graph(n=15,area=20)

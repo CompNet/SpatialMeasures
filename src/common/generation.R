@@ -137,6 +137,7 @@ produce.square.graph <- function(n, area=1)
 	g$side <- side
 	g$name <- "squares"
 	g$title <- paste("Squares n=",n,sep="") 
+	g <- distances.as.weights(g)
 	
 	return(g)
 }
@@ -228,6 +229,7 @@ produce.radiocentric.graph <- function(r, s, area=1)
 	g$spires <- s
 	g$name <- "radioconcentric"
 	g$title <- paste("Radioconcentric rays=",r," spires=",s,sep="") 
+	g <- distances.as.weights(g)
 	
 	return(g)
 }
@@ -326,6 +328,7 @@ produce.orbitele.graph <- function(r, s, area=1)
 	g$spires <- s
 	g$name <- "orbitele"
 	g$title <- paste("Orbitele rays=",r," spires=",s,sep="") 
+	g <- distances.as.weights(g)
 	
 	return(g)
 }
