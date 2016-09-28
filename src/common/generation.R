@@ -7,9 +7,6 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/common/generation.R")
 ############################################################################
-library("splancs") # used to process polygon areas
-
-#source("src/raw-generation.R")
 source("src/common/transformations.R")
 
 
@@ -143,6 +140,56 @@ produce.square.graph <- function(n, area=1)
 
 	
 ############################################################################################
+# Generates a radio-concentric graph.
+#
+# ray.nbr: total number of rays in the graph.
+# spire.nbr: number of spires connected to one ray.
+# directed: whether the graph should be directed or not.
+# empty: produces a graph without any link.
+#
+# returns: the created graph.
+############################################################################################
+generate.radiocentric.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FALSE)
+{	# init
+	n <- spire.nbr * ray.nbr + 1
+	x.coords <- rep(NA,n)
+	y.coords <- rep(NA,n)
+	links <- c()
+	
+	# set coordinates
+	x.coords[1] <- 0
+	y.coords[1] <- 0
+	i <- 2
+	for(r in 1:ray.nbr)
+	{	angle <- pi/2 + (r-1) * (2*pi/ray.nbr)
+		prev <- 1
+		for(s in 1:spire.nbr)
+		{	x.coords[i] <- cos(angle)*s/spire.nbr
+			y.coords[i] <- sin(angle)*s/spire.nbr
+			links <- c(links, c(prev,i))
+			if(r>1)
+				links <- c(links, c(i-spire.nbr,i))
+			else
+				links <- c(links, c(i+spire.nbr*(ray.nbr-1),i))
+			prev <- i
+			i <- i + 1
+		}
+	}
+	
+	# build graph
+	g <- graph.empty(n=length(x.coords),directed=directed)
+	g$name <- "radioconcentric"
+	if(!empty)
+		g <- add.edges(graph=g,edges=links)
+	V(g)$x <- x.coords
+	V(g)$y <- y.coords
+	
+	return(g)
+}
+
+
+
+############################################################################################
 # Generates a radioconcentric graph.
 #
 # r: number of rays.
@@ -176,6 +223,103 @@ produce.radiocentric.graph <- function(r, s, area=1)
 	g$spires <- s
 	g$name <- "radioconcentric"
 	g$title <- paste("Radioconcentric rays=",r," spires=",s,sep="") 
+	
+	return(g)
+}
+
+
+
+############################################################################################
+# Generates an orbitele graph.
+#
+# ray.nbr: total number of rays in the graph.
+# spire.nbr: approximate number of spires connected to one ray.
+# directed: whether the graph should be directed or not.
+# empty: produces a graph without any link.
+#
+# returns: the created graph.
+############################################################################################
+generate.orbitele.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FALSE)
+{	# init
+#	n <- spire.nbr * ray.nbr + 1
+	x.coords <- c()
+	y.coords <- c()
+	links <- c()
+	
+	# set coordinates
+	x.coords[1] <- 0
+	y.coords[1] <- 0
+	delta <- 1 / (ray.nbr*spire.nbr)
+	#cat("delta:",delta,"\n")      
+	d <- 0
+	i <- 2
+	for(s in 1:spire.nbr)
+	{	for(r in 1:ray.nbr)
+		{	angle <- pi/2 + (r-1) * (2*pi/ray.nbr)
+			d <- d + delta
+			#cat(i,":",d,"\n")      
+			x.coords[i] <- cos(angle)*d
+			y.coords[i] <- sin(angle)*d
+			# add spiral links
+			if(i>2)
+				links <- c(links, c(i-1,i))
+			# add ray links
+			if(s>1)
+				links <- c(links, c(i-ray.nbr,i))
+			else
+				links <- c(links, c(1,i))
+			
+			i <- i + 1
+		}
+	}
+	
+	# build graph
+	g <- graph.empty(n=length(x.coords),directed=directed)
+	g$name <- "orbitele"
+	if(!empty)
+		g <- add.edges(graph=g,edges=links)
+	V(g)$x <- x.coords
+	V(g)$y <- y.coords
+	
+	return(g)
+}
+
+
+
+############################################################################################
+# Generates an orbitele graph.
+#
+# r: number of rays.
+# s: number of spires.
+# area: area covered by the network (by default: 1).
+#
+# returns: an orbitele graph with approximately the specified area.
+############################################################################################
+produce.orbitele.graph <- function(r, s, area=1)
+{	# generate graph
+	g <- generate.orbitele.graph(ray.nbr=r, spire.nbr=s)
+	
+	# translate to (0,0)
+	dx <- min(V(g)$x)
+	V(g)$x <- V(g)$x - dx
+	dy <- min(V(g)$y)
+	V(g)$y <- V(g)$y - dy
+	
+	# normalize area
+	env <- chull(V(g)$x,V(g)$y) #convex hull of the network nodes
+	true.area <- areapl(cbind(V(g)$x[env],V(g)$y[env]))
+	coef <- sqrt(area/true.area)
+	coord <- cbind(V(g)$x,V(g)$y)
+	coord <- coord %*% (coef*diag(2))
+	V(g)$x <- coord[,1]
+	V(g)$y <- coord[,2]
+	
+	# set graph attributes
+	g$area <- area
+	g$rays <- r
+	g$spires <- s
+	g$name <- "orbitele"
+	g$title <- paste("Orbitele rays=",r," spires=",s,sep="") 
 	
 	return(g)
 }

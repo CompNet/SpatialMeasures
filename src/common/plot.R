@@ -7,7 +7,7 @@
 # Vincent Labatut 12/2015
 #
 # setwd("~/eclipse/workspaces/Networks/SpiderNet")
-# source("src/model/plot.R")
+# source("src/common/plot.R")
 ############################################################################
 
 
@@ -98,13 +98,15 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 		{	if(large) 
 				plot(g,main=g$title,
 						vertex.color=vertex.color,
+						vertex.label.color="BLACK",vertex.label.cex=0.5,
 						edge.color=link.cols,edge.width=link.widths,
 						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
 						...
 				) 
 			else 
 				plot(g,main=g$title,
-						vertex.size=vertex.sizes,vertex.color=vertex.color,vertex.label=vertex.label,vertex.label.cex=0.5,
+						vertex.size=vertex.sizes,vertex.color=vertex.color,
+						vertex.label=vertex.label,vertex.label.cex=0.5,vertex.label.color="BLACK",
 						edge.color=link.cols,edge.width=link.widths,
 						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
 						...

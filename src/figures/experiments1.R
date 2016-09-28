@@ -5,7 +5,7 @@
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/figures/experiments.R")
+# source("src/figures/experiments1.R")
 ############################################################################
 source("src/common/misc.R")
 source("src/common/plot.R")
