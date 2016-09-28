@@ -73,7 +73,7 @@ aux.process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, 
 # returns: value of the antiderivative needed to process the straightness.
 ############################################################################
 aux.process.straightness.antiderivative <- function(a,b,c,d,e,f,ell,disp)
-{	disp <- F
+{	disp <- FALSE
 	if(disp)
 	{	cat("a=",a,"; b=",b,"; c=",c,"; d=",d,"; e=",e,"; f=",f,"; ell=",sprintf("%.25f",ell),"\n",sep="")
 	
@@ -88,14 +88,19 @@ aux.process.straightness.antiderivative <- function(a,b,c,d,e,f,ell,disp)
 		temp1 <- temp11 * temp12 * temp13
 		temp2 <- ((-(b^2*e) + a*b*f + d*(-(d*e) + c*f))
 					* log(abs(2*(a*b + c*d + b^2*ell + d^2*ell + sqrt(b^2 + d^2)*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)))))
-		temp3log <- (2*f^3*(-(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell 
-									+ sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-									* sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)))
-		cat("temp3log: ",as.numeric(temp3log),"\n",sep="")
-		temp3 <- (sqrt(b^2 + d^2)
-					* (f*sqrt(a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2)
-						- sqrt(b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2)
-						* log(abs(temp3log))))
+		temp31 <- b^2 + d^2
+		temp32 <- a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2
+		temp33 <- b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2
+		cat("\t","temp31: ",temp31," temp32: ",temp32," temp33: ",temp33,"\n",sep="")
+		temp341 <- -(a*b*e) - c*d*e + a^2*f + c^2*f - b^2*e*ell - d^2*e*ell + a*b*f*ell + c*d*f*ell
+		temp342 <- b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2
+		temp343 <- a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2
+		temp34 <- (2*f^3*(temp341 + sqrt(temp342)*sqrt(temp343)))
+		cat("\t","temp341: ",temp341," temp342: ",temp342," temp343: ",temp343," sqrt(temp342)*sqrt(temp343): ",sqrt(temp342)*sqrt(temp343)," temp34: ",temp34,"\n",sep="")
+		temp3 <- (sqrt(temp31)
+					* (f*sqrt(temp32)
+						- sqrt(temp33)
+						* log(abs(temp34))))
 		result <- (temp1 + temp2 + temp3) / (sqrt(b^2 + d^2)*f^2)
 		cat("\t"," temp11: ",temp11," temp12: ",temp12," temp131: ",temp131," temp13: ",temp13," temp1: ",temp1," temp2: ",temp2," temp3: ",temp3," result: ",result,"\n",sep="")
 		cat("\tresult: ",result,"\n",sep="")
@@ -134,7 +139,7 @@ aux.process.straightness.antiderivative <- function(a,b,c,d,e,f,ell,disp)
 # returns: value of the double integral needed to process the straightness.
 ############################################################################
 aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g2,h2, i2, fellp2, ell2pup, lb, ub, disp)
-{	disp <- F
+{	disp <- FALSE
 	if(disp) cat("......lb: ",sprintf("%.23f",lb)," ub: ",sprintf("%.23f",ub),"\n",sep="")
 	
 	result <- 0
@@ -584,15 +589,9 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 	else
 	{	# use the pre-processed antiderivative of function f (faster)
 		if(use.primitive)
-		{	# possibly round the lambdas
-			if(tol.eq(lambdau,0))
-				lambdau <- 0
-			else if(tol.eq(lambdau,e.dist[u1,v1]))
-				lambdau <- e.dist[u1,v1]
-			if(tol.eq(lambdav,0))
-				lambdav <- 0
-			else if(tol.eq(lambdav,e.dist[u1,v1]))
-				lambdav <- e.dist[u1,v1]
+		{	# check if the links have a common end-node
+			#if(length(intersect(c(u1,v1),c(u2,v2)))>0)
+			#	cat("WARNING: Links (",u1,",",v1,") and (",u2,",",v2,") have a common end-node\n")
 			
 			# get the node coordinates
 			xu1 <- V(graph)$x[u1]
@@ -604,41 +603,61 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 			xv2 <- V(graph)$x[v2]
 			yv2 <- V(graph)$y[v2]
 			
-			# function used to process lambda2
-			fellp2 <- function(ellp1) aux.process.lambda2(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
-			
-			# common constants
-			a0 <- xu2 - xu1
-			b0 <- (xu1 - xv1) / e.dist[u1,v1]
-			c0 <- (xv2 - xu2) / e.dist[u2,v2]
-			d0 <- yu2 - yu1
-			e0 <- (yu1 - yv1) / e.dist[u1,v1]
-			f0 <- (yv2 - yu2) / e.dist[u2,v2]
-			
-			# specific cases
-			gu1u2 <- g.dist[u1,u2]									; hu1u2 <- 1	; iu1u2 <- 1
-			gu1v2 <- g.dist[u1,v2] + e.dist[u2,v2]					; hu1v2 <- 1	; iu1v2 <- -1
-			gv1u2 <- g.dist[v1,u2] + e.dist[u1,v1]					; hv1u2 <- -1	; iv1u2 <- 1
-			gv1v2 <- g.dist[v1,v2] + e.dist[u1,v1] + e.dist[u2,v2]	; hv1v2 <- -1	; iv1v2 <- -1
-			
-			part1 <- 0 ; part2 <- 0 ; part3 <- 0
-			if(lambdau <= lambdav)
-			{	# from 0 to lambda_u
-				part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdau, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
-				# from lambda_u to lambda_v
-				part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=lambdav, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
-				# from lambda_v to ||u1v1||
-				part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=e.dist[u1,v1], disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+			# if both links are aligned and connected by optimal paths, we can speed up the process
+			if(check.alignment(xu1,yu1,xv1,yv1,xu2,yu2) 
+				&& check.alignment(xu1,yu1,xv1,yv1,xv2,yv2)
+				&& tol.eq(e.dist[u1,u2],g.dist[u1,u2]))
+			{	result <- e.dist[u1,v1]*e.dist[u1,v1]
 			}
+			
+			# general case
 			else
-			{	# from 0 to lambda_v
-				part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdav, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
-				# from lambda_v to lambda_u
-				part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=lambdau, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
-				# from lambda_u to ||u1v1||
-				part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=e.dist[u1,v1], disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+			{	# possibly round the lambdas
+				if(tol.eq(lambdau,0))
+					lambdau <- 0
+				else if(tol.eq(lambdau,e.dist[u1,v1]))
+					lambdau <- e.dist[u1,v1]
+				if(tol.eq(lambdav,0))
+					lambdav <- 0
+				else if(tol.eq(lambdav,e.dist[u1,v1]))
+					lambdav <- e.dist[u1,v1]
+				
+				# function used to process lambda2
+				fellp2 <- function(ellp1) aux.process.lambda2(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
+				
+				# common constants
+				a0 <- xu2 - xu1
+				b0 <- (xu1 - xv1) / e.dist[u1,v1]
+				c0 <- (xv2 - xu2) / e.dist[u2,v2]
+				d0 <- yu2 - yu1
+				e0 <- (yu1 - yv1) / e.dist[u1,v1]
+				f0 <- (yv2 - yu2) / e.dist[u2,v2]
+				
+				# specific cases
+				gu1u2 <- g.dist[u1,u2]									; hu1u2 <- 1	; iu1u2 <- 1
+				gu1v2 <- g.dist[u1,v2] + e.dist[u2,v2]					; hu1v2 <- 1	; iu1v2 <- -1
+				gv1u2 <- g.dist[v1,u2] + e.dist[u1,v1]					; hv1u2 <- -1	; iv1u2 <- 1
+				gv1v2 <- g.dist[v1,v2] + e.dist[u1,v1] + e.dist[u2,v2]	; hv1v2 <- -1	; iv1v2 <- -1
+				
+				part1 <- 0 ; part2 <- 0 ; part3 <- 0
+				if(lambdau <= lambdav)
+				{	# from 0 to lambda_u
+					part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdau, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+					# from lambda_u to lambda_v
+					part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=lambdav, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+					# from lambda_v to ||u1v1||
+					part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=e.dist[u1,v1], disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+				}
+				else
+				{	# from 0 to lambda_v
+					part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdav, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+					# from lambda_v to lambda_u
+					part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=lambdau, disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+					# from lambda_u to ||u1v1||
+					part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=e.dist[u1,v1], disp=all(c0(u1,v1,u2,v2)==c0(8,77,49,77)))
+				}
+				result <- part1 + part2 + part3
 			}
-			result <- part1 + part2 + part3
 		}
 		# use an approximate numerical integration instead of the antiderivative
 		else
@@ -902,7 +921,7 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 
 
 # TODO le pb ne viendrait il pas du fait qu'on n'intègre pas la vraie fonction, mais celle du cas général, 
-# qui ne marche pas si les deux liens ont un point commun (pas définie sur le point commun)
+# qui ne marche pas si les deux liens ont un point commun (F pas définie sur le point commun)
 # >> pas de pb théorique, mais juste utiliser la double intégrale en pratique... ou calculer la vraie valeur?
 
 # TODO bloquer la condition d'indéfinition de la fonction au niveau de la primitive (0/0 >>> ?)

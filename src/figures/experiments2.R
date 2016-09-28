@@ -19,6 +19,7 @@ source("src/straightness/discrete.R")
 
 #######################################
 # generate a square graph
+tlog("Generate a square graph")
 g <- produce.square.graph(n=15,area=20)
 
 # process several variants of the average straightness
@@ -36,6 +37,7 @@ myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="graph2-nod
 
 #######################################
 # generate a radio-concentric graph
+tlog("Generate a radio-concentric graph")
 g2 <- produce.radiocentric.graph(r=8,s=10,area=20)
 
 # process several variants of the average straightness
@@ -53,6 +55,7 @@ myplot.graph(g2, node.str=node.str2, link.str=NA, large=FALSE, filename="graph3-
 
 #######################################
 # generate an orbitele graph
+tlog("Generate spider graph")
 g3 <- produce.orbitele.graph(r=8,s=7,area=20)
 
 # process several variants of the average straightness

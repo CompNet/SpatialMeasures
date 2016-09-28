@@ -58,6 +58,7 @@ connect.closest <- function(g, k, dist.fun="euclidean", min.pow=2, max.dist=NA)
 	# add links
 	g <- add.edges(graph=g,edges=link.vect)
 	g <- simplify(graph=g, remove.multiple=TRUE, remove.loops=TRUE)
+	g <- distances.as.weights(g)
 	
 	return(g)
 }
@@ -101,7 +102,7 @@ generate.regular.graph <- function(x, y, reps, gap, directed=FALSE)
 	g$name <- "regular"
 	V(g)$x <- x.coords
 	V(g)$y <- y.coords
-	
+	g <- distances.as.weights(g)
 	
 	return(g)
 }
@@ -183,6 +184,7 @@ generate.radiocentric.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empt
 		g <- add.edges(graph=g,edges=links)
 	V(g)$x <- x.coords
 	V(g)$y <- y.coords
+	g <- distances.as.weights(g)
 	
 	return(g)
 }
@@ -280,6 +282,7 @@ generate.orbitele.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FA
 		g <- add.edges(graph=g,edges=links)
 	V(g)$x <- x.coords
 	V(g)$y <- y.coords
+	g <- distances.as.weights(g)
 	
 	return(g)
 }

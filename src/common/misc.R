@@ -124,21 +124,25 @@ tol.eq <- function(x,y,tolerance=1e-10)
 ############################################################################
 check.alignment <- function(x1, y1, x2, y2, x3, y3)
 {	result <- FALSE
+#	cat("(",x1,",",y1,") (",x2,",",y2,") (",x3,",",y3,")\n",sep="")
+#	cat("x1==x2: ",tol.eq(x1,x2)," x1==x3: ",tol.eq(x1,x3),"\n",sep="")	
 	
-#cat("x1==x2: ",abs(x1-x2)<1e-10," x1==x3: ",abs(x1-x3)<1e-10,"\n",sep="")	
+	# possible the same points
+	if(tol.eq(x1,x2) && tol.eq(y1,y2) 
+		|| tol.eq(x1,x3) && tol.eq(y1,y3)
+		|| tol.eq(x2,x3) && tol.eq(y2,y3))
+		result <- TRUE
 	
 	# possibly vertical
-	if(tol.eq(x1,x2))
+	else if(tol.eq(x1,x2))
 		result <- tol.eq(x1,x3)
 	
 	# not vertical
-	else
-	{	if(!tol.eq(x1,x3))
-		{	slope1 <- (y1-y2)/(x1-x2)
-			slope2 <- (y1-y3)/(x1-x3)
-			result <- tol.eq(slope1,slope2)
-#cat("slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
-		}
+	else if(!tol.eq(x1,x3))
+	{	slope1 <- (y1-y2)/(x1-x2)
+		slope2 <- (y1-y3)/(x1-x3)
+		result <- tol.eq(slope1,slope2)
+#		cat("slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
 	}
 	
 	return(result)
