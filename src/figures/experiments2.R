@@ -40,7 +40,7 @@ myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="graph2-nod
 
 
 
-#######################################
+######################################
 # generate a radio-concentric graph
 tlog("Generate a radio-concentric graph")
 g2 <- produce.radiocentric.graph(r=8,s=10,area=20)
