@@ -6,7 +6,7 @@
 #
 # Vincent Labatut 12/2015
 #
-# setwd("~/eclipse/workspaces/Networks/SpiderNet")
+# setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/misc/plot.R")
 ############################################################################
 
@@ -43,10 +43,18 @@ add.alpha <- function(col, alpha=1)
 # ...: other parameters, passed to the regular plot function.
 ############################################################################################
 myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), ...)
-{	# plot parameters
-	vertex.sizes <- 1
-	vertex.label <- ""
-	vertex.color <- "BEIGE"
+{	# possibly create output folder
+	if(!is.na(filename) & !is.na(out.folder))
+		dir.create(path=out.folder,showWarnings=FALSE,recursive=TRUE)
+	
+	# plot parameters
+	vertex.sizes <- rep(1,vcount(g))
+	vertex.label <- rep("",vcount(g))
+	vertex.color <- rep("BEIGE",vcount(g))
+	vertex.shape <- rep("circle",vcount(g))
+	vertex.frame.color <- rep("BLACK",vcount(g))
+	
+	# adjust in function of the vertex types
 	if("type" %in% list.vertex.attributes(g))
 	{	vertex.sizes[V(g)$type=="original"] <- 15
 		vertex.label[V(g)$type=="original"] <- V(g)$label[V(g)$type=="original"]
@@ -54,23 +62,19 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 		vertex.label[V(g)$type=="extra"] <- ""
 	}
 #vertex.label <- 1:vcount(g)
+	
 	# set node colors
 	if(!all(is.na(node.str)))
 	{	cscale <- colorRamp(c("BLUE","CYAN","YELLOW","RED"))
 		vertex.color <- apply(cscale(node.str), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255))
 	}
 	
-	# possibly create output folder
-	if(!is.na(filename) & !is.na(out.folder))
-		dir.create(path=out.folder,showWarnings=FALSE,recursive=TRUE)
-	
-	# plot parameters
-	mn <- 0
-	mx <- max(c(V(g)$x,V(g)$y))
-	mn <- min(c(V(g)$x,V(g)$y))	#TODO added for model debugging
-	lm <- c(mn,mx)
-#lm <- c(-1,+1)	#TODO added for model debugging
-#	print(lm)
+	# mark certain nodes
+	if("marked" %in% list.vertex.attributes(g))
+	{	#vertex.color[V(g)$marked] <- "WHITE"
+		vertex.shape[V(g)$marked] <- "square"
+		vertex.frame.color[V(g)$marked] <- "PURPLE"
+	}
 	
 	# set link colors
 	if(all(is.na(link.str)))
@@ -80,9 +84,24 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 	else
 	{	cscale <- colorRamp(c("BLUE","CYAN","YELLOW","RED"))
 		link.cols <- apply(cscale(link.str), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255))
-		link.widths <- 4*link.str
+		#link.widths <- 4*link.str
+		link.widths <- rep(3,ecount(g))
 	}
-		
+
+	# mark certain links
+	if("marked" %in% list.edge.attributes(g))
+	{	link.widths[E(g)$marked] <- link.widths[E(g)$marked]*3
+		link.cols[E(g)$marked] <- "PURPLE"
+	}
+	
+	# setup plot dimensions
+	mn <- 0
+	mx <- max(c(V(g)$x,V(g)$y))
+	mn <- min(c(V(g)$x,V(g)$y))	#TODO added for model debugging
+	lm <- c(mn,mx)
+#lm <- c(-1,+1)	#TODO added for model debugging
+#	print(lm)
+	
 	# generate plots
 	for(format in formats)
 	{	if(!is.na(format) & !is.na(filename) & !is.na(out.folder))
@@ -99,6 +118,7 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 				plot(g,main=g$title,
 						vertex.color=vertex.color,
 						vertex.label.color="BLACK",vertex.label.cex=0.5,
+						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
 						edge.color=link.cols,edge.width=link.widths,
 						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
 						...
@@ -107,6 +127,7 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 				plot(g,main=g$title,
 						vertex.size=vertex.sizes,vertex.color=vertex.color,
 						vertex.label=vertex.label,vertex.label.cex=0.5,vertex.label.color="BLACK",
+						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
 						edge.color=link.cols,edge.width=link.widths,
 						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
 						...
