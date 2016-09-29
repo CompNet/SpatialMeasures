@@ -20,7 +20,7 @@ source("src/straightness/discrete.R")
 ########################################
 # generate a square graph
 tlog("Generate a square graph")
-g <- produce.square.graph(n=15,area=20)
+g <- produce.square.graph(n=14,area=20)
 
 # process several variants of the average straightness
 tlog("Process the average straightness of each link")
@@ -58,8 +58,8 @@ write.table(x=node.str2,file="data/figures/graph3-node-str.txt",row.names=FALSE,
 
 # plot them
 tlog("Generate the corresponding plots")
-myplot.graph(g2, node.str=NA, link.str=link.str2, large=FALSE, filename="graph3-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
-myplot.graph(g2, node.str=node.str2, link.str=NA, large=FALSE, filename="graph3-node-str", out.folder="data/figures", export=FALSE, formats="pdf")
+myplot.graph(g2, node.str=NA, link.str=link.str2, large=TRUE, filename="graph3-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
+myplot.graph(g2, node.str=node.str2, link.str=NA, large=TRUE, filename="graph3-node-str", out.folder="data/figures", export=FALSE, formats="pdf")
 
 
 
@@ -81,5 +81,5 @@ write.table(x=node.str3,file="data/figures/graph4-node-str.txt",row.names=FALSE,
 
 # plot them
 tlog("Generate the corresponding plots")
-myplot.graph(g3, node.str=NA, link.str=link.str3, large=FALSE, filename="graph4-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
-myplot.graph(g3, node.str=node.str3, link.str=NA, large=FALSE, filename="graph4-node-str", out.folder="data/figures", export=FALSE, formats="pdf")
+myplot.graph(g3, node.str=NA, link.str=link.str3, large=TRUE, filename="graph4-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
+myplot.graph(g3, node.str=node.str3, link.str=NA, large=TRUE, filename="graph4-node-str", out.folder="data/figures", export=FALSE, formats="pdf")

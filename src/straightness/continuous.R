@@ -488,7 +488,7 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 	{	# get the second link
 		u2 <- el[i,1]
 		v2 <- el[i,2]
-		cat("(",u1,",",v1," ;",ellp1,") vs (",u2,",",v2,")\n",sep="")
+		#cat("(",u1,",",v1," ;",ellp1,") vs (",u2,",",v2,")\n",sep="")
 		
 		# process the lambdas
 		temp <- aux.process.lambdauv(e.dist, g.dist, u1, v1, u2, v2)
@@ -497,7 +497,7 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 		
 		# get the mean straightness between the point and the link
 		part.str <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
-		cat("part.str: ",part.str,"\n",sep="")
+		#cat("part.str: ",part.str,"\n",sep="")
 		total.str <- total.str + part.str
 		total.lgt <- total.lgt + e.dist[u2,v2]
 	}
