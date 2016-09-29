@@ -427,22 +427,22 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 	v2 <- el[e,2]
 	
 	# process each specified node
-	for(i in u)
+	for(i in 1:length(u))
 	{	# if the node is an isolate, no need to go further
-		if(degree(graph,u)==0)
+		if(degree(graph,u[i])==0)
 			str <- 0
 		
 		# otherwise, we process the mean straightness for the node
 		else
 		{	# get the relative position
 			tmp <- as_ids(neighbors(graph,1))[1]
-			if(tmp<u)
+			if(tmp<u[i])
 			{	u1 <- tmp
-				v1 <- u
+				v1 <- u[i]
 				ellp1 <- e.dist[u1,v1]
 			}
 			else
-			{	u1 <- u
+			{	u1 <- u[i]
 				v1 <- tmp
 				ellp1 <- 0
 			}
