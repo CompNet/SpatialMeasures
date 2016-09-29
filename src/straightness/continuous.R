@@ -440,6 +440,8 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 aux.mean.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive=TRUE)
 {	# get the total straightness between the point and the link
 	total <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
+	#cat("u1:",u1," v1:",v1," ellp1:",ellp1," -- u2:",u2," v2:",v2," -- Total:",total," e.dist[u2,v2]:",e.dist[u2,v2],"\n",sep="")
+	
 	# normalize to get the mean
 	result <- total / e.dist[u2,v2]
 	
@@ -483,7 +485,7 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 		# otherwise, we process the mean straightness for the node
 		else
 		{	# get the relative position
-			tmp <- as_ids(neighbors(graph,1))[1]
+			tmp <- as_ids(neighbors(graph,v=u[i]))[1]
 			if(tmp<u[i])
 			{	u1 <- tmp
 				v1 <- u[i]
