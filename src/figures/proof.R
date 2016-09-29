@@ -11,7 +11,10 @@
 ############################################################################
 library("igraph")
 
-source("src/common/transformations.R")
+source("src/misc/log.R")
+source("src/misc/plot.R")
+source("src/misc/transformations.R")
+source("src/misc/generation.R")
 
 
 

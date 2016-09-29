@@ -8,9 +8,9 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/time.R")
 ############################################################################
-source("src/common/misc.R")
-source("src/common/plot.R")
-source("src/common/transformations.R")
+source("src/misc/misc.R")
+source("src/misc/plot.R")
+source("src/misc/transformations.R")
 
 source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
