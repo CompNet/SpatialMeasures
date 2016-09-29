@@ -11,9 +11,6 @@
 library("igraph")
 
 
-source("src/common/misc.R")
-source("src/common/transformations.R")
-
 
 ############################################################################
 # Processes the straightness for each pair of nodes:

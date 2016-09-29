@@ -12,8 +12,56 @@ library("igraph")
 #library("pracma") # test for another integration library (was not faster than the default method)
 
 
-source("src/common/misc.R")
-source("src/common/transformations.R")
+
+############################################################################
+# Checks if the specified floats are equal, for a given tolerance. Useful for
+# certain rounding bugs.
+#
+# x,y: the values to compare.
+# tolerance: the tolerance (optional, default=10^-10).
+############################################################################
+tol.eq <- function(x,y,tolerance=1e-10)
+{	abs(x-y)<tolerance
+}
+
+
+
+############################################################################
+# Checks if the three specified points are aligned. 
+#
+# Note: uses function tol.eq to compare the points positions.
+#
+# x1,y1: coordinates of the first point.
+# x2,y2: coordinates of the second point.
+# x3,y3: coordinates of the third point.
+#
+# returns: TRUE iff the points are aligned (colinear).
+############################################################################
+check.alignment <- function(x1, y1, x2, y2, x3, y3)
+{	result <- FALSE
+#	cat("(",x1,",",y1,") (",x2,",",y2,") (",x3,",",y3,")\n",sep="")
+#	cat("x1==x2: ",tol.eq(x1,x2)," x1==x3: ",tol.eq(x1,x3),"\n",sep="")	
+	
+	# possible the same points
+	if(tol.eq(x1,x2) && tol.eq(y1,y2) 
+			|| tol.eq(x1,x3) && tol.eq(y1,y3)
+			|| tol.eq(x2,x3) && tol.eq(y2,y3))
+		result <- TRUE
+	
+	# possibly vertical
+	else if(tol.eq(x1,x2))
+		result <- tol.eq(x1,x3)
+	
+	# not vertical
+	else if(!tol.eq(x1,x3))
+	{	slope1 <- (y1-y2)/(x1-x2)
+		slope2 <- (y1-y3)/(x1-x3)
+		result <- tol.eq(slope1,slope2)
+#		cat("slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
+	}
+	
+	return(result)
+}
 
 
 
@@ -918,15 +966,3 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 	result <- total.str / denom
 	return(result)
 }
-
-
-# TODO le pb ne viendrait il pas du fait qu'on n'intègre pas la vraie fonction, mais celle du cas général, 
-# qui ne marche pas si les deux liens ont un point commun (F pas définie sur le point commun)
-# >> pas de pb théorique, mais juste utiliser la double intégrale en pratique... ou calculer la vraie valeur?
-
-# TODO bloquer la condition d'indéfinition de la fonction au niveau de la primitive (0/0 >>> ?)
-#	PB : le cas diffère du 0/0 de la straightness. alignement, comme précédemment supposé ?
-# TODO au pire, invoquer directement la double intégration numérique
-# TODO extraire les liens problématiques du réseau ? (graphe induit)
-
-# TODO qu'est-ce que ça donne dans un tout petit réseau avec 3 points alignés ?
