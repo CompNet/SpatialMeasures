@@ -17,70 +17,102 @@ source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
+out.folder <- file.path("data","figures","radiocentric")
 
 ########################################
-# generate a square graph
-tlog("Generate a square graph")
-g <- produce.square.graph(n=14,area=20)
+# Generate the graph
+########################################
+tlog("Generate a radio-concentric graph")
+g <- produce.radiocentric.graph(r=8,s=10,area=20)
 
+
+
+########################################
+# Process the link-graph and node-graph averages
+########################################
 # process several variants of the average straightness
-tlog("Process the average straightness of each link")
+tlog("Process the average straightness between each link and the rest of the graph")
 link.str <- mean.straightness.links.graph(graph=g)
-tlog("Process the average straightness of each node")
+tlog("Process the average straightness between each node and the rest of the graph")
 node.str <- mean.straightness.nodes.graph(graph=g)
 
-# record them 
-tlog("Record these results")
-write.table(x=link.str,file="data/figures/graph2-link-str.txt",row.names=FALSE,col.names=FALSE)
-write.table(x=node.str,file="data/figures/graph2-node-str.txt",row.names=FALSE,col.names=FALSE)
-
 # plot them
 tlog("Generate the corresponding plots")
-myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="graph2-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
-myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="graph2-node-str", out.folder="data/figures", export=FALSE, formats="pdf")
+myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="link-graph", out.folder=out.folder, export=FALSE, formats="pdf")
+myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="node-graph", out.folder=out.folder, export=FALSE, formats="pdf")
+
+# record them as text files
+tlog("Record the numerical results for later consultation")
+write.table(x=link.str,file=file.path(out.folder,"link-graph.txt"),row.names=FALSE,col.names=FALSE)
+write.table(x=node.str,file=file.path(out.folder,"node-graph.txt"),row.names=FALSE,col.names=FALSE)
 
 
 
-######################################
-# generate a radio-concentric graph
-tlog("Generate a radio-concentric graph")
-g2 <- produce.radiocentric.graph(r=8,s=10,area=20)
+########################################
+# Process the node-link and link-node averages
+########################################
+# process the average node-link straightness
+tlog("Process average straightness between each node and each link")
+nl.str <- matrix(NA,nrow=ecount(g),ncol=vcount(g)) 
+for(e in 1:ecount(g))
+{	tlog(2,"Process link ",e,"/",ecount(g))
+	str <- mean.straightness.nodes.link(graph=g, u=1:vcount(g), e=e)
+	#print(str)
+	nl.str[e,] <- str
+}
 
-# process several variants of the average straightness
-tlog("Process the average straightness of each link")
-link.str2 <- mean.straightness.links.graph(graph=g2)
-tlog("Process the average straightness of each node")
-node.str2 <- mean.straightness.nodes.graph(graph=g2)
+# plot the values for each node
+tlog("Plot them relatively to the nodes")
+for(u in 1:vcount(g))
+{	tlog(2,"Process node ",u,"/",vcount(g))
+	V(g)$marked <- 1:vcount(g)==u
+	myplot.graph(g, node.str=NA, link.str=nl.str[,u], large=TRUE, filename=paste0("node=",u,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
+}
+V(g)$marked <- FALSE
 
-# record them 
-tlog("Record these results")
-write.table(x=link.str2,file="data/figures/graph3-link-str.txt",row.names=FALSE,col.names=FALSE)
-write.table(x=node.str2,file="data/figures/graph3-node-str.txt",row.names=FALSE,col.names=FALSE)
+# plot the values for each link 
+tlog("Plot them relatively to the links")
+el <- get.edgelist(g)
+for(e in 1:ecount(g))
+{	tlog(2,"Process link ",e,"/",ecount(g))
+	E(g)$marked <- 1:ecount(g)==e
+	myplot.graph(g, node.str=nl.str[e,], link.str=NA, large=TRUE, filename=paste0("link=",e,"-node"), out.folder=out.folder, export=FALSE, formats="pdf")
+}
+E(g)$marked <- FALSE
 
-# plot them
-tlog("Generate the corresponding plots")
-myplot.graph(g2, node.str=NA, link.str=link.str2, large=TRUE, filename="graph3-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
-myplot.graph(g2, node.str=node.str2, link.str=NA, large=TRUE, filename="graph3-node-str", out.folder="data/figures", export=FALSE, formats="pdf")
+# record them as a text file
+tlog("Record the numerical results for later consultation")
+write.table(x=nl.str,file=file.path(out.folder,"node-link.txt"),row.names=FALSE,col.names=FALSE)
 
 
 
-#######################################
-# generate an orbitele graph
-tlog("Generate spider graph")
-g3 <- produce.orbitele.graph(r=8,s=7,area=20)
+########################################
+# Process the link-link averages
+########################################
+# process the average link-link straightness
+tlog("Process average straightness between each link and each other link")
+ll.str <- matrix(NA,nrow=ecount(g),ncol=ecount(g))
+for(e1 in 1:ecount(g))
+{	tlog(2,"Process link ",e1,"/",ecount(g))
+	for(e2 in 1:ecount(g))
+	{	tlog(4,"Process link ",e2,"/",ecount(g))
+		str <- mean.straightness.link.link(graph=g, e1=e1, e2=e2)
+		#print(str)
+		ll.str[e1,e2] <- str
+		ll.str[e2,e1] <- ll.str[e1,e2]
+	}
+}
 
-# process several variants of the average straightness
-tlog("Process the average straightness of each link")
-link.str3 <- mean.straightness.links.graph(graph=g3)
-tlog("Process the average straightness of each node")
-node.str3 <- mean.straightness.nodes.graph(graph=g3)
+# plot the values for each link 
+tlog("Plot them relatively to the links")
+el <- get.edgelist(g)
+for(e in 1:ecount(g))
+{	tlog(2,"Process link ",e,"/",ecount(g))
+	E(g)$marked <- 1:ecount(g)==e
+	myplot.graph(g, node.str=NA, link.str=ll.str[e,], large=TRUE, filename=paste0("link=",e,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
+}
+E(g)$marked <- FALSE
 
-# record them 
-tlog("Record these results")
-write.table(x=link.str3,file="data/figures/graph4-link-str.txt",row.names=FALSE,col.names=FALSE)
-write.table(x=node.str3,file="data/figures/graph4-node-str.txt",row.names=FALSE,col.names=FALSE)
-
-# plot them
-tlog("Generate the corresponding plots")
-myplot.graph(g3, node.str=NA, link.str=link.str3, large=TRUE, filename="graph4-link-str", out.folder="data/figures", export=FALSE, formats="pdf")
-myplot.graph(g3, node.str=node.str3, link.str=NA, large=TRUE, filename="graph4-node-str", out.folder="data/figures", export=FALSE, formats="pdf")
+# record them as a text file
+tlog("Record the numerical results for later consultation")
+write.table(x=ll.str,file=file.path(out.folder,"link-link.txt"),row.names=FALSE,col.names=FALSE)

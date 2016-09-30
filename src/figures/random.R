@@ -1,12 +1,12 @@
 ############################################################################
 # Script used to produce some of the paper figures from the experiments section.
-# This one focuses on regular orbitele graphs (i.e. spider webs).
+# This one focuses on random planar graphs.
 #
 # Vincent Labatut 09/2016
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/figures/orbitele.R")
+# source("src/figures/random.R")
 ############################################################################
 source("src/misc/log.R")
 source("src/misc/plot.R")
@@ -17,13 +17,18 @@ source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
-out.folder <- file.path("data","figures","orbitele")
+out.folder <- file.path("data","figures","random")
 
 ########################################
 # Generate the graph
 ########################################
-tlog("Generate spider graph")
-g <- produce.orbitele.graph(r=8,s=7,area=20)
+tlog("Generate a random planar graph")
+g <- graph.empty(n=200, directed=FALSE)
+V(g)$x <- runif(vcount(g),min=0,max=5)
+V(g)$y <- runif(vcount(g),min=0,max=5)
+g <- connect.triangulation(g)
+g <- distances.as.weights(g)
+V(g)$label <- 1:vcount(g)
 
 
 

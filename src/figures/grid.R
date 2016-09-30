@@ -24,27 +24,28 @@ out.folder <- file.path("data","figures","grid")
 ########################################
 tlog("Generate a square graph")
 g <- produce.square.graph(n=14,area=20)
+write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
 
 
 
-#########################################
-## Process the link-graph and node-graph averages
-#########################################
-## process several variants of the average straightness
-#tlog("Process the average straightness between each link and the rest of the graph")
-#link.str <- mean.straightness.links.graph(graph=g)
-#tlog("Process the average straightness between each node and the rest of the graph")
-#node.str <- mean.straightness.nodes.graph(graph=g)
-#
-## plot them
-#tlog("Generate the corresponding plots")
-#myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="link-graph", out.folder=out.folder, export=FALSE, formats="pdf")
-#myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="node-graph", out.folder=out.folder, export=FALSE, formats="pdf")
-#
-## record them as text files
-#tlog("Record the numerical results for later consultation")
-#write.table(x=link.str,file=file.path(out.folder,"link-graph.txt"),row.names=FALSE,col.names=FALSE)
-#write.table(x=node.str,file=file.path(out.folder,"node-graph.txt"),row.names=FALSE,col.names=FALSE)
+########################################
+# Process the link-graph and node-graph averages
+########################################
+# process several variants of the average straightness
+tlog("Process the average straightness between each link and the rest of the graph")
+link.str <- mean.straightness.links.graph(graph=g)
+tlog("Process the average straightness between each node and the rest of the graph")
+node.str <- mean.straightness.nodes.graph(graph=g)
+
+# plot them
+tlog("Generate the corresponding plots")
+myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="link-graph", out.folder=out.folder, export=FALSE, formats="pdf")
+myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="node-graph", out.folder=out.folder, export=FALSE, formats="pdf")
+
+# record them as text files
+tlog("Record the numerical results for later consultation")
+write.table(x=link.str,file=file.path(out.folder,"link-graph.txt"),row.names=FALSE,col.names=FALSE)
+write.table(x=node.str,file=file.path(out.folder,"node-graph.txt"),row.names=FALSE,col.names=FALSE)
 
 
 
@@ -65,22 +66,20 @@ for(e in 1:ecount(g))
 tlog("Plot them relatively to the nodes")
 for(u in 1:vcount(g))
 {	tlog(2,"Process node ",u,"/",vcount(g))
-	cols <- rep("BLACK",vcount(g))
-	cols[u] <- "RED"
-	myplot.graph(g, node.str=NA, link.str=nl.str[,u], large=TRUE, filename=paste0("node=",u,"-link"), out.folder=out.folder, export=FALSE, formats="pdf", frame.color=cols)
+	V(g)$marked <- 1:vcount(g)==u
+	myplot.graph(g, node.str=NA, link.str=nl.str[,u], large=TRUE, filename=paste0("node=",u,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
 }
+V(g)$marked <- FALSE
 
 # plot the values for each link 
 tlog("Plot them relatively to the links")
-el <- get.edgelist(graph)
+el <- get.edgelist(g)
 for(e in 1:ecount(g))
 {	tlog(2,"Process link ",e,"/",ecount(g))
-	u <- el[e,1]
-	v <- el[e,2]
-	cols <- rep("BLACK",vcount(g))
-	cols[c(u,v)] <- "RED"
-	myplot.graph(g, node.str=nl.str[e,], link.str=NA, large=TRUE, filename=paste0("link=",e,"-node"), out.folder=out.folder, export=FALSE, formats="pdf", frame.color=cols)
+	E(g)$marked <- 1:ecount(g)==e
+	myplot.graph(g, node.str=nl.str[e,], link.str=NA, large=TRUE, filename=paste0("link=",e,"-node"), out.folder=out.folder, export=FALSE, formats="pdf")
 }
+E(g)$marked <- FALSE
 
 # record them as a text file
 tlog("Record the numerical results for later consultation")
@@ -93,7 +92,7 @@ write.table(x=nl.str,file=file.path(out.folder,"node-link.txt"),row.names=FALSE,
 ########################################
 # process the average link-link straightness
 tlog("Process average straightness between each link and each other link")
-ll.str <- matrix(NA,nrow=ecount,ncol=ecount)
+ll.str <- matrix(NA,nrow=ecount(g),ncol=ecount(g))
 for(e1 in 1:ecount(g))
 {	tlog(2,"Process link ",e1,"/",ecount(g))
 	for(e2 in 1:ecount(g))
@@ -107,16 +106,14 @@ for(e1 in 1:ecount(g))
 
 # plot the values for each link 
 tlog("Plot them relatively to the links")
-el <- get.edgelist(graph)
+el <- get.edgelist(g)
 for(e in 1:ecount(g))
 {	tlog(2,"Process link ",e,"/",ecount(g))
-	u <- el[e,1]
-	v <- el[e,2]
-	cols <- rep("BLACK",vcount(g))
-	cols[c(u,v)] <- "RED"
-	myplot.graph(g, node.str=NA, link.str=ll.str[e,], large=TRUE, filename=paste0("link=",e,"-link"), out.folder=out.folder, export=FALSE, formats="pdf", frame.color=cols)
+	E(g)$marked <- 1:ecount(g)==e
+	myplot.graph(g, node.str=NA, link.str=ll.str[e,], large=TRUE, filename=paste0("link=",e,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
 }
+E(g)$marked <- FALSE
 
 # record them as a text file
 tlog("Record the numerical results for later consultation")
-write.table(x=ll.str,file=file.path(out.folder,"node-link.txt"),row.names=FALSE,col.names=FALSE)
+write.table(x=ll.str,file=file.path(out.folder,"link-link.txt"),row.names=FALSE,col.names=FALSE)
