@@ -1,12 +1,12 @@
 ############################################################################
 # Script used to produce some of the paper figures from the experiments section.
-# This one focuses on a random planar graph.
+# This one focuses on a small random planar graph.
 #
 # Vincent Labatut 09/2016
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/figures/randomplanar.R")
+# source("src/figures/exp1.R")
 ############################################################################
 source("src/misc/log.R")
 source("src/misc/plot.R")

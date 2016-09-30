@@ -145,6 +145,124 @@ produce.square.graph <- function(n, area=1)
 
 	
 ############################################################################################
+# Generates a graph of triangles.
+#
+# n: number of triangles in one row.
+# area: area covered by the network (by default: 1).
+#
+# returns: a graph made of triangles, with approximately the specified area.
+############################################################################################
+produce.triangle.graph <- function(n, area=1)
+{	# init scale
+	m <- round(n*sqrt(3)/2+EPSILON)			# number of triangles on a column
+	side <- sqrt((4*area)/(sqrt(3)*m*n))	# side of the equilateral triangles
+	h <- sqrt(3)*side/2						# height of the equilateral triangle
+	ov.side <- n*h	 						# total width of the graph
+	
+	# generate graph
+	g <- generate.regular.graph(
+			x=list(
+					seq(from=0, to=ov.side, by=2*h),
+					seq(from=h, to=ov.side, by=2*h)
+			),
+			y=c(0,side/2), gap=side/2, reps=m
+	)
+	g <- connect.closest(g=g,k=6,max.dist=side+EPSILON)
+	
+	# set graph attributes
+	g$area <- area
+	g$side <- side
+	g$name <- "triangles"
+	g$title <- paste("Triangles n=",n,sep="") 
+	g <- distances.as.weights(g)
+	
+	return(g)
+}
+
+
+
+############################################################################################
+# Generates a graph of hexagons.
+#
+# m: number of hexagons in one column.
+# area: area covered by the network (by default: 1).
+#
+# returns: a graph made of hexagons, with approximately the specified area.
+############################################################################################
+produce.hexagon.graph <- function(m, area=1)
+{	# init scale
+	n <- trunc(2*(m*sqrt(3)-1/2)/3+EPSILON)					# number of hexagons on one row
+	if((n %% 2) == 0)										# this number must be odd, for construction reasons
+		n <- n + 1 											
+	side <- sqrt(2*area / ((n*(m-1)+n%/%2+1)*3*sqrt(3)))	# side of the hexagons
+	h <- sqrt(3)*side/2										# height of the "corner *right* triangle" of the hexagons
+	ov.side <- (n*3/2+1/2)*side								# total width of the graph
+	
+	# generate graph
+	g <- generate.regular.graph(
+			x=list(
+					sort(c(seq(from=0.5*side,to=ov.side-1.5*side,by=3*side),
+									seq(from=1.5*side,to=ov.side-0.5*side,by=3*side)
+							)),
+					sort(c(seq(from=0,to=ov.side-2*side,by=3*side),
+									seq(from=2*side,to=ov.side,by=3*side)
+							))
+			),
+			y=c(0,h), gap=h, reps=m
+	)
+	g <- connect.closest(g=g,k=3,max.dist=side+EPSILON)
+	
+	# set graph attributes
+	g$area <- area
+	g$side <- side
+	g$name <- "hexagons"
+	g$title <- paste("Hexagons m=",m,sep="")
+	g <- distances.as.weights(g)
+	
+	return(g)
+}	
+
+
+
+############################################################################################
+# Generates a graph of octogons.
+#
+# m: number of octogons in one row/column.
+# area: area covered by the network (by default: 1).
+#
+# returns: a graph made of octogons, with approximately the specified area.
+############################################################################################
+produce.octogon.graph <- function(n, area=1)
+{	# init scale
+	side <- sqrt(area / (n^2*2*(1+sqrt(2))+(n-1)^2))
+	h <- side / sqrt(2)
+	ov.side <- n*(side+2*h)
+	
+	# generate graph
+	g <- generate.regular.graph(
+			x=list(
+					sort(c(seq(from=h,to=ov.side-h-side,by=2*h+side),
+									seq(from=h+side,to=ov.side-h,by=2*h+side)
+							)),
+					seq(from=0,to=ov.side,by=2*h+side),
+					seq(from=0,to=ov.side,by=2*h+side)
+			),
+			y=c(0,h,h+side), gap=h, reps=n)
+	g <- connect.closest(g=g,k=4,max.dist=side+EPSILON)
+	
+	# set graph attributes
+	g$area <- area
+	g$side <- side
+	g$name <- "octogons"
+	g$title <- paste("Octogons n=",n,sep="") 
+	g <- distances.as.weights(g)
+	
+	return(g)
+}	
+
+
+
+############################################################################################
 # Generates a radio-concentric graph.
 #
 # ray.nbr: total number of rays in the graph.
