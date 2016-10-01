@@ -5,7 +5,7 @@
 # Vincent Labatut 09/2016
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
-# setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/figures/exp2.R")
 ############################################################################
 source("src/misc/log.R")
@@ -18,12 +18,15 @@ source("src/straightness/discrete.R")
 
 
 graph.types <- c(
-		"hexagons",
-		"octogons"
-#		"orbitele",
-#		"radiocentric",
-#		"squares",
-#		"triangles"
+#	"hexagons"
+#	"octogons"
+#	"orbitele",
+#	"radiocentric",
+#	"squares",
+#	"triangles",
+	"randplan-original",
+	"randplan-yfanhu",
+	"randplan-fruchtergold"
 )
 
 
@@ -83,20 +86,20 @@ for(gtype in graph.types)
 	# Process the link-graph and node-graph averages
 	########################################
 	# process several variants of the average straightness
-	tlog(2,"Process the average straightness between each link and the rest of the graph")
-	link.str <- mean.straightness.links.graph(graph=g)
 	tlog(2,"Process the average straightness between each node and the rest of the graph")
 	node.str <- mean.straightness.nodes.graph(graph=g)
+	tlog(2,"Process the average straightness between each link and the rest of the graph")
+	link.str <- mean.straightness.links.graph(graph=g)
 	
 	# plot them
 	tlog(2,"Generate the corresponding plots")
-	myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="link-graph", out.folder=out.folder, export=FALSE, formats="pdf")
 	myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="node-graph", out.folder=out.folder, export=FALSE, formats="pdf")
+	myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="link-graph", out.folder=out.folder, export=FALSE, formats="pdf")
 	
 	# record them as text files
 	tlog(2,"Record the numerical results for later consultation")
-	write.table(x=link.str,file=file.path(out.folder,"link-graph.txt"),row.names=FALSE,col.names=FALSE)
 	write.table(x=node.str,file=file.path(out.folder,"node-graph.txt"),row.names=FALSE,col.names=FALSE)
+	write.table(x=link.str,file=file.path(out.folder,"link-graph.txt"),row.names=FALSE,col.names=FALSE)
 	
 	
 	
@@ -182,4 +185,18 @@ for(gtype in graph.types)
 	
 
 
+# this command allows to plot the network on screen (useful for visual verifications)
 # myplot.graph(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=FALSE, formats=NA)
+
+# this loop check the data are in the theoretical range (used for debugging)
+#for(gtype in graph.types)
+#{	tlog("Processing graph type ",gtype)
+#	out.folder <- file.path("data","figures",gtype)
+#	for(d in c("node-graph","link-graph","node-link","link-link"))
+#	{	tlog(2,"Processing ",d)
+#		data <- as.matrix(read.table(file=file.path(out.folder,paste0(d,".txt")),header=FALSE))
+#		tlog(4,"           Infinite values: ",length(which(is.infinite(data))))
+#		tlog(4,"     Other negative values: ",length(which(!is.infinite(data) & data<0)))
+#		tlog(4,"Other values larger than 1: ",length(which(!is.infinite(data) & data>1)))
+#	}
+#}

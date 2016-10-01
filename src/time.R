@@ -8,7 +8,7 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/time.R")
 ############################################################################
-source("src/misc/misc.R")
+source("src/misc/log.R")
 source("src/misc/plot.R")
 source("src/misc/transformations.R")
 
@@ -664,4 +664,7 @@ mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-mymain(n=10, type="RAND_PLANAR", repetitions=10)
+#mymain(n=10, type="RAND_PLANAR", repetitions=10)
+#mymain(n=25, type="RAND_PLANAR", repetitions=10)
+#mymain(n=50, type="RAND_PLANAR", repetitions=10)
+mymain(n=100, type="RAND_PLANAR", repetitions=10)
