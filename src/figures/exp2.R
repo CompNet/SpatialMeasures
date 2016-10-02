@@ -162,7 +162,7 @@ graph.types <- c(
 #	for(e1 in 1:ecount(g))
 #	{	tlog(4,"Process link ",e1,"/",ecount(g))
 #		for(e2 in 1:ecount(g))
-#		{	tlog(6,"Process link ",e2,"/",ecount(g))
+#		{	#tlog(6,"Process link ",e2,"/",ecount(g))
 #			str <- mean.straightness.link.link(graph=g, e1=e1, e2=e2)
 #			#print(str)
 #			ll.str[e1,e2] <- str
