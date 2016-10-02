@@ -42,8 +42,8 @@ check.alignment <- function(x1, y1, x2, y2, x3, y3)
 {	disp <- FALSE
 	
 	result <- FALSE
-	if(disp) cat("(",x1,",",y1,") (",x2,",",y2,") (",x3,",",y3,")\n",sep="")
-	if(disp) cat("x1==x2: ",tol.eq(x1,x2)," x1==x3: ",tol.eq(x1,x3),"\n",sep="")	
+	if(disp) cat("........(",x1,",",y1,") (",x2,",",y2,") (",x3,",",y3,")\n",sep="")
+	if(disp) cat("........x1==x2: ",tol.eq(x1,x2)," x1==x3: ",tol.eq(x1,x3),"\n",sep="")	
 	
 	# possible the same points
 	if(tol.eq(x1,x2) && tol.eq(y1,y2) 
@@ -60,7 +60,7 @@ check.alignment <- function(x1, y1, x2, y2, x3, y3)
 	{	slope1 <- (y1-y2)/(x1-x2)
 		slope2 <- (y1-y3)/(x1-x3)
 		result <- tol.eq(slope1,slope2)
-		if(disp) cat("slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
+		if(disp) cat("........slope1: ",(y1-y2)/(x1-x2)," slope2: ",(y1-y3)/(x1-x3)," slope1==slope2: ",abs(slope1-slope2)<1e-10,"\n",sep="")
 	}
 	
 	return(result)
@@ -80,8 +80,25 @@ check.alignment <- function(x1, y1, x2, y2, x3, y3)
 # returns: a vector containing lambda_u and lambda_v.
 ############################################################################
 aux.process.lambdauv <- function(e.dist, g.dist, u1, v1, u2, v2)
-{	lambdau <- (g.dist[u2,v1] - g.dist[u2,u1] + e.dist[u1,v1])/2
+{	disp <- FALSE
+	if(disp) cat("..........(u1,v1)=(",u1,",",v1,") vs (u2,v2)=(",u2,",",v2,") e.dist[u1,v1]=",e.dist[u1,v1],"\n",sep="")
+	if(disp) cat("..........g.dist[u2,v1]=",g.dist[u2,v1]," -- g.dist[u2,u1]=",g.dist[u2,u1]," g.dist[v2,v1]=",g.dist[v2,v1]," -- g.dist[v2,u1]=",g.dist[v2,u1],"\n",sep="")
+	
+	# apply the article formulas
+	lambdau <- (g.dist[u2,v1] - g.dist[u2,u1] + e.dist[u1,v1])/2
 	lambdav <- (g.dist[v2,v1] - g.dist[v2,u1] + e.dist[u1,v1])/2
+	if(disp) cat("..........lambdau:",lambdau," lambdav:",lambdav,"\n",sep="")
+	
+	# must sometimes correct some rounding problems
+	if(lambdau<0)
+		lambdau <- 0
+	else if(lambdau>e.dist[u1,v1])
+		result <- e.dist[u1,v1]
+	if(lambdav<0)
+		lambdav <- 0
+	else if(lambdav>e.dist[u1,v1])
+		lambdav <- e.dist[u1,v1]
+	
 	result <- c(lambdau,lambdav)
 	return(result)
 }
@@ -101,7 +118,12 @@ aux.process.lambdauv <- function(e.dist, g.dist, u1, v1, u2, v2)
 # returns: the lambda_2 break-even distance.
 ############################################################################
 aux.process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
-{	result <- NA
+{	disp <- FALSE
+	if(disp) cat("..........(u1,v1)=(",u1,",",v1,") vs (u2,v2)=(",u2,",",v2,") e.dist[u1,v1]=",e.dist[u1,v1]," e.dist[u2,v2]=",e.dist[u2,v2],"\n",sep="")
+	if(disp) cat("..........g.dist[u1,u2]=",g.dist[u1,u2]," -- g.dist[u1,v2]=",g.dist[u1,v2]," g.dist[v1,u2]=",g.dist[v1,u2]," -- g.dist[v1,v2]=",g.dist[v1,v2],"\n",sep="")
+	
+	# apply the article formulas
+	result <- NA
 	if(ellp1<=lambdau && ellp1<=lambdav)
 		result <- (g.dist[u1,v2] - g.dist[u1,u2] + e.dist[u2,v2])/2
 	else if(ellp1<=lambdau && ellp1>lambdav)
@@ -110,6 +132,14 @@ aux.process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, 
 		result <- (g.dist[u1,v2] - g.dist[v1,u2] - e.dist[u1,v1] + e.dist[u2,v2] + 2*ellp1)/2
 	else if(ellp1>lambdau && ellp1>lambdav)
 		result <- (g.dist[v1,v2] - g.dist[v1,u2] + e.dist[u2,v2])/2
+	if(disp) cat("..........lambda2:",result,"\n",sep="")
+	
+	# must sometimes correct some rounding problems
+	if(result<0)
+		result <- 0
+	else if(result>e.dist[u2,v2])
+		result <- e.dist[u2,v2]
+	
 	return(result)
 }
 
@@ -354,11 +384,21 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 	# if p_1 is aligned with (u_2,v_2) and optimally connected to this link
 	else if(tol.eq(ellp1,0) && check.alignment(xu1,yu1,xu2,yu2,xv2,yv2) && tol.eq(e.dist[u1,u2],g.dist[u1,u2])
 			|| tol.eq(ellp1,e.dist[u1,v1]) && check.alignment(xv1,yv1,xu2,yu2,xv2,yv2) && tol.eq(e.dist[v1,u2],g.dist[v1,u2]))
+			# this can be the case only if p_1 is u_1 or v_1
 		result <- e.dist[u2,v2]
 	# general case
 	else
-	{	if(use.primitive)
+	{	# if the point is aligned with the link, we sometimes get some rounding problems (could not find why, exactly): 
+		# in this case we need to use the numerical integration
+		if(use.primitive && check.alignment(xu1+ellp1/e.dist[u1,v1]*(xv1-xu1),yu1+ellp1/e.dist[u1,v1]*(yv1-yu1),xu2,yu2,xv2,yv2))
+		{	if(disp) cat("......Point aligned with the link (and not optimally connected) >> no primitive\n")
+			use.primitive <- FALSE
+		}
+		
+		# integrate using the antiderivative
+		if(use.primitive)
 		{	if(disp) cat("......(u1,v1)=(",u1,",",v1,") - ellp1=",ellp1," - (u2,v2)=(",u2,",",v2,") - lambda2=",lambda2," - e.dist[u2,v2]:",e.dist[u2,v2],"\n",sep="")
+			if(disp) cat("......lambda_u=",lambdau," - lambda_v=",lambdav,"\n",sep="")
 			
 			# set the common parameters
 			a <- xu2 - xu1 - ellp1*(xv1-xu1)/e.dist[u1,v1]
@@ -375,19 +415,22 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 			part2 <- 0
 			if(lambdau <= lambdav)
 			{	if(ellp1 <= lambdau)
-				{	if(!tol.eq(lambda2,0))
+				{	if(disp) cat("......case ellp1 <= lambdau, lambdav\n",sep="")
+					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e1,f1,0)
 					if(!tol.eq(lambda2,e.dist[u2,v2]))
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
 				}
 				else if(ellp1 <= lambdav)
-				{	if(!tol.eq(lambda2,0))
+				{	if(disp) cat("......case lambdau < ellp1 <= lambdav\n",sep="")
+					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e3,f3,0)
 					if(!tol.eq(lambda2,e.dist[u2,v2]))
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
 				}
 				else
-				{	if(!tol.eq(lambda2,0))
+				{	if(disp) cat("......case lambdau, lambdav < ellp1\n",sep="")
+					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e3,f3,0)
 					if(!tol.eq(lambda2,e.dist[u2,v2]))
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
@@ -395,19 +438,22 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 			}
 			else
 			{	if(ellp1 <= lambdav)
-				{	if(!tol.eq(lambda2,0))
+				{	if(disp) cat("......case ellp1 <= lambdau, lambdav\n",sep="")
+					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e1,f1,0)
 					if(!tol.eq(lambda2,e.dist[u2,v2]))
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
 				}
 				else if(ellp1 <= lambdau)
-				{	if(!tol.eq(lambda2,0))
+				{	if(disp) cat("......case lambdau < ellp1 <= lambdau\n",sep="")
+					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e1,f1,0)
 					if(!tol.eq(lambda2,e.dist[u2,v2]))
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
 				}
 				else
-				{	if(!tol.eq(lambda2,0))
+				{	if(disp) cat("......case lambdau, lambdav < ellp1\n",sep="")
+					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e3,f3,0)
 					if(!tol.eq(lambda2,e.dist[u2,v2]))
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
@@ -418,6 +464,8 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 			if(disp) cat("......part1:",part1," (max:",lambda2,") part2:",part2," (max:",e.dist[u2,v2]-lambda2,")\n",sep="")
 			result <- part1 + part2
 		}
+		
+		# numerical integration (much slower)
 		else
 		{	# define the function to integrate
 			fun <- Vectorize(function(x)
@@ -689,10 +737,13 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 		result <- e.dist[u1,v1]*e.dist[u2,v2]
 	# general case
 	else
-	{	
-#		use.primitive <- use.primitive && 
-#				!(check.alignment(xu1,yu1,xv1,yv1,xu2,yu2) && check.alignment(xu1,yu1,xv1,yv1,xv2,yv2))
-			
+	{	# if the point is aligned with the link, we sometimes get some rounding problems (could not find why, exactly): 
+		# in this case we need to use the numerical integration
+		if(use.primitive && check.alignment(xu1,yu1,xv1,yv1,xu2,yu2) && check.alignment(xu1,yu1,xv1,yv1,xv2,yv2))
+		{	if(disp) cat("......Both links are aligned (and not optimally connected) >> no primitive\n")
+			use.primitive <- FALSE
+		}
+		
 		# use the pre-processed antiderivative of function f (faster)
 		if(use.primitive)
 		{	# check if the links have a common end-node

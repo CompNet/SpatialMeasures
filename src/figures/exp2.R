@@ -42,12 +42,12 @@ graph.types <- c(
 #	
 #	if(gtype=="hexagons")
 #	{	tlog("Generate a graph of hexagons")
-#		g <- produce.hexagon.graph(m=11,area=20)
+#		g <- produce.hexagon.graph(m=7,area=7)
 #		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
 #	}
 #	else if(gtype=="octogons")
 #	{	tlog("Generate a graph of octogons")
-#		g <- produce.octogon.graph(n=9,area=30)
+#		g <- produce.octogon.graph(n=7,area=15)
 #		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
 #	}
 #	else if(gtype=="orbitele")
