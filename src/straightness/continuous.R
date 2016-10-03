@@ -179,8 +179,6 @@ aux.process.straightness.antiderivative <- function(a, b, c, d, e, f, ell)
 		temp342 <- b^2*e^2 + d^2*e^2 - 2*a*b*e*f - 2*c*d*e*f + (a^2 + c^2)*f^2
 		temp343 <- a^2 + c^2 + 2*a*b*ell + 2*c*d*ell + (b^2 + d^2)*ell^2
 		temp34 <- (2*f^3*(temp341 + sqrt(temp342)*sqrt(temp343)))
-#if(temp34==0)
-#	temp34 <- .Machine$double.eps
 		cat("........    ","temp341: ",temp341," temp342: ",temp342," temp343: ",temp343," sqrt(temp342)*sqrt(temp343): ",sqrt(temp342)*sqrt(temp343)," temp34: ",temp34,"\n",sep="")
 		temp3 <- (sqrt(temp31)
 					* (f*sqrt(temp32)
