@@ -12,8 +12,32 @@
 
 
 
+############################################################################
+# Generate a gradient legend, to be added to an existing plot.
+# 
+# Source code by John Colby, retrieved from the following URL:
+#	http://stackoverflow.com/a/9314880/1254730
+############################################################################
+color.bar <- function(lut, min, max=-min, nticks=11, ticks=seq(min, max, len=nticks), title="") 
+{	scale = (length(lut)-1)/(max-min)
+	
+#	dev.new(width=1.75, height=5)
+	plot(c(0,10), c(min,max), type="n", bty="n", xaxt="n", xlab=title, yaxt="n", ylab="", main="")
+	axis(2, ticks, las=1)
+	for (i in 1:(length(lut)-1))
+	{	y <- (i-1)/scale + min
+		rect(0,y,10,y+1/scale, col=lut[i], border=NA)
+	}
+}
+#pdf(file="data/legend.pdf",width=1.75,height=5)
+#color.bar(colorRampPalette(c("BLUE","CYAN","YELLOW","RED"))(100), min=0, max=1, title="Straightness")
+#dev.off()
+
+
+
 ############################################################################################
 # Adds an alpha chanel to an existing color.
+#
 # Source code by Markus Gesmann, retrieved from the following URL:
 #	https://gist.github.com/mages/5339689#file-add-alpha-r
 ############################################################################################
