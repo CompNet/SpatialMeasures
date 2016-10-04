@@ -620,7 +620,7 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 #		(Erdös-Rényi random graph).
 # repetitions: number of instances of the graph to generate and process.
 ############################################################################
-mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
+monitor.time <- function(n=5, type="RAND_PLANAR", repetitions=10)
 {	gc()
 	
 	# process the specified number of repetitions
@@ -631,7 +631,7 @@ mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	{	# retrieve or create the graph
 		g <- init.graph(n, type, iteration=r)
 		
-		# retrieve the discretization table exists
+		# retrieve the discretization table, or init it if it doesn't exist
 		disc.table <- init.disc.table(n, type, iteration=r, g)
 		
 		# deal with the continuous version
@@ -652,7 +652,7 @@ mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-#mymain(n=10, type="RAND_PLANAR", repetitions=10)
-#mymain(n=25, type="RAND_PLANAR", repetitions=10)
-#mymain(n=50, type="RAND_PLANAR", repetitions=10)
-mymain(n=100, type="RAND_PLANAR", repetitions=10)
+monitor.time(n=10, type="RAND_PLANAR", repetitions=10)
+monitor.time(n=25, type="RAND_PLANAR", repetitions=10)
+#monitor.time(n=50, type="RAND_PLANAR", repetitions=10)
+#monitor.time(n=100, type="RAND_PLANAR", repetitions=10)

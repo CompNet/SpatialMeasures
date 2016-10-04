@@ -14,6 +14,9 @@
 ############################################################################
 source("src/evaluation/common.R")
 
+MEM_FILE <- "data/profiling.txt"
+MEM_INTER <- 0.00002
+MEM_SLEEP <- 0.5 	# in seconds
 
 
 
@@ -31,69 +34,60 @@ source("src/evaluation/common.R")
 #
 # returns: the table summarizing the discretization process.
 ############################################################################
-init.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
-{	tlog(2,"Initializing the discretization table")
+load.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
+{	tlog(2,"Loading the discretization table")
 	
 	# init file names
 	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
 	disc.file <- file.path(it.folder,"discretizations.txt")
-	
-	# if the table already exists, we load it
+
+	# get the table
 	if(file.exists(disc.file))
-	{	tlog(2,"The discretization table is already available: we load it from file \"",disc.file,"\"")
 		disc.table <- as.matrix(read.table(file=disc.file,header=TRUE))
+	else
+		stop("Discretization table not found. You must first execute the time.R script.")
+	nbr.disc <- nrow(disc.table) - 1
+	
+	# process each granularity value
+	memuses <- c()
+	for(d in 0:nbr.disc)
+	{	tlog(4,"Granularity: ",disc.table[d+1,"Granularity"]," (",d,"/",nbr.disc,")")
+		memuse <- 0
+		if(d>0)
+		{	again <- TRUE
+			while(again)
+			{	again <- FALSE
+				gc()
+				Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
+#					Sys.sleep(MEM_SLEEP)
+					g2 <- add.intermediate.nodes(g, granularity=disc.table[d+1,"Granularity"])
+#					Sys.sleep(MEM_SLEEP)
+				Rprof(NULL)
+#				Sys.sleep(MEM_SLEEP)
+				# update memory usage
+				mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+					error=function(e){again <<- TRUE})
+				if(again)
+					tlog(4,"Error while trying to process memory usage. Trying again.")
+				else
+					memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
+			}
+		}
+		memuses <- c(memuses,memuse)
+		tlog(6,"Memory: ",memuse," MB")
+		
+		# reset to free memory
+		g2 <- NULL
 	}
 	
-	# other wise, we init it (which may take a while)
+	# record the table
+	if("SegmentationMemory" %in% colnames(disc.table))
+		disc.table[,"SegmentationMemory"] <- memuses
 	else
-	{	# init discretization table
-		disc.table <- matrix(nrow=1,data=c(NA,n,0,0))
-		colnames(disc.table) <- c("Granularity","Nodes","AverageSegmentation","SegmentationDuration")
-		
-		# init granularity values
-		grans <- seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001)#seq(from=0.10,to=0.004,by=-0.0001))
-		
-		# process each granularity value
-		prev.size <- 0
-		for(d in 1:length(grans))
-		{	tlog(4,"Iteration "	,d,"/",length(grans)," granularity: ",grans[d])
-			start.time <- Sys.time()
-			g2 <- add.intermediate.nodes(g, granularity=grans[d])
-			if(vcount(g2)!=prev.size)
-			{	# update duration
-				end.time <- Sys.time()
-				duration <- difftime(end.time,start.time,units="s")
-				g2$duration <- duration
-				# update size
-				size <- vcount(g2)
-				g2$size <- size
-				prev.size <- size
-				# update granularity
-				g2$granularity <- grans[d]
-				# update average segmentation
-				avgseg <- mean(E(g)$dist/grans[d])
-				g2$avgseg <- avgseg
-				
-				# record graph for later
-				graph.file <- file.path(it.folder,paste0("disc=",nrow(disc.table),".graphml"))
-				write.graph(graph=g2,file=graph.file,format="graphml")
-				
-				# update discretization table
-				row <- c(grans[d],size,avgseg,duration)
-				disc.table <- rbind(disc.table,row)
-				
-				# display for debug
-				tlog(6,"Number of nodes: ",size," - Duration: ",duration," s - Average segmentation: ",avgseg," - Recorded as \"",graph.file,"\"")
-			}
-			
-			# reset to free memory
-			g2 <- NULL
-			gc()
-			
-			# record the current table
-			write.table(disc.table,file=disc.file,col.names=TRUE,row.names=FALSE)
-		}
+	{	disc.table <- cbind(disc.table,memuses)
+		colnames(disc.table)[ncol(disc.table)] <- "SegmentationMemory"
 	}
+	write.table(disc.table,file=disc.file,col.names=TRUE,row.names=FALSE)
 	
 	return(disc.table)
 }
@@ -110,8 +104,7 @@ init.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 # iteration: number of the iteration (cf. number of repetitions).
 # g: the original graph.
 #
-# returns: the list of tables containing the average straightness and corresponding
-#		   durations values for the graph ($graph) and each node ($nodes).
+# returns: the list of tables containing the memory usage.
 ############################################################################
 process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
@@ -119,58 +112,73 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 	
 	# for the whole graph
 	table.file <- file.path(it.folder,"continuous-graph.txt")
-	# check if the table already exists, in which case it is simply loaded
 	if(file.exists(table.file))
-	{	tlog(2,"The results for the whole graph are already available: we load them from file \"",table.file,"\"")
 		graph.table <- as.matrix(read.table(file=table.file,header=TRUE))
-	}
-	# otherwise, we process and record it 
 	else
-	{	tlog(2,"Processing average over the whole graph")
-		start.time <- Sys.time()
-			value <- mean.straightness.graph(graph=g)
-		end.time <- Sys.time()
-		duration <- difftime(end.time,start.time,units="s")
-		tlog(4,"Continuous average straightness: ",value," - Duration: ",duration," s")
+		stop("Whole graph table not found (\"",table.file,"\"). You must first execute the time.R script.")
+	tlog(2,"Processing average over the whole graph")
+	again <- TRUE
+	while(again)
+	{	again <- FALSE
 		gc()
-		
-		# record the data as a text file
-		tlog(4,"Record results as file \"",table.file,"\"")
-		graph.table <- matrix(c(value,duration),nrow=1)
-		colnames(graph.table) <- c("Straightness","Duration")
-		write.table(x=graph.table,file=table.file,row.names=FALSE,col.names=TRUE)
+		Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
+			value <- mean.straightness.graph(graph=g)
+		Rprof(NULL)
+		mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+			error=function(e){again <<- TRUE})
+		if(again)
+			tlog(4,"Error while trying to process memory usage. Trying again.")
+		else
+			memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 	}
+	tlog(4,"Continuous average straightness: ",value," - Memory: ",memuse," MB")
+	
+	# record the data as a text file
+	tlog(4,"Record results as file \"",table.file,"\"")
+	if("Memory" %in% colnames(graph.table))
+		graph.table[,"Memory"] <- memuse
+	else
+	{	graph.table <- cbind(graph.table,memuse)
+		colnames(graph.table)[ncol(graph.table)] <- "Memory"
+	}
+	write.table(x=graph.table,file=table.file,row.names=FALSE,col.names=TRUE)
 	
 	# process each node in the graph
 	table.file <- file.path(it.folder,"continuous-nodes.txt")
-	# check if the table already exists, in which case it is simply loaded
 	if(file.exists(table.file))
-	{	tlog(2,"The results for the nodes are already available: we load them from file \"",table.file,"\"")
 		nodes.table <- as.matrix(read.table(file=table.file,header=TRUE))
-	}
-	# otherwise, we process and record it 
 	else
-	{	tlog(2,"Processing continuous average for each individual node")
-		values <- c()
-		durations <- c()
-		for(i in 1:vcount(g))
-		{	# process the straightness
-			start.time <- Sys.time()
-				value <- mean.straightness.nodes.graph(graph=g, u=i)
-			end.time <- Sys.time()
-			values <- c(values,value)
-			duration <- difftime(end.time,start.time,units="s")
-			durations <- c(durations,duration)
-			tlog(4,"Continuous average straightness for node ",i,": ",value," - Duration: ",duration," s")
+		stop("Individual nodes table not found (\"",table.file,"\"). You must first execute the time.R script.")
+	tlog(2,"Processing continuous average for each individual node")
+	memuses <- c()
+	for(i in 1:vcount(g))
+	{	again <- TRUE
+		while(again)
+		{	again <- FALSE
 			gc()
+			Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
+				value <- mean.straightness.nodes.graph(graph=g, u=i)
+			Rprof(NULL)
+			mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+				error=function(e){again <<- TRUE})
+			if(again)
+				tlog(4,"Error while trying to process memory usage. Trying again.")
+			else
+				memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 		}
-	
-		# record the data as a text file
-		tlog(2,"Record results as file \"",table.file,"\"")
-		nodes.table <- cbind(values,durations)
-		colnames(nodes.table) <- c("Straightness","Duration")
-		write.table(x=nodes.table,file=table.file,row.names=FALSE,col.names=TRUE)
+		memuses <- c(memuses,memuse)
+		tlog(4,"Continuous average straightness for node ",i,": ",value," - Memory: ",memuse," MB")
 	}
+	
+	# record the data as a text file
+	tlog(2,"Record results as file \"",table.file,"\"")
+	if("Memory" %in% colnames(nodes.table))
+		nodes.table[,"Memory"] <- memuses
+	else
+	{	nodes.table <- cbind(nodes.table,memuses)
+		colnames(nodes.table)[ncol(nodes.table)] <- "Memory"
+	}
+	write.table(x=nodes.table,file=table.file,row.names=FALSE,col.names=TRUE)
 	
 	result <- list(graph=graph.table, nodes=nodes.table)
 	return(result)
@@ -188,10 +196,7 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 # iteration: number of the iteration (cf. number of repetitions).
 # g: the original graph.
 #
-# returns: the list of lists of tables containing the average straightness 
-#		   and corresponding durations for the graph ($graph) and each node 
-#		   ($nodes). Each element in the sublists correspond to a given 
-#		   granularity in the discretization process.
+# returns: the list of lists of tables containing the memory usage.
 ############################################################################
 process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
@@ -213,67 +218,83 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 		graph.file <- file.path(it.folder,paste0("disc=",d,".graphml"))
 		tlog(4,"Loading the previously discretized graph from file \"",graph.file,"\"")
 		g2 <- read.graph(file=graph.file,format="graphml")
-		seg.duration <- disc.table[d+1,"SegmentationDuration"]
+		seg.mem <- disc.table[d+1,"SegmentationMemory"]
 		
 		# for the whole graph
 		table.file <- file.path(it.folder,paste0("disc=",d,"-graph.txt"))
-		# check if the table already exists, in which case it is simply loaded
 		if(file.exists(table.file))
-		{	tlog(4,"The results for the whole graph are already available: we load them from file \"",table.file,"\"")
 			graph.table <- as.matrix(read.table(file=table.file,header=TRUE))
-		}
-		# otherwise, we process and record it 
 		else
-		{	tlog(4,"Processing average over the whole graph")
-			start.time <- Sys.time()
-				value <- mean.straightness.nodes(graph=g2, v=NA)[1]
-			end.time <- Sys.time()
-			duration <- difftime(end.time,start.time,units="s") + seg.duration
-			diff <- value - cont.tables$graph[1,"Straightness"]
-			tlog(6,"Discrete average straightness: ",value," (Difference: ",diff,") - Duration: ",duration," s")
+			stop("Whole graph table not found (\"",table.file,"\"). You must first execute the time.R script.")
+		tlog(4,"Processing average over the whole graph")
+		again <- TRUE
+		while(again)
+		{	again <- FALSE
 			gc()
-			
-			# record the data as a text file
-			tlog(4,"Record results as file \"",table.file,"\"")
-			graph.table <- matrix(c(value,diff,duration),nrow=1)
-			colnames(graph.table) <- c("Straightness","Difference","Duration")
-			write.table(x=graph.table,file=table.file,row.names=FALSE,col.names=TRUE)
+			Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
+				value <- mean.straightness.nodes(graph=g2, v=NA)[1]
+			Rprof(NULL)
+			mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+				error=function(e){again <<- TRUE})
+			if(again)
+				tlog(4,"Error while trying to process memory usage. Trying again.")
+			else
+				memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 		}
+		memuse <- max(seg.mem,memuse)
+		tlog(6,"Discrete average straightness: ",value," - Memory: ",memuse," MB")
+		
+		# record the data as a text file
+		tlog(4,"Record results as file \"",table.file,"\"")
+		if("Memory" %in% colnames(graph.table))
+			graph.table[1,"Memory"] <- memuse
+		else
+		{	graph.table <- cbind(graph.table,memuse)
+			colnames(graph.table)[ncol(graph.table)] <- "Memory"
+		}
+		write.table(x=graph.table,file=table.file,row.names=FALSE,col.names=TRUE)
+
 		graph.tables[[as.character(d)]] <- graph.table
 		
 		# process each node in the graph
 		table.file <- file.path(it.folder,paste0("disc=",d,"-nodes.txt"))
-		# check if the table already exists, in which case it is simply loaded
 		if(file.exists(table.file))
-		{	tlog(4,"The results for the nodes are already available: we load them from file \"",table.file,"\"")
 			nodes.table <- as.matrix(read.table(file=table.file,header=TRUE))
-		}
 		# otherwise, we process and record it 
 		else
-		{	tlog(4,"Processing discrete average for each individual node")
-			values <- c()
-			durations <- c()
-			diffs <- c()
-			for(i in 1:vcount(g))
-			{	# process the straightness
-				start.time <- Sys.time()
-					value <- mean.straightness.nodes(graph=g2,v=i)[1,1]
-				end.time <- Sys.time()
-				values <- c(values,value)
-				duration <- difftime(end.time,start.time,units="s") + seg.duration
-				durations <- c(durations,duration)
-				diff <- value - cont.tables$nodes[i,"Straightness"]
-				diffs <- c(diffs,diff)
-				tlog(6,"Discrete average straightness for node ",i,": ",value," (Difference: ",diff,") - Duration: ",duration," s")
+			stop("Individual nodes table not found (\"",table.file,"\"). You must first execute the time.R script.")
+		tlog(4,"Processing discrete average for each individual node")
+		memuses <- c()
+		for(i in 1:vcount(g))
+		{	again <- TRUE
+			while(again)
+			{	again <- FALSE
 				gc()
+				Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
+					value <- mean.straightness.nodes(graph=g2,v=i)[1,1]
+				Rprof(NULL)
+				mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+					error=function(e){again <<- TRUE})
+				if(again)
+					tlog(4,"Error while trying to process memory usage. Trying again.")
+				else
+					memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 			}
-			
-			# record the data as a text file
-			tlog(4,"Record results as file \"",table.file,"\"")
-			nodes.table <- cbind(values,diffs,durations)
-			colnames(nodes.table) <- c("Straightness","Difference","Duration")
-			write.table(x=nodes.table,file=table.file,row.names=FALSE,col.names=TRUE)
+			memuse <- max(seg.mem,memuse)
+			memuses <- c(memuses,memuse)
+			tlog(6,"Discrete average straightness for node ",i,": ",value," - Memory: ",memuse," MB")
 		}
+		
+		# record the data as a text file
+		tlog(4,"Record results as file \"",table.file,"\"")
+		if("Memory" %in% colnames(nodes.table))
+			nodes.table[,"Memory"] <- memuses
+		else
+		{	nodes.table <- cbind(nodes.table,memuses)
+			colnames(nodes.table)[ncol(nodes.table)] <- "Memory"
+		}
+		write.table(x=nodes.table,file=table.file,row.names=FALSE,col.names=TRUE)
+		
 		nodes.tables[[as.character(d)]] <- nodes.table
 		g2 <- NULL
 		gc()
@@ -297,7 +318,7 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 # disc.tables: list of tables for the discrete average straightness.
 #
 # returns: list of tables corresponding to a more compact representation of
-#		   the previously processed values.
+#		   the previously processed memory usages.
 ############################################################################
 generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table, cont.tables, disc.tables)
 {	tlog("Generating plots and tables for the iteration ",iteration)
@@ -306,8 +327,8 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 	
 	# build the graph table
 	tlog(2,"Building the graph table")
-	graph.all <- matrix(NA,nrow=nrow(disc.table),ncol=3)
-	colnames(graph.all) <- c("Straightness","Difference","Duration")
+	graph.all <- matrix(NA,nrow=nrow(disc.table),ncol=4)
+	colnames(graph.all) <- c("Straightness","Difference","Duration","Memory")
 	for(d in 0:(nrow(disc.table)-1))
 		graph.all[d+1,] <- c(disc.tables$graph[[as.character(d)]])
 	rownames(graph.all) <- nm
@@ -318,25 +339,14 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 		
 	# build the nodes tables
 	tlog(2,"Building the nodes tables")
-	nodes.values <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])
-	colnames(nodes.values) <- nm
-	nodes.differences <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])	
-	colnames(nodes.differences) <- nm
-	nodes.durations <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])	
-	colnames(nodes.durations) <- nm
+	nodes.memory <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])
+	colnames(nodes.memory) <- nm
 	for(d in 0:(nrow(disc.table)-1))
-	{	nodes.values[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Straightness"]
-		nodes.differences[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Difference"]
-		nodes.durations[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Duration"]
-	}
+		nodes.memory[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Memory"]
 	
 	# record the nodes tables
-	table.file <- file.path(it.folder,paste0("discrete-nodes-straightness.txt"))
-	write.table(nodes.values,file=table.file,col.names=TRUE,row.names=FALSE)
-	table.file <- file.path(it.folder,paste0("discrete-nodes-differences.txt"))
-	write.table(nodes.differences,file=table.file,col.names=TRUE,row.names=FALSE)
-	table.file <- file.path(it.folder,paste0("discrete-nodes-durations.txt"))
-	write.table(nodes.durations,file=table.file,col.names=TRUE,row.names=FALSE)
+	table.file <- file.path(it.folder,paste0("discrete-nodes-memory.txt"))
+	write.table(nodes.memory,file=table.file,col.names=TRUE,row.names=FALSE)
 	
 	# generate the plots
 	tlog(2,"Generating the plots for iteration ",iteration)
@@ -354,53 +364,13 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			xvals <- disc.table[,"Granularity"]
 		} 
 		
-		# straightness
-		{	yaxis <- "straightness"
-			ylab <- "Straightness"
-			graph.yvals <- graph.all[,"Straightness"]
-			graph.cont.val <- cont.tables$graph[1,"Straightness"]
-			nodes.yvals <- nodes.values
-			nodes.cont.vals <- cont.tables$nodes[,"Straightness"]
-			
-			# graph plot
-			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
-					xlab=xlab, ylab=ylab,
-					col="BLUE",
-					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
-			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),y=rep(graph.cont.val,2),col="RED")
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
-					fill=c("BLUE","RED"))
-			dev.off()
-			
-			# node plots
-			for(j in 1:length(nodes.cont.vals))
-			{	plot.file <- file.path(it.folder,paste0("node=",j,"-",yaxis,"-vs-",xaxis,".pdf"))
-				pdf(file=plot.file)
-				plot(x=xvals, y=nodes.yvals[j,],
-						xlab=xlab, ylab=ylab,
-						col="BLUE",
-						ylim=c(min(c(nodes.yvals[j,],nodes.cont.vals[j])),max(c(nodes.yvals[j,],nodes.cont.vals[j])))
-				)
-				lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-						y=rep(nodes.cont.vals[j],2),
-						col="RED"
-				)
-				legend(x="bottomright",legend=c("Approximation","Exact value"),
-						fill=c("BLUE","RED"))
-				dev.off()
-			}
-		}
-		
-		# durations
-		{	yaxis <- "durations"
-			ylab <- "Time (s)"
-			graph.yvals <- graph.all[,"Duration"]
-			graph.cont.val <- cont.tables$graph[1,"Duration"]
-			nodes.yvals <- nodes.durations
-			nodes.cont.vals <- cont.tables$nodes[,"Duration"]
+		# memory
+		{	yaxis <- "memory"
+			ylab <- "Memory (MB)"
+			graph.yvals <- graph.all[,"Memory"]
+			graph.cont.val <- cont.tables$graph[1,"Memory"]
+			nodes.yvals <- nodes.memory
+			nodes.cont.vals <- cont.tables$nodes[,"Memory"]
 			
 			# graph plots
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
@@ -434,46 +404,10 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
-		
-		# straightness differences
-		{	yaxis <- "differences"
-			ylab <- "Straightness difference"
-			graph.yvals <- graph.all[,"Difference"]
-			nodes.yvals <- nodes.differences
-			
-			# graph plots
-			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(graph.yvals),max(graph.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-					xlab=xlab, ylab=ylab
-			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
-			points(x=xvals, y=graph.yvals,
-					col="BLUE"
-			)
-			dev.off()
-			
-			# node plots
-			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(nodes.yvals),max(nodes.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-					xlab=xlab, ylab=ylab
-			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
-			points(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
-					pch=20,
-					col=add.alpha("BLUE", 0.25)
-			)
-			dev.off()
-		}
 	}
 	
 	result <- 	list(graph=graph.all, 
-			nodes=list(straightness=nodes.values,
-					differences=nodes.differences,
-					durations=nodes.durations))
+			nodes=list(memuses=nodes.memory))
 	return(result)
 }
 
@@ -496,24 +430,20 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 	
 	# collecting the data
 	ngran <- nrow(data.disc[[1]]$graph)
-	graph.cont.durations <- data.cont[[1]]$graph[1,"Duration"]
-	nodes.cont.durations <- data.cont[[1]]$nodes[,"Duration"]
-	graph.disc.durations <- data.disc[[1]]$graph[,"Duration"]
-	graph.disc.differences <- data.disc[[1]]$graph[,"Difference"]
-	nodes.disc.durations <- data.disc[[1]]$nodes$durations	#TODO pas le même nbre de discretizations
-	nodes.disc.differences <- data.disc[[1]]$nodes$differences
+	graph.cont.memory <- data.cont[[1]]$graph[1,"Memory"]
+	nodes.cont.memory <- data.cont[[1]]$nodes[,"Memory"]
+	graph.disc.memory <- data.disc[[1]]$graph[,"Memory"]
+	nodes.disc.memory <- data.disc[[1]]$nodes$memuses
 	granularities <- discretizations[[1]][,"Granularity"]
 	nodes <- discretizations[[1]][,"Nodes"]
 	avgseg <- discretizations[[1]][,"AverageSegmentation"]
 	for(r in 2:length(data.disc))
 	{	# continuous results
-		graph.cont.durations <- c(graph.cont.durations,data.cont[[r]]$graph[1,"Duration"])
-		nodes.cont.durations <- c(nodes.cont.durations,data.cont[[r]]$nodes[,"Duration"])
+		graph.cont.memory <- c(graph.cont.memory,data.cont[[r]]$graph[1,"Memory"])
+		nodes.cont.memory <- c(nodes.cont.memory,data.cont[[r]]$nodes[,"Memory"])
 		# discrete results
-		graph.disc.durations <- c(graph.disc.durations,data.disc[[r]]$graph[,"Duration"])
-		graph.disc.differences <- c(graph.disc.differences,data.disc[[r]]$graph[,"Difference"])
-		nodes.disc.durations <- cbind(nodes.disc.durations,data.disc[[r]]$nodes$durations)
-		nodes.disc.differences <- cbind(nodes.disc.differences,data.disc[[r]]$nodes$differences)
+		graph.disc.memory <- c(graph.disc.memory,data.disc[[r]]$graph[,"Memory"])
+		nodes.disc.memory <- cbind(nodes.disc.memory,data.disc[[r]]$nodes$memuses)
 		# x values
 		granularities <- c(granularities,discretizations[[r]][,"Granularity"])
 		nodes <- c(nodes,discretizations[[r]][,"Nodes"])
@@ -536,22 +466,22 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			xvals <- granularities
 		} 
 		
-		# durations
-		{	yaxis <- "durations"
-			ylab <- "Time (s)"
+		# memory
+		{	yaxis <- "memory"
+			ylab <- "Memory (MB)"
 			
 			# graph plots
 			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.disc.durations,
+			plot(x=xvals, y=graph.disc.memory,
 					pch=20,
 					xlab=xlab, ylab=ylab,
 					col=add.alpha("BLUE", 0.25),
-					ylim=c(min(c(graph.disc.durations,graph.cont.durations)),max(c(graph.disc.durations,graph.cont.durations)))
+					ylim=c(min(c(graph.disc.memory,graph.cont.memory)),max(c(graph.disc.memory,graph.cont.memory)))
 			)
-			for(j in 1:length(graph.cont.durations))
+			for(j in 1:length(graph.cont.memory))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-						y=rep(graph.cont.durations[j],2),
+						y=rep(graph.cont.memory[j],2),
 						col=add.alpha("RED", 0.25)
 				)
 			}
@@ -562,53 +492,20 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			# node plots
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.disc.durations)), y=c(t(nodes.disc.durations)),
+			plot(x=rep(xvals,nrow(nodes.disc.memory)), y=c(t(nodes.disc.memory)),
 					pch=20,
 					xlab=xlab, ylab=ylab,
 					col=add.alpha("BLUE", 0.25),
-					ylim=c(min(c(nodes.disc.durations,nodes.cont.durations)),max(c(nodes.disc.durations,nodes.cont.durations)))
+					ylim=c(min(c(nodes.disc.memory,nodes.cont.memory)),max(c(nodes.disc.memory,nodes.cont.memory)))
 			)
-			for(j in 1:length(nodes.cont.durations))
+			for(j in 1:length(nodes.cont.memory))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-						y=rep(nodes.cont.durations[j],2),
+						y=rep(nodes.cont.memory[j],2),
 						col=add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
 					fill=c("BLUE","RED"))
-			dev.off()
-		}
-		
-		# straightness differences
-		{	yaxis <- "differences"
-			ylab <- "Straightness difference"
-			
-			# graph plots
-			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(graph.disc.differences),max(graph.disc.differences)),
-				xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-				xlab=xlab, ylab=ylab
-			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
-			points(x=xvals, y=graph.disc.differences,
-					pch=20,
-					col=add.alpha("BLUE", 0.25)
-			)
-			dev.off()
-			
-			# node plots
-			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(nodes.disc.differences),max(nodes.disc.differences)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-					xlab=xlab, ylab=ylab
-			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
-			points(x=rep(xvals,nrow(nodes.disc.differences)), y=c(t(nodes.disc.differences)),
-					pch=20,
-					col=add.alpha("BLUE", 0.25)
-			)
 			dev.off()
 		}
 	}
@@ -625,7 +522,7 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 #		(Erdös-Rényi random graph).
 # repetitions: number of instances of the graph to generate and process.
 ############################################################################
-mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
+monitor.memory <- function(n=5, type="RAND_PLANAR", repetitions=10)
 {	gc()
 	
 	# process the specified number of repetitions
@@ -636,8 +533,8 @@ mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	{	# retrieve or create the graph
 		g <- init.graph(n, type, iteration=r)
 		
-		# retrieve the discretization table exists
-		disc.table <- init.disc.table(n, type, iteration=r, g)
+		# retrieve the discretization table
+		disc.table <- load.disc.table(n, type, iteration=r, g)
 		
 		# deal with the continuous version
 		cont.tables <- process.continuous.straightness(n,type,iteration=r,g)
@@ -657,7 +554,7 @@ mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-#mymain(n=10, type="RAND_PLANAR", repetitions=10)
-#mymain(n=25, type="RAND_PLANAR", repetitions=10)
-#mymain(n=50, type="RAND_PLANAR", repetitions=10)
-mymain(n=100, type="RAND_PLANAR", repetitions=10)
+monitor.memory(n=10, type="RAND_PLANAR", repetitions=10)
+#monitor.memory(n=25, type="RAND_PLANAR", repetitions=10)
+#monitor.memory(n=50, type="RAND_PLANAR", repetitions=10)
+#monitor.memory(n=100, type="RAND_PLANAR", repetitions=10)
