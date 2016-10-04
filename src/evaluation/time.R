@@ -6,82 +6,17 @@
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/time.R")
+# source("src/evaluation/time.R")
 ############################################################################
-source("src/misc/log.R")
-source("src/misc/plot.R")
-source("src/misc/transformations.R")
-
-source("src/straightness/continuous.R")
-source("src/straightness/discrete.R")
-
-
-
-############################################################################
-# Creates a new graph corresponding to the specified parameters, or loads
-# it from the file, if it exists. When created, the graph is also recorded
-# as a Graphml file.
-#
-# n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
-#		graph).
-# iteration: number of the iteration (cf. number of repetitions).
-#
-# returns: the created or loaded graph.
-############################################################################
-init.graph <- function(n=5, type="RAND_PLANAR", iteration=1)
-{	tlog(2,"Initializing the graph")
-	
-	# init file name
-	graph.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
-	graph.filename <- "disc=0"
-	gf <- file.path(graph.folder,paste0(graph.filename,".graphml"))
-	
-	# graph already exists as a file
-	if(file.exists(gf))
-	{	tlog(4,"The graph already exists: loading file \"",gf,"\"")
-		g <- read.graph(gf,format="graphml")
-	}
-	
-	# graph must be created
-	else
-	{	tlog(4,"The graph is generated and recorded in file \"",gf,"\"")
-		
-		# create a planar graph
-		if(type=="RAND_PLANAR")
-		{	g <- graph.empty(n=n, directed=FALSE)									# create empty graph
-			V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-			V(g)$y <- runif(vcount(g),min=-1,max=1)
-			g <- connect.triangulation(g)											# use triangulation to init the links
-		}
-		
-		# create an Erdös-Rényi graph
-		else if(type=="ERDOS_RENYI")
-		{	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
-			V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-			V(g)$y <- runif(vcount(g),min=-1,max=1)
-		}
-		
-		# common steps
-		g <- distances.as.weights(g)											# add inter-node distances as link attributes
-		V(g)$label <- 1:vcount(g)
-		g$duration <- 0
-		g$size <- vcount(g)
-		g$granularity <- NA
-		g$avgseg <- 0
-		myplot.graph(g, node.str=NA, link.str=NA, large=TRUE, filename=graph.filename, out.folder=graph.folder, export=TRUE, formats=c("pdf",NA))
-	}
-	
-	return(g)
-}
+source("src/evaluation/common.R")
 
 
 
 ############################################################################
 # Discretizes the original graph and record all the resulting graphs as 
-# Graphml files for later use. A table summarizing the process is also
-# recorded, also for later use. If the table already exists as a file, we 
-# assime the graph files also exist, and load the table then return it.
+# Graphml files for later use. A table summarizing the process is recorded
+# too, also for later use. If the table already exists as a file, we assume 
+# the graph files also exist, and load the table then return it.
 #
 # n: number of nodes.
 # type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
@@ -161,6 +96,17 @@ init.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 
 
 ############################################################################
+# Processes the continuous version of the average straightness, for the
+# specified graphs.
+#
+# n: number of nodes.
+# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+#		graph).
+# iteration: number of the iteration (cf. number of repetitions).
+# g: the original graph.
+#
+# returns: the list of tables containing the average straightness and corresponding
+#		   durations values for the graph ($graph) and each node ($nodes).
 ############################################################################
 process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
@@ -228,6 +174,19 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 
 
 ############################################################################
+# Processes the discrete version of the average straightness, for the
+# specified graphs.
+#
+# n: number of nodes.
+# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+#		graph).
+# iteration: number of the iteration (cf. number of repetitions).
+# g: the original graph.
+#
+# returns: the list of lists of tables containing the average straightness 
+#		   and corresponding durations for the graph ($graph) and each node 
+#		   ($nodes). Each element in the sublists correspond to a given 
+#		   granularity in the discretization process.
 ############################################################################
 process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
@@ -322,6 +281,18 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 
 
 ############################################################################
+# Generates the plots for each iteration.
+#
+# n: number of nodes.
+# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+#		graph).
+# iteration: number of the iteration (cf. number of repetitions).
+# disc.table: discretization table.
+# cont.tables: list of tables for the continuous average straightness.
+# disc.tables: list of tables for the discrete average straightness.
+#
+# returns: list of tables corresponding to a more compact representation of
+#		   the previously processed values.
 ############################################################################
 generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table, cont.tables, disc.tables)
 {	tlog("Generating plots and tables for the iteration ",iteration)
@@ -504,6 +475,15 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 
 
 ############################################################################
+# Generates the plots for all iteration.
+#
+# n: number of nodes.
+# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+#		graph).
+# iteration: number of the iteration (cf. number of repetitions).
+# discretizations: list of discretization tables.
+# data.cont: list of lists of tables for the continuous average straightness.
+# data.disc: list of list of tables for the discrete average straightness.
 ############################################################################
 generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, data.cont, data.disc)
 {	tlog("Generating plots and tables for all the repetitions")
@@ -630,7 +610,15 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 }
 
 
+
 ############################################################################
+# Process the time usage stats on a collection of randomly generated networks,
+# and generates the corresponding tables and plots.
+#
+# n: number of nodes in the graph.
+# type: type of graph, RAND_PLANAR (planar random graph) or ERDOS_RENYI 
+#		(Erdös-Rényi random graph).
+# repetitions: number of instances of the graph to generate and process.
 ############################################################################
 mymain <- function(n=5, type="RAND_PLANAR", repetitions=10)
 {	gc()
