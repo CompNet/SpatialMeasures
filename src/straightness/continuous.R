@@ -257,7 +257,7 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 		if(error.flag)
 		{	cat("......",a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,"\n",sep="")
 			print(fellp2)
-			stop()
+#			stop()
 		}
 		else
 		{	result <- intres$value

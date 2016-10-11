@@ -27,7 +27,7 @@ tlog("Load the original graph")
 gl[[1]] <- read.graph("data/figures/small_1/graph.graphml",format="graphml")
 # remove a few nodes from the graph
 tlog("Remove nodes 16-18 from the graph")
-gl[[2]] <- delete.vertices(g,16:18)
+gl[[2]] <- delete.vertices(gl[[1]],16:18)
 
 
 
