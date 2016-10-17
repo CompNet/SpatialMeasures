@@ -15,7 +15,6 @@
 source("src/evaluation/common.R")
 
 MEM_FILE <- "data/profiling.txt"	# R profiler output file (temporary)
-MEM_INTER <- 0.00002				# R profiler update rate
 MEM_SLEEP <- 2 						# sleep between to tries, in seconds
 TRY_LIMIT <- 100					# max number of tries
 DURATION_LIMIT <- 300 				# max duration for trying, in seconds
@@ -68,6 +67,7 @@ load.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
 	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	graph.file <- 	file.path("data",type,paste0("n=",n),paste0("it=",iteration),paste0("disc=0",".graphml"))
 	
 	# for the whole graph
 	table.file <- file.path(it.folder,"continuous-graph.txt")
@@ -80,33 +80,20 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 		tlog(2,"The memory usage for the graph is already available (",graph.table[1,"Memory"]," MB): nothing to do here")
 	else
 	{	tlog(2,"Processing average over the whole graph")
+		cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",0," ",0)
+		memuse <- NA
 		again <- TRUE
 		while(again)
 		{	again <- FALSE
-			gc()
-			Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
-				value <- mean.straightness.graph(graph=g)
-			Rprof(NULL)
-			#Sys.sleep(MEM_SLEEP)
-			# this part is just because the R memory profiler sometimes seems to be buggy...
-#stop()
-#				warned <- FALSE
-#				memtrc <- tryCatch(readLines(MEM_FILE),warning=function(e) 
-#						{	warned <<- TRUE
-#							return(readLines(MEM_FILE,warn=FALSE))
-#						})
-#				if(warned)
-#				{	memtrc <- memtrc[-length(memtrc)]
-#					writeLines(text=memtrc,con=MEM_FILE)
-#				}
-			mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+			invisible(system(command=cmd, intern=FALSE, ignore.stdout=FALSE, ignore.stderr=FALSE, wait=TRUE, input=NULL))
+			mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]],
 					error=function(e){again <<- TRUE})
 			if(again)
 				tlog(4,"Error while trying to process memory usage. Trying again.")
 			else
 				memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 		}
-		tlog(4,"Continuous average straightness: ",value," - Memory: ",memuse," MB")
+		tlog(4,"Continuous average straightness memory usage: ",memuse," MB")
 		
 		# record the data as a text file
 		tlog(4,"Record results as file \"",table.file,"\"")
@@ -134,14 +121,13 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 			memuses <- c(memuses,nodes.table[i,"Memory"])
 		}
 		else
-		{	again <- TRUE
+		{	cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",0," ",i)
+			memuse <- NA
+			again <- TRUE
 			while(again)
 			{	again <- FALSE
-				gc()
-				Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
-				value <- mean.straightness.nodes.graph(graph=g, u=i)
-				Rprof(NULL)
-				mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
+				invisible(system(command=cmd, intern=FALSE, ignore.stdout=FALSE, ignore.stderr=FALSE, wait=TRUE, input=NULL))
+				mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]],
 						error=function(e){again <<- TRUE})
 				if(again)
 					tlog(4,"Error while trying to process memory usage. Trying again.")
@@ -149,7 +135,7 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 					memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 			}
 			memuses <- c(memuses,memuse)
-			tlog(4,"Continuous average straightness for node ",i,": ",value," - Memory: ",memuse," MB")
+			tlog(4,"Continuous average straightness memory usage for node ",i,": ",memuse," MB")
 		}
 	}
 		
@@ -184,6 +170,7 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
 	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	graph.file <- 	file.path("data",type,paste0("n=",n),paste0("it=",iteration),paste0("disc=0",".graphml"))
 	
 	# load the discretization table
 	disc.file <- file.path(it.folder,"discretizations.txt")
@@ -208,42 +195,35 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 			tlog(4,"The memory usage for the graph is already available (",graph.table[1,"Memory"]," MB): nothing to do here")
 		else
 		{	tlog(4,"Processing average over the whole graph")
-			again <- TRUE
-			tries <- 0
-			start.time <- Sys.time()
-			while(again)
-			{	again <- FALSE
-				gc()
-				Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
-				# the profiler doesn't like it if it's too fast...
-				if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
-				# discretize the graph links
-				if(d==0)
-					g2 <- g
-				else
-					g2 <- add.intermediate.nodes(g, granularity=disc.table[d+1,"Granularity"])
-				# process the straightness
-				value <- mean.straightness.nodes(graph=g2, v=NA)[1]
-				if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
-				Rprof(NULL)
-				if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
-				mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
-						error=function(e){again <<- TRUE})
-				end.time <- Sys.time()
-				duration <- difftime(end.time,start.time,units="s")
-				if(again && tries<TRY_LIMIT && duration<DURATION_LIMIT)
-				{	tries <- tries + 1
-					tlog(4,"Error while trying to process memory usage. Trying again (",tries,"/",TRY_LIMIT,").")
+			memuse <- NA
+			if(d>0)
+			{	cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",disc.table[d+1,"Granularity"]," ",0)
+				again <- TRUE
+				tries <- 0
+				start.time <- Sys.time()
+				while(again)
+				{	again <- FALSE
+#print(cmd);stop()					
+					invisible(system(command=cmd, intern=FALSE, ignore.stdout=FALSE, ignore.stderr=FALSE, wait=TRUE, input=NULL))
+					if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
+					mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]],
+							error=function(e){again <<- TRUE})
+					end.time <- Sys.time()
+					duration <- difftime(end.time,start.time,units="s")
+					if(again && tries<TRY_LIMIT && duration<DURATION_LIMIT)
+					{	tries <- tries + 1
+						tlog(4,"Error while trying to process memory usage. Trying again (",tries,"/",TRY_LIMIT,").")
+#print(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1))						
+					}
+					else if(again && (tries>=TRY_LIMIT || duration>=DURATION_LIMIT))
+					{	tlog(4,"Error while trying to process memory usage. Too many tries or too long: giving up (",tries,"/",TRY_LIMIT," tries -- ",duration,"/",DURATION_LIMIT," seconds).")
+						again <- FALSE
+					}
+					else
+						memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 				}
-				else if(again && (tries>=TRY_LIMIT || duration>=DURATION_LIMIT))
-				{	tlog(4,"Error while trying to process memory usage. Too many tries or too long: giving up (",tries,"/",TRY_LIMIT," tries -- ",duration,"/",DURATION_LIMIT," seconds).")
-					memuse <- NA
-					again <- FALSE
-				}
-				else
-					memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 			}
-			tlog(6,"Discrete average straightness: ",value," - Memory: ",memuse," MB")
+			tlog(6,"Discrete average straightness memory usage: ",memuse," MB")
 			
 			# record the data as a text file
 			tlog(4,"Record results as file \"",table.file,"\"")
@@ -273,42 +253,34 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 				memuses <- c(memuses,nodes.table[i,"Memory"])
 			}
 			else
-			{	again <- TRUE
-				tries <- 0
-				start.time <- Sys.time()
-				while(again)
-				{	again <- FALSE
-					gc()
-					Rprof(MEM_FILE, memory.profiling=TRUE, interval=MEM_INTER)
-					if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
-					# discretize the graph links
-					if(d==0)
-						g2 <- g
-					else
-						g2 <- add.intermediate.nodes(g, granularity=disc.table[d+1,"Granularity"])
-					# process the straightness
-					value <- mean.straightness.nodes(graph=g2,v=i)[1,1]
-					if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
-					Rprof(NULL)
-					if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
-					mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[["\"source\""]],
-							error=function(e){again <<- TRUE})
-					end.time <- Sys.time()
-					duration <- difftime(end.time,start.time,units="s")
-					if(again && tries<TRY_LIMIT && duration<DURATION_LIMIT)
-					{	tries <- tries + 1
-						tlog(4,"Error while trying to process memory usage. Trying again (",tries,"/",TRY_LIMIT,").")
+			{	memuse <- NA
+				if(d>0)
+				{	cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",disc.table[d+1,"Granularity"]," ",i)
+					again <- TRUE
+					tries <- 0
+					start.time <- Sys.time()
+					while(again)
+					{	again <- FALSE
+						invisible(system(command=cmd, intern=FALSE, ignore.stdout=FALSE, ignore.stderr=FALSE, wait=TRUE, input=NULL))
+						if(tries==TRY_LIMIT-1) Sys.sleep(MEM_SLEEP)
+						mem.stats <- tryCatch(summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]],
+								error=function(e){again <<- TRUE})
+						end.time <- Sys.time()
+						duration <- difftime(end.time,start.time,units="s")
+						if(again && tries<TRY_LIMIT && duration<DURATION_LIMIT)
+						{	tries <- tries + 1
+							tlog(4,"Error while trying to process memory usage. Trying again (",tries,"/",TRY_LIMIT,").")
+						}
+						else if(again && (tries>=TRY_LIMIT || duration>=DURATION_LIMIT))
+						{	tlog(4,"Error while trying to process memory usage. Too many tries: giving up (",tries,"/",TRY_LIMIT,").")
+							again <- FALSE
+						}
+						else
+							memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 					}
-					else if(again && (tries>=TRY_LIMIT || duration>=DURATION_LIMIT))
-					{	tlog(4,"Error while trying to process memory usage. Too many tries: giving up (",tries,"/",TRY_LIMIT,").")
-						memuse <- NA
-						again <- FALSE
-					}
-					else
-						memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
 				}
 				memuses <- c(memuses,memuse)
-				tlog(6,"Discrete average straightness for node ",i,": ",value," - Memory: ",memuse," MB")
+				tlog(6,"Discrete average straightness memory usage for node ",i,": ",memuse," MB")
 			}
 		}
 		
@@ -323,8 +295,6 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 		write.table(x=nodes.table,file=table.file,row.names=FALSE,col.names=TRUE)
 		
 		nodes.tables[[as.character(d)]] <- nodes.table
-		g2 <- NULL
-		gc()
 	}
 	
 	result <- list(graph=graph.tables, nodes=nodes.tables)
@@ -550,9 +520,7 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 # repetitions: number of instances of the graph to generate and process.
 ############################################################################
 monitor.memory <- function(n=5, type="RAND_PLANAR", repetitions=10)
-{	gc()
-	
-	# process the specified number of repetitions
+{	# process the specified number of repetitions
 	data.disc <- list()
 	data.cont <- list()
 	discretizations <- list()
@@ -564,24 +532,23 @@ monitor.memory <- function(n=5, type="RAND_PLANAR", repetitions=10)
 		disc.table <- load.disc.table(n, type, iteration=r, g)
 		
 		# deal with the continuous version
-		cont.tables <- process.continuous.straightness(n,type,iteration=r,g)
+		cont.tables <- process.continuous.straightness(n, type, iteration=r,g)
 		
 		# deal with the discrete version
-		disc.tables <- process.discrete.straightness(n,type,iteration=r,g,cont.tables)
+		disc.tables <- process.discrete.straightness(n, type, iteration=r, g, cont.tables)
 		
 		# generate plots
 		data.disc[[r]] <- generate.rep.plots(n, type, iteration=r, disc.table, cont.tables, disc.tables)
 		
 		data.cont[[r]] <- cont.tables
 		discretizations[[r]] <- disc.table
-		gc()
 	}
 	
 	# generate plots using the repetitions
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-monitor.memory(n=10, type="RAND_PLANAR", repetitions=10)
+#monitor.memory(n=10, type="RAND_PLANAR", repetitions=10)
 #monitor.memory(n=25, type="RAND_PLANAR", repetitions=10)
 #monitor.memory(n=50, type="RAND_PLANAR", repetitions=10)
-#monitor.memory(n=100, type="RAND_PLANAR", repetitions=10)
+monitor.memory(n=100, type="RAND_PLANAR", repetitions=10)
