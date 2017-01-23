@@ -12,6 +12,7 @@
 
 
 
+
 #############################################################################################
 # Logs the specified message on screen, adding current date and time, and possible some
 # offset (to represent the hierarchy of function calls).

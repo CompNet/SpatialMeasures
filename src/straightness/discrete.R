@@ -12,6 +12,7 @@ library("igraph")
 
 
 
+
 ############################################################################
 # Processes the straightness for each pair of nodes:
 #  1) Get the spatial distance between each pair of nodes.

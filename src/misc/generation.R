@@ -7,14 +7,17 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/misc/generation.R")
 ############################################################################
-library("splancs") # used to process polygon areas
+#library("splancs") # used to process polygon areas
 
 
 source("src/misc/transformations.R")
 
 
+
+
 # constant used as a workaround to rounding problems
 EPSILON <- 0.0001
+
 
 
 

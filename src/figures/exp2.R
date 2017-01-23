@@ -1,6 +1,7 @@
 ############################################################################
 # Script used to produce some of the paper figures from the experiments section.
-# This one focuses on a selection of lattices (regular graphs).
+# This one focuses on a selection of lattices (regular graphs), cf. Fig.5-7 in
+# the paper.
 #
 # Vincent Labatut 09/2016
 #
@@ -17,18 +18,66 @@ source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
+
+
 graph.types <- c(
-#	"hexagons",
-#	"octogons",
-#	"orbitele",
-#	"radiocentric",
-#	"squares",
-	"triangles"
-#	"randplan-original",
-#	"randplan-yifanhu",
-#	"randplan-fruchtergold"
+	"hexagons",
+	"octogons",
+	"orbitele",
+	"radiocentric",
+	"squares",
+	"triangles",
+	"randplan-original",
+	"randplan-yifanhu",
+	"randplan-fruchtergold"
 )
 
+data.folder <- "data"
+figures.folder <- file.path(data.folder,"figures")
+
+
+
+
+########################################
+# This function generates a random planar graph.
+#
+# gtype: type of layout to apply to the graph.
+# returns: the produced graph, as an igraph object.
+########################################
+produce.random.graph <- function(gtype)
+{	out.folder <- file.path(figures.folder,gtype)
+	net.file <- file.path(out.folder,"graph.graphml")
+	
+	if(gtype=="randplan-original")
+	{	g <- graph.empty(n=n, directed=FALSE)
+		V(g)$x <- runif(vcount(g),min=-1,max=1)
+		V(g)$y <- runif(vcount(g),min=-1,max=1)
+		g <- connect.triangulation(g)
+		g <- distances.as.weights(g)
+		V(g)$label <- 1:vcount(g)
+	}
+	else
+	{	net.file0 <- file.path(figures.folder,"randplan-original","graph.graphml")
+		if(file.exists(net.file0))
+			g <- read.graph(net.file0,format="graphml")
+		else
+		{	g <- produce.random.graph(gtype="randplan-original")
+			write.graph(g,net.file0,format="graphml")
+		}
+		if(gtype=="randplan-yifanhu")
+		{	lay <- layout_with_kk(g)
+			V(g)$x <- lay[,1]
+			V(g)$y <- lay[,2]
+		}
+		else if(gtype=="randplan-fruchtergold")
+		{	lay <- layout_with_fr(g)
+			V(g)$x <- lay[,1]
+			V(g)$y <- lay[,2]
+		}
+	}
+	
+	return(g)
+}
 
 ########################################
 # Generate the graphs
@@ -37,48 +86,60 @@ graph.types <- c(
 ########################################
 for(gtype in graph.types)
 {	# possibly create the folder
-	out.folder <- file.path("data","figures",gtype)
+	out.folder <- file.path(figures.folder,gtype)
 	dir.create(path=out.folder, showWarnings=FALSE, recursive=TRUE)
+	net.file <- file.path(out.folder,"graph.graphml")
 	
-	if(gtype=="hexagons")
-	{	tlog("Generate a graph of hexagons")
-		g <- produce.hexagon.graph(m=7,area=7)
-		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
-	}
-	else if(gtype=="octogons")
-	{	tlog("Generate a graph of octogons")
-		g <- produce.octogon.graph(n=7,area=15)
-		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
-	}
-	else if(gtype=="orbitele")
-	{	tlog("Generate a spider graph")
-		g <- produce.orbitele.graph(r=8,s=7,area=20)
-		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
-	}
-	else if(gtype=="radiocentric")
-	{	tlog("Generate a radio-concentric graph")
-		g <- produce.radiocentric.graph(r=8,s=10,area=20)
-		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
-	}
-	else if(gtype=="squares")
-	{	tlog("Generate a graph of squares")
-		g <- produce.square.graph(n=14,area=20)
-		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
-	}
-	else if(gtype=="triangles")
-	{	tlog("Generate a graph of triangles")
-		g <- produce.triangle.graph(n=7,area=4)
-		write.graph(g,file.path(out.folder,"graph.graphml"),format="graphml")
-	}
-	
-	# the random planar graph were generated using the following instruction
-	# then various layouts were applied to get different spatializations
-	#g <- graph.empty(n=n, directed=FALSE)
-	#V(g)$x <- runif(vcount(g),min=-1,max=1)
-	#V(g)$y <- runif(vcount(g),min=-1,max=1)
-	#g <- connect.triangulation(g)
-	#g <- distances.as.weights(g)
-	#V(g)$label <- 1:vcount(g)
+	if(file.exists(net.file))
+		g <- read.graph(net.file,format="graphml")
+	else
+	{	if(gtype=="hexagons")
+		{	tlog("Generate a graph of hexagons")
+			g <- produce.hexagon.graph(m=7,area=7)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype=="octogons")
+		{	tlog("Generate a graph of octogons")
+			g <- produce.octogon.graph(n=7,area=15)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype=="orbitele")
+		{	tlog("Generate a spider graph")
+			g <- produce.orbitele.graph(r=8,s=7,area=20)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype=="radiocentric")
+		{	tlog("Generate a radio-concentric graph")
+			g <- produce.radiocentric.graph(r=8,s=10,area=20)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype=="squares")
+		{	tlog("Generate a graph of squares")
+			g <- produce.square.graph(n=14,area=20)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype=="triangles")
+		{	tlog("Generate a graph of triangles")
+			g <- produce.triangle.graph(n=7,area=4)
+			write.graph(g,net.file,format="graphml")
+		}
+		
+		else if(gtype="randplan-original")
+		{	tlog("Generate a random planar graph")
+			g <- produce.random.graph(gtype)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype="randplan-fruchtergold")
+		{	tlog("Generate a random planar graph with a Fruchterman-Reingold layout")
+			g <- produce.random.graph(gtype)
+			write.graph(g,net.file,format="graphml")
+		}
+		else if(gtype="randplan-yifanhu")
+		{	tlog("Generate a random planar graph with a Yifan-Hu layout")
+			g <- produce.random.graph(gtype)
+			write.graph(g,net.file,format="graphml")
+		}
+		}
 }
 
 
@@ -91,7 +152,7 @@ for(gtype in graph.types)
 	# Load the (previously created) graph
 	########################################
 	tlog("Load the ",gtype," graph")
-	out.folder <- file.path("data","figures",gtype)
+	out.folder <- file.path(figures.folder,gtype)
 	g <- read.graph(file.path(out.folder,"graph.graphml"),format="graphml")
 	
 	########################################
@@ -202,7 +263,7 @@ for(gtype in graph.types)
 ########################################
 for(gtype in graph.types)
 {	tlog("Processing graph type ",gtype)
-	out.folder <- file.path("data","figures",gtype)
+	out.folder <- file.path(figures.folder,gtype)
 	for(d in c("node-graph","link-graph","node-link","link-link"))
 	{	tlog(2,"Processing ",d)
 		data <- as.matrix(read.table(file=file.path(out.folder,paste0(d,".txt")),header=FALSE))

@@ -26,14 +26,15 @@ source("src/straightness/discrete.R")
 # type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
+# folder: folder in which to record the graph.
 #
 # returns: the created or loaded graph.
 ############################################################################
-init.graph <- function(n=5, type="RAND_PLANAR", iteration=1)
+init.graph <- function(n=5, type="RAND_PLANAR", iteration=1, folder)
 {	tlog(2,"Initializing the graph")
 	
 	# init file name
-	graph.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	graph.folder <- file.path(folder,type,paste0("n=",n),paste0("it=",iteration))
 	graph.filename <- "disc=0"
 	gf <- file.path(graph.folder,paste0(graph.filename,".graphml"))
 	

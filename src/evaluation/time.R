@@ -12,6 +12,13 @@ source("src/evaluation/common.R")
 
 
 
+
+data.folder <- "data"
+time.folder <- file.path(data.folder,"time")
+
+
+
+
 ############################################################################
 # Discretizes the original graph and record all the resulting graphs as 
 # Graphml files for later use. A table summarizing the process is recorded
@@ -30,7 +37,7 @@ init.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 {	tlog(2,"Initializing the discretization table")
 	
 	# init file names
-	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(time.folder,type,paste0("n=",n),paste0("it=",iteration))
 	disc.file <- file.path(it.folder,"discretizations.txt")
 	
 	# if the table already exists, we load it
@@ -110,7 +117,7 @@ init.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 ############################################################################
 process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
-	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(time.folder,type,paste0("n=",n),paste0("it=",iteration))
 	
 	# for the whole graph
 	table.file <- file.path(it.folder,"continuous-graph.txt")
@@ -190,7 +197,7 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 ############################################################################
 process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
-	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(time.folder,type,paste0("n=",n),paste0("it=",iteration))
 	
 	# load the discretization table
 	disc.file <- file.path(it.folder,"discretizations.txt")
@@ -296,7 +303,7 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 ############################################################################
 generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table, cont.tables, disc.tables)
 {	tlog("Generating plots and tables for the iteration ",iteration)
-	it.folder <- file.path("data",type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(time.folder,type,paste0("n=",n),paste0("it=",iteration))
 	nm <- paste0("d=",0:(nrow(disc.table)-1))
 	
 	# build the graph table
@@ -414,15 +421,14 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
 			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
-					pch=20,
+					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
-					col=add.alpha("BLUE", 0.25),
 					ylim=c(min(c(nodes.yvals,nodes.cont.vals)),max(c(nodes.yvals,nodes.cont.vals)))
 			)
 			for(j in 1:length(nodes.cont.vals))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(nodes.cont.vals[j],2),
-						col=add.alpha("RED", 0.25)
+						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
@@ -458,8 +464,7 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 			)
 			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
 			points(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
-					pch=20,
-					col=add.alpha("BLUE", 0.25)
+					col="BLUE"#add.alpha("BLUE", 0.25),pch=20					
 			)
 			dev.off()
 		}
@@ -487,7 +492,7 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 ############################################################################
 generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, data.cont, data.disc)
 {	tlog("Generating plots and tables for all the repetitions")
-	folder <- file.path("data",type,paste0("n=",n))
+	folder <- file.path(time.folder,type,paste0("n=",n))
 	
 	# collecting the data
 	ngran <- nrow(data.disc[[1]]$graph)
@@ -539,15 +544,14 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
 			plot(x=xvals, y=graph.disc.durations,
-					pch=20,
+					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
-					col=add.alpha("BLUE", 0.25),
 					ylim=c(min(c(graph.disc.durations,graph.cont.durations)),max(c(graph.disc.durations,graph.cont.durations)))
 			)
 			for(j in 1:length(graph.cont.durations))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(graph.cont.durations[j],2),
-						col=add.alpha("RED", 0.25)
+						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
@@ -558,15 +562,14 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
 			plot(x=rep(xvals,nrow(nodes.disc.durations)), y=c(t(nodes.disc.durations)),
-					pch=20,
+					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
-					col=add.alpha("BLUE", 0.25),
 					ylim=c(min(c(nodes.disc.durations,nodes.cont.durations)),max(c(nodes.disc.durations,nodes.cont.durations)))
 			)
 			for(j in 1:length(nodes.cont.durations))
 			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(nodes.cont.durations[j],2),
-						col=add.alpha("RED", 0.25)
+						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
 			legend(x="bottomright",legend=c("Approximation","Exact value"),
@@ -587,9 +590,8 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			)
 			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
 			points(x=xvals, y=graph.disc.differences,
-					pch=20,
-					col=add.alpha("BLUE", 0.25)
-			)
+					col="BLUE"#add.alpha("BLUE", 0.25),pch=20
+				)
 			dev.off()
 			
 			# node plots
@@ -601,9 +603,8 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 			)
 			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
 			points(x=rep(xvals,nrow(nodes.disc.differences)), y=c(t(nodes.disc.differences)),
-					pch=20,
-					col=add.alpha("BLUE", 0.25)
-			)
+					col="BLUE"#add.alpha("BLUE", 0.25),pch=20
+				)
 			dev.off()
 		}
 	}
@@ -629,7 +630,7 @@ monitor.time <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	discretizations <- list()
 	for(r in 1:repetitions)
 	{	# retrieve or create the graph
-		g <- init.graph(n, type, iteration=r)
+		g <- init.graph(n, type, iteration=r, folder=time.folder)
 		
 		# retrieve the discretization table, or init it if it doesn't exist
 		disc.table <- init.disc.table(n, type, iteration=r, g)

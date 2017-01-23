@@ -12,6 +12,7 @@ library("geometry")	# used for the triangulation when generating random planar g
 
 
 
+
 ############################################################################
 # Processes the spatial distances between each pair of connected nodes of the 
 # graph, and stores them as an edge numerical attribute named "dist", which 

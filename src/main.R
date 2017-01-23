@@ -1,6 +1,6 @@
 ############################################################################
-# Reproduce the experimental process described in the article cited in
-# the project readme file.
+# This script shows how to process the discrete and continuous averages 
+# of the Straightness measure.
 #
 # Vincent Labatut 09/2016
 #
@@ -8,221 +8,61 @@
 # setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/main.R")
 ############################################################################
-source("src/misc/log.R")
-source("src/misc/plot.R")
-source("src/misc/transformations.R")
+library("igraph")
 
 source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
 
 
-mem.file <- "data/profiling.txt"
-planar <- TRUE
-SLEEP.DURATION <- 0.5
 
-mymain <- function(mem.mon=TRUE)
-{	for(n in c(10,25,50,100,250,500))
-#	for(n in c(10))
-	{   tlog("++++++++++++++++++++++ Processing a network of size n=",n)
-		gc()
-		
-		############################################################################
-# init the graph
-		tlog("Initializing the graph")
-		graph.file <- paste("n=",n,"-graph",sep="")						# graph file name
-		gf <- paste("data/",graph.file,".graphml",sep="")
-		if(file.exists(gf))
-		{	tlog(2,"The graph already exists: loading file \"",gf,"\"")
-			g <- read.graph(gf,format="graphml")
-		}
-		else
-		{	tlog(2,"The graph is generated and recorded in file \"",gf,"\"")
-			
-			# create a planar graph
-			if(planar)
-			{	g <- graph.empty(n=n, directed=FALSE)									# create empty graph
-				V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-				V(g)$y <- runif(vcount(g),min=-1,max=1)
-				g <- connect.triangulation(g)											# use triangulation to init the links
-			}
-			
-			# create an Erdös-Rényi graph
-			else
-			{	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
-				V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
-				V(g)$y <- runif(vcount(g),min=-1,max=1)
-			}
-			
-			# common init steps
-			g <- distances.as.weights(g)											# add inter-node distances as link attributes
-			V(g)$label <- 1:vcount(g)
-			myplot.graph(g, node.str=NA, link.str=NA, large=TRUE, filename=graph.file, out.folder="data/", export=TRUE, formats=c("pdf",NA))
-		}
-		node <- sample(1:vcount(g),1)												# randomly draw a node for later processing	
-		
-		
-		
-		############################################################################
-#mode <- "graph" # node graph
-		for(mode in c("graph","node"))
-		{	if(mode=="node")
-				tlog("Processing the average straightness for node ",node)
-			else
-				tlog("Processing the average straightness for the whole graph")
-			
-			########## continuous version
-			tlog(2,"Processing the continuous average")
-			pus.mem <- NA
-			again <- TRUE
-			while(again)
-			{	again <- FALSE
-				if(mem.mon)
-				{	Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
-					#Sys.sleep(SLEEP.DURATION)
-				}
-				start.time <- Sys.time()
-				if(mode=="node")
-					pus <- mean.straightness.nodes.graph(graph=g, u=node)					# process node straightness
-				else
-					pus <- mean.straightness.graph(graph=g)									# process graph straightness
-				end.time <- Sys.time()
-				pus.duration <- difftime(end.time,start.time,units="s")
-				if(mem.mon)
-				{	#Sys.sleep(SLEEP.DURATION)
-					Rprof(NULL)
-					#Sys.sleep(SLEEP.DURATION)
-					mem.stats <- tryCatch(summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]],
-							error=function(e){again <<- TRUE})
-					if(again)
-						tlog(4,"Error while trying to process memory usage. Trying again.")
-					else
-						pus.mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
-				}
-				gc()
-			}
-			tlog(4,"Average point straightness: ",pus," - Duration: ",pus.duration," s - Memory: ",pus.mem," MB")
-			
-			# record the data as a text file
-			table.file <- paste("data/n=",vcount(g),"-",mode,"-continuous",".txt",sep="")
-			data <- matrix(c(pus,pus.duration,pus.mem),ncol=3)
-			colnames(data) <- c("Straightness","Duration","Memory")
-			write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
-			
-			########## discrete version
-			tlog(2,"Processing the discrete approximations")
-			grans <- c(0,seq(from=max(E(g)$dist)/2,to=0.004,by=-0.001))#seq(from=0.10,to=0.004,by=-0.0001))
-			prev.n <- 0
-			est.str <- c(); est.nbr <- c(); est.duration <- c() ; used.grans <- c() ; est.mem <- c()
-			i <- 1
-			for(d in 1:length(grans))
-			{	tlog(4,"Iteration "	,d,"/",length(grans)," granularity: ",grans[d])
-				again <- TRUE
-				mem <- NA
-				while(again)
-				{	again <- FALSE
-					if(mem.mon)
-						Rprof(mem.file, memory.profiling=TRUE, interval=0.002)
-					start.time <- Sys.time()
-					g2 <- add.intermediate.nodes(g, granularity=grans[d])			# create additional nodes
-					if(vcount(g2)!=prev.n)											# check that the number of nodes is at least different compared to the previous graph
-					{	nbr <- vcount(g2)											# total number of nodes
-						if(mem.mon)
-						{	#if(d==1)
-							#	Sys.sleep(1)							# otherwise, too fast for Rprof
-						}
-						if(mode=="node")
-							str <- mean.straightness.nodes(graph=g2,v=node)[1,1]	# process approximate node straightness
-						else
-							str <- mean.straightness.nodes(graph=g2, v=NA)[1]		# process nodal approximate graph straightness
-						end.time <- Sys.time()
-						duration <- difftime(end.time,start.time,units="s")
-						if(mem.mon)
-						{	Rprof(NULL)
-							#tlog(6,"xxxxxxxx")
-							mem.stats <- tryCatch(summaryRprof(mem.file, memory="stats", diff=FALSE, index=1)[["\"mymain\""]],
-									error=function(e){again<<-TRUE})
-						}
-						if(again)
-							tlog(6,"Error while trying to process memory usage. Trying again.")
-						else
-						{	if(mem.mon)
-								mem <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
-							est.nbr <- c(est.nbr,nbr)
-							est.str <- c(est.str,str)
-							used.grans <- c(used.grans,grans[d])
-							est.duration <- c(est.duration,duration)
-							est.mem <- c(est.mem,mem)
-							prev.n <- nbr
-							tlog(6,"Number of nodes: ",nbr," - Duration: ",duration," s - Memory: ",mem," MB - Straightness: ",str," (Difference: ",abs(str-pus),")")
-						}
-						g2 <- NULL
-						gc()
-					}
-					else
-					{	if(mem.mon)
-							Rprof(NULL)
-						g2 <- NULL
-						gc()
-					}
-				}
-			}
-			
-			# record the data as a text file
-			table.file <- paste("data/n=",vcount(g),"-",mode,"-discrete",".txt",sep="")
-			data <- cbind(used.grans,est.nbr,est.str,est.duration,est.mem)
-			colnames(data) <- c("Granularity","Nodes","Straightness","Duration","Memory")
-			write.table(x=data,file=table.file,row.names=FALSE,col.names=TRUE)
-			
-			# generate straightness plot
-			pdf(file=paste("data/n=",vcount(g),"-",mode,"-straightness",".pdf",sep=""))		# open PDF file
-			plot(x=est.nbr, y=est.str,														# plot approximations
-					xlab="Number of nodes", ylab="Straightness",
-					col="BLUE" 
-					,ylim=c(min(c(est.str,pus)),max(c(est.str,pus)))
-			)
-			lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus,2),col="RED")					# plot exact value
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
-					fill=c("BLUE","RED"))
-			dev.off()
-			# generate computational cost plot
-			pdf(file=paste("data/n=",vcount(g),"-",mode,"-time",".pdf",sep=""))				# open PDF file
-			plot(x=est.nbr, y=est.duration,													# plot approximations
-					xlab="Number of nodes", ylab="Time (s)",
-					col="BLUE"
-					,ylim=c(min(c(est.duration,pus.duration)),max(c(est.duration,pus.duration)))
-			)
-			lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus.duration,2),col="RED")			# plot exact value
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
-					fill=c("BLUE","RED"))
-			dev.off()
-			# generate memory cost plot
-			if(mem.mon)
-			{	pdf(file=paste("data/n=",vcount(g),"-",mode,"-mem",".pdf",sep=""))				# open PDF file
-				plot(x=est.nbr, y=est.mem,														# plot approximations
-						xlab="Number of nodes", ylab="Max Memory (MB)",
-						col="BLUE"
-						,ylim=c(min(c(est.mem,pus.mem)),max(c(est.mem,pus.mem)))
-				)
-				lines(x=c(min(est.nbr),max(est.nbr)),y=rep(pus.mem,2),col="RED")				# plot exact value
-				legend(x="bottomright",legend=c("Approximation","Exact value"),
-						fill=c("BLUE","RED"))
-				dev.off()
-			}
-			
-			gc()
-		}
-	}
-	
-#TODO check if the tolerance is really necessary
-#TODO check how it works when some points are aligned (use addpoints function or just build a simple 3-node graph)
-}
+############################################################################
+# Preparation
+############################################################################
+# first you need to provide a graph taking the form of an igraph object
+# for instance, by loading it from a file. the graph must have two nodal
+# attributes x and y describing the spatial position of the nodes
+#g <- read.graph(my.graph,format="graphml")
 
-mymain(mem.mon=FALSE)
+# here we just generate it for the example
+g <- erdos.renyi.game(n=100,p.or.m=0.4,type="gnp",directed=FALSE,loops=FALSE)
+V(g)$x <- runif(n=gorder(g),0,1)
+V(g)$y <- runif(n=gorder(g),0,1)
 
-# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/main.R")
-# Rprof(mem.file, memory.profiling=TRUE)
-# mymain();Rprof(NULL);
-# mem.stats <- summaryRprof(mem.file, memory="stats", diff=FALSE, index=1) #tseries stats both
-# mem <- max(sapply(mem.stats,function(v) v[1]*8+v[3]*8+v[5]*56)/2^20)
+# plot the graph
+#plot(g)
+
+
+
+
+############################################################################
+# Node-to-node Straightness
+############################################################################
+# process the vertex-to-vertex straightness for each pair of nodes
+res <- straightness.nodes(graph=g)
+cat("Node-to-node straightness for each pair of nodes in the graph:")
+print(res)
+# plot the histogram, just by curiosity...
+#hist(res)
+
+# discrete (traditional) average straightness between each node and the rest of the graph
+res <- mean.straightness.nodes(graph=g, v=V(g))
+cat("\n\nAverage node-to-node straightness between each node and the rest of the graph, and associated standard deviation:")
+print(res)
+hist(res)
+
+# discrete (traditional) average straightness over the whole graph
+res <- mean.straightness.nodes(graph=g, v=NA)
+cat("\n\nAverage node-to-node straightness over the whole graph: ",res[1]," standard deviation: ",res[2],"\n",sep="")
+
+
+
+
+############################################################################
+# Point-to-point Straightness
+############################################################################
+mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRUE)
+mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self=FALSE, use.primitive=TRUE)
+		
+
+

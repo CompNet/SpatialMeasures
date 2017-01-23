@@ -1,6 +1,6 @@
 ############################################################################
 # Script used to produce some of the paper figures from the experiments section.
-# This one focuses on a small random planar graph.
+# This one focuses on a small random planar graph (Fig.7-left in the paper).
 #
 # Vincent Labatut 09/2016
 #
@@ -18,14 +18,15 @@ source("src/straightness/discrete.R")
 
 
 
+
 ########################################
 # Load/generate the graphs
 ########################################
 gl <- list()
 # load the original graph
 tlog("Load the original graph")
-gl[[1]] <- read.graph("data/figures/small_1/graph.graphml",format="graphml")
-# remove a few nodes from the graph
+gl[[1]] <- read.graph("data/figures/graph1.graphml",format="graphml")
+# remove a few nodes from the graph (to highlight the consequence on the average straightness)
 tlog("Remove nodes 16-18 from the graph")
 gl[[2]] <- delete.vertices(gl[[1]],16:18)
 
@@ -116,15 +117,15 @@ for(i in 1:length(gl))
 		}
 	}
 	
-#	# plot the values for each link 
-#	tlog(2,"Plot them relatively to the links")
-#	el <- get.edgelist(g)
-#	for(e in 1:ecount(g))
-#	{	tlog(4,"Process link ",e,"/",ecount(g))
-#		E(g)$marked <- 1:ecount(g)==e
-#		myplot.graph(g, node.str=NA, link.str=ll.str[e,], large=TRUE, filename=paste0("link=",e,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
-#	}
-#	E(g)$marked <- FALSE
+	# plot the values for each link 
+	tlog(2,"Plot them relatively to the links")
+	el <- get.edgelist(g)
+	for(e in 1:ecount(g))
+	{	tlog(4,"Process link ",e,"/",ecount(g))
+		E(g)$marked <- 1:ecount(g)==e
+		myplot.graph(g, node.str=NA, link.str=ll.str[e,], large=TRUE, filename=paste0("link=",e,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
+	}
+	E(g)$marked <- FALSE
 	
 	# record them as a text file
 	tlog(2,"Record the numerical results for later consultation")
