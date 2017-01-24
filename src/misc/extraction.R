@@ -1,6 +1,9 @@
 ############################################################################
 # Extracts road networks from OpenStreetMap.
 # https://www.openstreetmap.org
+# In order to obtain some clean graphs, this script was completed with some 
+# manual processing: convert to Gephi, remove tendrils, then programmatically
+# keep only the giant component (to remove all remaining noise).
 #
 # Vincent Labatut 01/2017
 #
@@ -75,3 +78,16 @@ for(c in 1:length(cities))
 	net.file <- file.path(city.folder,"graph.graphml")
 	write.graph(g, net.file, format="graphml")
 }
+
+
+# normalization (finally not necessary)
+#c <- 1
+#name <- names(cities)[c]
+#city.folder <- file.path(urban.folder,name)
+#net.file <- file.path(city.folder,"graph.graphml")
+#g <- read.graph(net.file,format="graphml")
+#temp <- c(V(g)$x,V(g)$y)
+#V(g)$x <- (V(g)$x - min(temp)) / (max(temp) - min(temp)) * 100
+#V(g)$y <- (V(g)$y - min(temp)) / (max(temp) - min(temp)) * 100
+#net.file <- file.path(city.folder,"graph0.graphml")
+#write.graph(g,net.file,format="graphml")
