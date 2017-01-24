@@ -61,8 +61,8 @@ cat("\n\nAverage node-to-node straightness over the whole graph: ",res[1]," stan
 ############################################################################
 # Point-to-point Straightness
 ############################################################################
-mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRUE)
-mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self=FALSE, use.primitive=TRUE)
-		
-
-
+mean.straightness.graph(graph=g)
+mean.straightness.links.graph(graph=g, e=1:ecount(g))
+mean.straightness.link.link(graph=g, e1, e2)
+mean.straightness.nodes.graph(graph=g, u=1:vcount(g))
+mean.straightness.nodes.link(graph=g, u=1:vcount(g), e)

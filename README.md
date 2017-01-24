@@ -30,7 +30,7 @@ Besides the functions used to process the average measures themselves, the scrip
 # Data
 Most of the data is generated randomly and recorded in the `data` folder (see the *Organization* section for more details).
 
-We also experiment on a few publicly available real-world networks, also contained in the data folder `data`.
+We also experiment on a few publicly available real-world networks, also contained in the `data` folder.
 
 **<To be completed>**
 
