@@ -27,12 +27,12 @@ urban.folder <- file.path(data.folder,"urban")
 cities <- list(
 #	      avignon=c(  4.7669, 43.9240,   4.8455, 43.9619),
 #	avignon-small=c(  4.7969, 43.9420,   4.8203, 43.9543),
-	         sfax=c( 10.6272, 34.6507,  10.8614, 34.8640)
+#	         sfax=c( 10.6272, 34.6507,  10.8614, 34.8640),
 #	       beijin=c(116.2635, 39.8233, 116.4887, 39.9897),
 #	     istanbul=c( 28.9208, 40.9846,  29.0671, 41.0721),
-#	        tokyo=c(139.5895, 35.5378, 139.9136, 35.8590),
-#	      newyork=c(-74.0465, 40.5389, -73.7787, 40.9083),
-#	troisrivieres=c(-72.6351, 46.3104, -72.4902, 46.4083)
+	troisrivieres=c(-72.6351, 46.3104, -72.4902, 46.4083),
+		    tokyo=c(139.5895, 35.5378, 139.9136, 35.8590),
+	      newyork=c(-74.0465, 40.5389, -73.7787, 40.9083)
 )
 
 
@@ -63,11 +63,13 @@ for(c in 1:length(cities))
 	idx <- match(V(g)$name,city.sub$nodes$attrs[,"id"])
 	V(g)$x <- city.sub$nodes$attrs[idx,"lon"]*1000
 	V(g)$y <- city.sub$nodes$attrs[idx,"lat"]*1000
-	plot(g,vertex.label=NA,vertex.size=1)
 	
 	# filter the nodes located out of the box
 	idx <- which(V(g)$x<cities[[name]][1] || V(g)$y<cities[[name]][3] || V(g)$x>cities[[name]][3] || V(g)$y>cities[[name]][4])
+	print(length(idx))
 	g <- delete_vertices(graph=g, v=idx)
+
+	plot(g,vertex.label=NA,vertex.size=1)
 	
 	# export as graphml
 	net.file <- paste0(file_path_sans_ext(osm.file),".graphml")
