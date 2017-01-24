@@ -26,8 +26,8 @@ graph.types <- c(
 	"beijin",
 	"istanbul",
 	"troisrivieres",
-	"tokyo-original",
-	"newyork-fruchtergold"
+	"tokyo",
+	"newyork"
 )
 
 data.folder <- "data"
