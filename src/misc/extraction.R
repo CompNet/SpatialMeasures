@@ -24,7 +24,7 @@ urban.folder <- file.path(data.folder,"urban")
 # list the cities and their boxes
 cities <- list(
 	      avignon=c(  4.7669, 43.9240,   4.8455, 43.9619),
-#	avignon-small=c(  4.7969, 43.9420,   4.8203, 43.9543),
+#	      avignon=c(  4.7969, 43.9420,   4.8203, 43.9543),
 	         sfax=c( 10.6272, 34.6507,  10.8614, 34.8640),
 	       beijin=c(116.2635, 39.8233, 116.4887, 39.9897),
 	     istanbul=c( 28.9208, 40.9846,  29.0671, 41.0721),

@@ -38,14 +38,14 @@ DURATION_LIMIT <- 300 							# max duration for trying, in seconds
 # the graph files also exist, and load the table then return it.
 #
 # n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+# type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
 # g: the original graph.
 #
 # returns: the table summarizing the discretization process.
 ############################################################################
-load.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
+load.disc.table <- function(n=5, type="randplanar", iteration=1, g)
 {	tlog(2,"Loading the discretization table")
 	
 	# init file names
@@ -68,14 +68,14 @@ load.disc.table <- function(n=5, type="RAND_PLANAR", iteration=1, g)
 # specified graphs.
 #
 # n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+# type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
 # g: the original graph.
 #
 # returns: the list of tables containing the memory usage.
 ############################################################################
-process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g)
+process.continuous.straightness <- function(n=5, type="randplanar", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
 	it.folder <- file.path(memory.folder,type,paste0("n=",n),paste0("it=",iteration))
 	
@@ -172,14 +172,14 @@ process.continuous.straightness <- function(n=5, type="RAND_PLANAR", iteration=1
 # specified graphs.
 #
 # n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+# type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
 # g: the original graph.
 #
 # returns: the list of lists of tables containing the memory usage.
 ############################################################################
-process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, g, cont.tables)
+process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
 	it.folder <- file.path(memory.folder,type,paste0("n=",n),paste0("it=",iteration))
 	
@@ -335,7 +335,7 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 # Generates the plots for each iteration.
 #
 # n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+# type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
 # disc.table: discretization table.
@@ -345,7 +345,7 @@ process.discrete.straightness <- function(n=5, type="RAND_PLANAR", iteration=1, 
 # returns: list of tables corresponding to a more compact representation of
 #		   the previously processed memory usages.
 ############################################################################
-generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table, cont.tables, disc.tables)
+generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, cont.tables, disc.tables)
 {	tlog("Generating plots and tables for the iteration ",iteration)
 	it.folder <- file.path(memory.folder,type,paste0("n=",n),paste0("it=",iteration))
 	nm <- paste0("d=",0:(nrow(disc.table)-1))
@@ -441,14 +441,14 @@ generate.rep.plots <- function(n=5, type="RAND_PLANAR", iteration=1, disc.table,
 # Generates the plots for all iteration.
 #
 # n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+# type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
 # discretizations: list of discretization tables.
 # data.cont: list of lists of tables for the continuous average straightness.
 # data.disc: list of list of tables for the discrete average straightness.
 ############################################################################
-generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, data.cont, data.disc)
+generate.overall.plots <- function(n=10, type="randplanar", discretizations, data.cont, data.disc)
 {	tlog("Generating plots and tables for all the repetitions")
 	folder <- file.path(memory.folder,type,paste0("n=",n))
 	
@@ -540,11 +540,11 @@ generate.overall.plots <- function(n=10, type="RAND_PLANAR", discretizations, da
 # and generates the corresponding tables and plots.
 #
 # n: number of nodes in the graph.
-# type: type of graph, RAND_PLANAR (planar random graph) or ERDOS_RENYI 
+# type: type of graph, randplanar (planar random graph) or erdosrenyi 
 #		(Erdös-Rényi random graph).
 # repetitions: number of instances of the graph to generate and process.
 ############################################################################
-monitor.memory <- function(n=5, type="RAND_PLANAR", repetitions=10)
+monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 {	gc()
 	
 	# process the specified number of repetitions
@@ -576,16 +576,16 @@ monitor.memory <- function(n=5, type="RAND_PLANAR", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-monitor.memory(n=10, type="RAND_PLANAR", repetitions=10)
-#monitor.memory(n=25, type="RAND_PLANAR", repetitions=10)
-#monitor.memory(n=50, type="RAND_PLANAR", repetitions=10)
-#monitor.memory(n=100, type="RAND_PLANAR", repetitions=10)
+monitor.memory(n=10, type="randplanar", repetitions=10)
+#monitor.memory(n=25, type="randplanar", repetitions=10)
+#monitor.memory(n=50, type="randplanar", repetitions=10)
+#monitor.memory(n=100, type="randplanar", repetitions=10)
 
 
 
 #it <- xxxx
 #d <- xxxx
-#g <- read.graph(paste0("data/RAND_PLANAR/n=50/it=",it,"/disc=",d,".graphml"),format="graphml")
+#g <- read.graph(paste0("data/randplanar/n=50/it=",it,"/disc=",d,".graphml"),format="graphml")
 #temp(g,node=xxx,disc=xxxx)
 #mem.stats <- summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]]
 #memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20

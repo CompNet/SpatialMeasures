@@ -23,14 +23,14 @@ source("src/straightness/discrete.R")
 # as a Graphml file.
 #
 # n: number of nodes.
-# type: RAND_PLANAR (planar random graph) or ERDOS_RENYI (Erdös-Rényi random
+# type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
 #		graph).
 # iteration: number of the iteration (cf. number of repetitions).
 # folder: folder in which to record the graph.
 #
 # returns: the created or loaded graph.
 ############################################################################
-init.graph <- function(n=5, type="RAND_PLANAR", iteration=1, folder)
+init.graph <- function(n=5, type="randplanar", iteration=1, folder)
 {	tlog(2,"Initializing the graph")
 	
 	# init file name
@@ -49,7 +49,7 @@ init.graph <- function(n=5, type="RAND_PLANAR", iteration=1, folder)
 	{	tlog(4,"The graph is generated and recorded in file \"",gf,"\"")
 		
 		# create a planar graph
-		if(type=="RAND_PLANAR")
+		if(type=="randplanar")
 		{	g <- graph.empty(n=n, directed=FALSE)									# create empty graph
 			V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 			V(g)$y <- runif(vcount(g),min=-1,max=1)
@@ -57,7 +57,7 @@ init.graph <- function(n=5, type="RAND_PLANAR", iteration=1, folder)
 		}
 		
 		# create an Erdös-Rényi graph
-		else if(type=="ERDOS_RENYI")
+		else if(type=="erdosrenyi")
 		{	g <- erdos.renyi.game(n=n,p.or.m=0.1,directd=FALSE)
 			V(g)$x <- runif(vcount(g),min=-1,max=1)									# setup the node spatial positions
 			V(g)$y <- runif(vcount(g),min=-1,max=1)
