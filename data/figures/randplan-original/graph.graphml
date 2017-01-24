@@ -135,9 +135,6 @@
     <edge source="n0" target="n7">
       <data key="e_dist">1.36429794266601</data>
     </edge>
-    <edge source="n0" target="n8">
-      <data key="e_dist">2.45042591012073</data>
-    </edge>
     <edge source="n0" target="n9">
       <data key="e_dist">0.61034210792654</data>
     </edge>
@@ -155,9 +152,6 @@
     </edge>
     <edge source="n2" target="n5">
       <data key="e_dist">0.844234666580104</data>
-    </edge>
-    <edge source="n2" target="n6">
-      <data key="e_dist">1.34354894635477</data>
     </edge>
     <edge source="n2" target="n12">
       <data key="e_dist">0.624557069084303</data>
