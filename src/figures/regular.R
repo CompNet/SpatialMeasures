@@ -1,7 +1,6 @@
 ############################################################################
 # Script used to produce some of the paper figures from the experiments section.
-# This one focuses on a selection of lattices (regular graphs), cf. Fig.5-7 in
-# the paper.
+# This one focuses on a selection of regular graphs, cf. Fig.5-7 in the paper.
 #
 # Vincent Labatut 09/2016
 #
@@ -78,6 +77,8 @@ produce.random.graph <- function(gtype)
 	
 	return(g)
 }
+
+
 
 ########################################
 # Generate the graphs
@@ -244,7 +245,7 @@ for(gtype in graph.types)
 	# record them as a text file
 	tlog(2,"Record the numerical results for later consultation")
 	write.table(x=ll.str,file=file.path(out.folder,"link-link.txt"),row.names=FALSE,col.names=FALSE)
-
+	
 	# check the values
 	if(length(which(is.infinite(link.str)))>0)
 		error("Straightness pb in link.str")
@@ -255,7 +256,7 @@ for(gtype in graph.types)
 	if(length(which(is.infinite(ll.str)))>0)
 		error("Straightness pb in ll.str")
 }
-	
+
 
 
 ########################################

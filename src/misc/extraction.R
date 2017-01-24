@@ -11,8 +11,6 @@
 library("tools")
 library("igraph")
 library("osmar")
-# https://cran.r-project.org/web/packages/osmar/index.html
-# version 1.1-7
 
 
 
@@ -25,11 +23,11 @@ urban.folder <- file.path(data.folder,"urban")
 
 # list the cities and their boxes
 cities <- list(
-#	      avignon=c(  4.7669, 43.9240,   4.8455, 43.9619),
+	      avignon=c(  4.7669, 43.9240,   4.8455, 43.9619),
 #	avignon-small=c(  4.7969, 43.9420,   4.8203, 43.9543),
-#	         sfax=c( 10.6272, 34.6507,  10.8614, 34.8640),
-#	       beijin=c(116.2635, 39.8233, 116.4887, 39.9897),
-#	     istanbul=c( 28.9208, 40.9846,  29.0671, 41.0721),
+	         sfax=c( 10.6272, 34.6507,  10.8614, 34.8640),
+	       beijin=c(116.2635, 39.8233, 116.4887, 39.9897),
+	     istanbul=c( 28.9208, 40.9846,  29.0671, 41.0721),
 	troisrivieres=c(-72.6351, 46.3104, -72.4902, 46.4083),
 		    tokyo=c(139.5895, 35.5378, 139.9136, 35.8590),
 	      newyork=c(-74.0465, 40.5389, -73.7787, 40.9083)
@@ -42,8 +40,9 @@ cities <- list(
 for(c in 1:length(cities))
 {	name <- names(cities)[c]
 	cat("Processing city ",name,"\n",sep="")
+	city.folder <- file.path(urban.folder,name)
 	
-	osm.file <- file.path(urban.folder,paste0(name,".osm"))
+	osm.file <- file.path(city.folder,"data.osm")
 #	src <- osmsource_api()
 	src <- osmsource_file(osm.file)
 
@@ -61,7 +60,7 @@ for(c in 1:length(cities))
 	g <- as_igraph(city.sub)
 	g <- as.undirected(graph=g,mode="collapse")
 	idx <- match(V(g)$name,city.sub$nodes$attrs[,"id"])
-	V(g)$x <- city.sub$nodes$attrs[idx,"lon"]*1000
+	V(g)$x <- city.sub$nodes$attrs[idx,"lon"]*1000			# multiply by 1000 so that the network can be browsed in Gephi
 	V(g)$y <- city.sub$nodes$attrs[idx,"lat"]*1000
 	
 	# filter the nodes located out of the box
@@ -72,6 +71,7 @@ for(c in 1:length(cities))
 	plot(g,vertex.label=NA,vertex.size=1)
 	
 	# export as graphml
-	net.file <- paste0(file_path_sans_ext(osm.file),".graphml")
+	#net.file <- paste0(file_path_sans_ext(osm.file),".graphml")
+	net.file <- file.path(city.folder,"graph.graphml")
 	write.graph(g, net.file, format="graphml")
 }

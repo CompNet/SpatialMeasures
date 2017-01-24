@@ -25,7 +25,7 @@ source("src/straightness/discrete.R")
 gl <- list()
 # load the original graph
 tlog("Load the original graph")
-gl[[1]] <- read.graph("data/figures/graph1.graphml",format="graphml")
+gl[[1]] <- read.graph("data/figures/randplan-original/graph.graphml",format="graphml")
 # remove a few nodes from the graph (to highlight the consequence on the average straightness)
 tlog("Remove nodes 16-18 from the graph")
 gl[[2]] <- delete.vertices(gl[[1]],16:18)
@@ -38,7 +38,7 @@ gl[[2]] <- delete.vertices(gl[[1]],16:18)
 for(i in 1:length(gl))
 {	tlog("Process graph #",i)
 	g <- gl[[i]]
-	out.folder <- file.path("data","figures",paste0("small_",i))
+	out.folder <- file.path("data","figures","randplan-original",paste0("small_",i))
 	dir.create(path=out.folder, showWarnings=FALSE, recursive=TRUE)
 	
 	########################################
@@ -149,7 +149,7 @@ for(i in 1:length(gl))
 ########################################
 for(i in 1:length(gl))
 {	tlog("Processing graph #",i)
-	out.folder <- file.path("data","figures",paste0("small_",i))
+	out.folder <- file.path("data","figures","randplan-original",paste0("small_",i))
 	for(d in c("node-graph","link-graph","node-link","link-link"))
 	{	tlog(2,"Processing ",d)
 		data <- as.matrix(read.table(file=file.path(out.folder,paste0(d,".txt")),header=FALSE))
