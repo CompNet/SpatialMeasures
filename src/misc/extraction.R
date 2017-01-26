@@ -26,23 +26,23 @@ urban.folder <- file.path(data.folder,"urban")
 
 # list the cities and their boxes
 cities <- list(
- 		  abidjan=c( -4.0314,   5.3125,  -4.0100,   5.3359),	#TODO
+# 		  abidjan=c( -4.0314,   5.3125,  -4.0100,   5.3359),
 #	 alicesprings=c(133.8220, -23.7248, 133.9050, -23.6639),
 #	      avignon=c(  4.7669,  43.9240,   4.8455,  43.9619),
 #	       beijin=c(116.2635,  39.8233, 116.4887,  39.9897),
- 		 bordeaux=c( -0.6805,  44.7757,  -0.4968,  44.8924),	#TODO
- 			dakar=c(-17.5338,  14.6434, -17.4185,  14.8104),	#TODO
- 		 hongkong=c(114.1150,  22.1912, 114.2640,  22.2961),	#TODO
+# 		 bordeaux=c( -0.6805,  44.7757,  -0.4968,  44.8924),	#TODO
+# 			dakar=c(-17.5338,  14.6434, -17.4185,  14.8104),	#TODO
+# 		 hongkong=c(114.1150,  22.1912, 114.2640,  22.2961),	#TODO
 #	     istanbul=c( 28.9208,  40.9846,  29.0671,  41.0721),
 #	   karlskrona=c( 15.5604,  56.1488,  15.6016,  56.1704),
- 		   lisbon=c( -9.1810,  38.6973,  -9.0938,  38.7511),	#TODO
- 		ljubljana=c( 14.4455,  46.0116,  14.5790,  46.0857),	#TODO
- 		manhattan=c(-74.0224,  40.6994, -73.9219,  40.8510)		#TODO
+# 		   lisbon=c( -9.1810,  38.6973,  -9.0938,  38.7511),	#TODO
+# 		ljubljana=c( 14.4455,  46.0116,  14.5790,  46.0857),	#TODO
+# 		manhattan=c(-74.0224,  40.6994, -73.9219,  40.8510),	#TODO
 ##	      newyork=c(-74.0465,  40.5389, -73.7787,  40.9083),
 #	         sfax=c( 10.6272,  34.6507,  10.8614,  34.8640),
 #	     soustons=c( -1.4313,  43.7396,  -1.3158,  43.7793),
 #		    tokyo=c(139.5895,  35.5378, 139.9136,  35.8590),
-#	troisrivieres=c(-72.6351,  46.3104, -72.4902,  46.4083),
+#	troisrivieres=c(-72.6351,  46.3104, -72.4902,  46.4083)
 )
 
 
@@ -89,6 +89,8 @@ for(c in 1:length(cities))
 }
 
 
+
+
 # normalization (finally not necessary)
 #c <- 1
 #name <- names(cities)[c]
@@ -100,3 +102,56 @@ for(c in 1:length(cities))
 #V(g)$y <- (V(g)$y - min(temp)) / (max(temp) - min(temp)) * 100
 #net.file <- file.path(city.folder,"graph0.graphml")
 #write.graph(g,net.file,format="graphml")
+
+
+
+
+# this part is used to clean the graphs after a first manual cleaning
+# the goal here is to remove useless attributes added by gephi, remove
+# multiple links, and keep only the giant component
+for(c in 1:length(cities))
+{	name <- names(cities)[c]
+	cat("Processing city ",name,"\n",sep="")
+	city.folder <- file.path(urban.folder,name)
+	
+	# load the graph exported from gephi
+	in.file <- file.path(city.folder,"graph2.graphml")
+	g <- read.graph(in.file, format="graphml")
+	
+	# remove useless node attributes
+	vatt <- list.vertex.attributes(g)
+	cat("  Node attributes before removal: ",paste(vatt,collapse=", "),"\n",sep="")
+	for(att in c("r","g","b","label","size","name","lon","lat"))
+	{	if(att %in% vatt)
+			g <- remove.vertex.attribute(graph=g,name=att)
+	}
+	cat("  Node attributes after removal: ",paste(list.vertex.attributes(g),collapse=", "),"\n",sep="")
+
+	eatt <- list.edge.attributes(g)
+	cat("  Link attributes before removal: ",paste(eatt,collapse=", "),"\n",sep="")
+	for(att in c("Edge Label","name"))
+	{	if(att %in% eatt)
+			g <- remove.edge.attribute(graph=g,name=att)
+	}
+	cat("  Link attributes after removal: ",paste(list.edge.attributes(g),collapse=", "),"\n",sep="")
+	
+	# remove loops and multiple links
+	cat("  Before simplification: ",gorder(g)," nodes - ",gsize(g)," links\n")
+	g <- simplify(graph=g, remove.multiple=TRUE, remove.loops=TRUE)
+	cat("  After simplification: ",gorder(g)," nodes - ",gsize(g)," links\n")
+	
+	# keep only the giant component
+	comp.res <- components(graph=g, mode="weak")
+	cat("  Components (",comp.res$no,"): ",paste(comp.res$csize,collapse=", "),"\n",sep="")
+	mx.comp <- which.max(comp.res$csize)
+	idx <- which(comp.res$membership!=mx.comp)
+	g <- delete_vertices(graph=g,v=idx)
+	cat("  Keeping giant component only: ",gorder(g)," nodes - ",gsize(g)," links\n")
+	
+	# record the cleaned graph
+	out.file <- file.path(city.folder,"graph3.graphml")
+	write.graph(g,out.file,format="graphml")
+}
+
+
+# TODO : plot discrete vs. continuous values?
