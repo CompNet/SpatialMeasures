@@ -5,7 +5,7 @@
 # Vincent Labatut 01/2017
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
-# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/figures/urban.R")
 ############################################################################
 source("src/misc/log.R")
@@ -20,14 +20,26 @@ source("src/straightness/discrete.R")
 
 
 graph.types <- c(
+	"abidjan",
+	"alicesprings",
 	"avignon",
-#	"avignon-small",
-	"sfax",
 	"beijin",
+	"bordeaux",
+	"dakar",
+	"hongkong",
 	"istanbul",
-	"troisrivieres",
+	"karlskrona",
+	"lisbon",
+	"liverpool",
+	"ljubljana",
+	"maastricht",
+	"manhattan",
+	"stpetersburg",
+	"roma",
+	"sfax",
+	"soustons",
 	"tokyo",
-	"newyork"
+	"troisrivieres"
 )
 
 data.folder <- "data"
