@@ -5,7 +5,7 @@
 # Vincent Labatut 01/2017
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
-# setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/figures/urban.R")
 ############################################################################
 source("src/misc/log.R")
@@ -20,7 +20,7 @@ source("src/straightness/discrete.R")
 
 
 graph.types <- c(
-	"abidjan",
+#	"abidjan",
 	"alicesprings",
 	"avignon",
 	"beijin",
@@ -61,22 +61,35 @@ for(gtype in graph.types)
 	g <- read.graph(file.path(out.folder,"graph.graphml"),format="graphml")
 	
 	########################################
-	# Process the link-graph and node-graph averages
+	# Process the node-graph averages
 	########################################
-	# process several variants of the average straightness
+	# process the average straightness values
 	tlog(2,"Process the average straightness between each node and the rest of the graph")
 	node.str <- mean.straightness.nodes.graph(graph=g)
+	
+	# plot them
+	tlog(2,"Generate the corresponding plots")
+	myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="node-graph", out.folder=out.folder, export=FALSE, formats="pdf")
+	
+	# record them as text files
+	tlog(2,"Record the numerical results for later consultation")
+	write.table(x=node.str,file=file.path(out.folder,"node-graph.txt"),row.names=FALSE,col.names=FALSE)
+	
+	
+	
+	########################################
+	# Process the link-graph averages
+	########################################
+	# process the average straightness values
 	tlog(2,"Process the average straightness between each link and the rest of the graph")
 	link.str <- mean.straightness.links.graph(graph=g)
 	
 	# plot them
 	tlog(2,"Generate the corresponding plots")
-	myplot.graph(g, node.str=node.str, link.str=NA, large=TRUE, filename="node-graph", out.folder=out.folder, export=FALSE, formats="pdf")
 	myplot.graph(g, node.str=NA, link.str=link.str, large=TRUE, filename="link-graph", out.folder=out.folder, export=FALSE, formats="pdf")
 	
 	# record them as text files
 	tlog(2,"Record the numerical results for later consultation")
-	write.table(x=node.str,file=file.path(out.folder,"node-graph.txt"),row.names=FALSE,col.names=FALSE)
 	write.table(x=link.str,file=file.path(out.folder,"link-graph.txt"),row.names=FALSE,col.names=FALSE)
 	
 	

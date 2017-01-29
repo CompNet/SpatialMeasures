@@ -1,7 +1,8 @@
 ############################################################################
-# Script used by memory.R to monitor the memory. It allows to start a fresh
+# Script used by memory2.R to monitor the memory. It allows to start a fresh
 # new R session each time we process a network. Indeed, the R garbage collector
-# does not really clean the memory when invoked. This allows to force that.
+# does not seem to really clean the memory when invoked. This allows to force 
+# clearing the memory.
 # 
 # Vincent Labatut 10/2016
 #

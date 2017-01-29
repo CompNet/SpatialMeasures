@@ -29,6 +29,33 @@ tol.eq <- function(x,y,tolerance=TOLERANCE)
 
 
 ############################################################################
+# Returns the distance extracted from a dist object, for the specified nodes.
+#
+# u,v: the concerned nodes.
+# d: the dist object.
+#
+# returns: the distance between u and v as represented by d.
+############################################################################
+get.dist <- function(u, v, d)
+{	if(u==v)
+		res <- 0
+	else
+	{	n <- attr(do, "Size")
+		if(u>v)
+		{	tmp <- v
+			v <- u
+			u <- tmp
+		}
+		res <- d[n*(u-1) - u*(u-1)/2 + v-u]
+	}
+	
+	return(res)
+}
+
+
+
+
+############################################################################
 # Checks if the three specified points are aligned. 
 #
 # Note: uses function tol.eq to compare the points positions.
@@ -82,23 +109,23 @@ check.alignment <- function(x1, y1, x2, y2, x3, y3)
 ############################################################################
 aux.process.lambdauv <- function(e.dist, g.dist, u1, v1, u2, v2)
 {	disp <- FALSE
-	if(disp) cat("..........(u1,v1)=(",u1,",",v1,") vs (u2,v2)=(",u2,",",v2,") e.dist[u1,v1]=",e.dist[u1,v1],"\n",sep="")
+	if(disp) cat("..........(u1,v1)=(",u1,",",v1,") vs (u2,v2)=(",u2,",",v2,") e.dist[u1,v1]=",get.dist(u1,v1,e.dist),"\n",sep="")
 	if(disp) cat("..........g.dist[u2,v1]=",g.dist[u2,v1]," -- g.dist[u2,u1]=",g.dist[u2,u1]," g.dist[v2,v1]=",g.dist[v2,v1]," -- g.dist[v2,u1]=",g.dist[v2,u1],"\n",sep="")
 	
 	# apply the article formulas
-	lambdau <- (g.dist[u2,v1] - g.dist[u2,u1] + e.dist[u1,v1])/2
-	lambdav <- (g.dist[v2,v1] - g.dist[v2,u1] + e.dist[u1,v1])/2
+	lambdau <- (g.dist[u2,v1] - g.dist[u2,u1] + get.dist(u1,v1,e.dist))/2
+	lambdav <- (g.dist[v2,v1] - g.dist[v2,u1] + get.dist(u1,v1,e.dist))/2
 	if(disp) cat("..........lambdau:",lambdau," lambdav:",lambdav,"\n",sep="")
 	
 	# must sometimes correct some rounding problems
 	if(lambdau<0)
 		lambdau <- 0
-	else if(lambdau>e.dist[u1,v1])
-		result <- e.dist[u1,v1]
+	else if(lambdau>get.dist(u1,v1,e.dist))
+		result <- get.dist(u1,v1,e.dist)
 	if(lambdav<0)
 		lambdav <- 0
-	else if(lambdav>e.dist[u1,v1])
-		lambdav <- e.dist[u1,v1]
+	else if(lambdav>get.dist(u1,v1,e.dist))
+		lambdav <- get.dist(u1,v1,e.dist)
 	
 	result <- c(lambdau,lambdav)
 	return(result)
@@ -120,26 +147,26 @@ aux.process.lambdauv <- function(e.dist, g.dist, u1, v1, u2, v2)
 ############################################################################
 aux.process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 {	disp <- FALSE
-	if(disp) cat("..........(u1,v1)=(",u1,",",v1,") vs (u2,v2)=(",u2,",",v2,") e.dist[u1,v1]=",e.dist[u1,v1]," e.dist[u2,v2]=",e.dist[u2,v2],"\n",sep="")
+	if(disp) cat("..........(u1,v1)=(",u1,",",v1,") vs (u2,v2)=(",u2,",",v2,") e.dist[u1,v1]=",get.dist(u1,v1,e.dist)," e.dist[u2,v2]=",get.dist(u2,v2,e.dist),"\n",sep="")
 	if(disp) cat("..........g.dist[u1,u2]=",g.dist[u1,u2]," -- g.dist[u1,v2]=",g.dist[u1,v2]," g.dist[v1,u2]=",g.dist[v1,u2]," -- g.dist[v1,v2]=",g.dist[v1,v2],"\n",sep="")
 	
 	# apply the article formulas
 	result <- NA
 	if(ellp1<=lambdau && ellp1<=lambdav)
-		result <- (g.dist[u1,v2] - g.dist[u1,u2] + e.dist[u2,v2])/2
+		result <- (g.dist[u1,v2] - g.dist[u1,u2] + get.dist(u2,v2,e.dist))/2
 	else if(ellp1<=lambdau && ellp1>lambdav)
-		result <- (g.dist[v1,v2] - g.dist[u1,u2] + e.dist[u1,v1] + e.dist[u2,v2] - 2*ellp1)/2
+		result <- (g.dist[v1,v2] - g.dist[u1,u2] + get.dist(u1,v1,e.dist) + get.dist(u2,v2,e.dist) - 2*ellp1)/2
 	else if(ellp1>lambdau && ellp1<=lambdav)
-		result <- (g.dist[u1,v2] - g.dist[v1,u2] - e.dist[u1,v1] + e.dist[u2,v2] + 2*ellp1)/2
+		result <- (g.dist[u1,v2] - g.dist[v1,u2] - get.dist(u1,v1,e.dist) + get.dist(u2,v2,e.dist) + 2*ellp1)/2
 	else if(ellp1>lambdau && ellp1>lambdav)
-		result <- (g.dist[v1,v2] - g.dist[v1,u2] + e.dist[u2,v2])/2
+		result <- (g.dist[v1,v2] - g.dist[v1,u2] + get.dist(u2,v2,e.dist))/2
 	if(disp) cat("..........lambda2:",result,"\n",sep="")
 	
 	# must sometimes correct some rounding problems
 	if(result<0)
 		result <- 0
-	else if(result>e.dist[u2,v2])
-		result <- e.dist[u2,v2]
+	else if(result>get.dist(u2,v2,e.dist))
+		result <- get.dist(u2,v2,e.dist)
 	
 	return(result)
 }
@@ -258,13 +285,13 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 		if(error.flag)
 		{	cat("......",a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,"\n",sep="")
 			print(fellp2)
-#			stop()
+stop()
 		}
 		else
 		{	result <- intres$value
 			if(disp) cat("......",result," vs. ",ell2pup*(ub-lb)," (",intres$abs.error,") \n",sep="")
 		}
-		# test using the pracma package (not faster, so not used)
+		# test using the pracma package (turned out not to be faster than base, so eventually not used)
 		#result <- integral(fun=fun, xmin=lb, xmax=ub, method="Kronrod",vectorized=TRUE)
 	}
 	
@@ -299,8 +326,8 @@ aux.straightness.point.point <- function(graph, e.dist, g.dist, u1, v1, ellp1, u
 	yv2 <- V(graph)$y[v2]
 	
 	# euclidean distance between the points
-	edp1p2 <- sqrt((xu2 + ellp2/e.dist[u2,v2]*(xv2-xu2) - xu1 - ellp1/e.dist[u1,v1]*(xv1-xu1))^2 
-				+ (yu2 + ellp2/e.dist[u2,v2]*(yv2-yu2) - yu1 - ellp1/e.dist[u1,v1]*(yv1-yu1))^2)
+	edp1p2 <- sqrt((xu2 + ellp2/get.dist(u2,v2,e.dist)*(xv2-xu2) - xu1 - ellp1/get.dist(u1,v1,e.dist)*(xv1-xu1))^2 
+				+ (yu2 + ellp2/get.dist(u2,v2,e.dist)*(yv2-yu2) - yu1 - ellp1/get.dist(u1,v1,e.dist)*(yv1-yu1))^2)
 	
 	# process the straightness
 	result <- NA
@@ -310,9 +337,9 @@ aux.straightness.point.point <- function(graph, e.dist, g.dist, u1, v1, ellp1, u
 	# if p1 and p2 are lying on the same link
 	else if(setequal(c(u1,v1),c(u2,v2)) 
 			|| ellp1==0 && u1 %in% c(u2,v2)
-			|| ellp1==e.dist[u1,v1] && v1 %in% c(u2,v2)
+			|| ellp1==get.dist(u1,v1,e.dist) && v1 %in% c(u2,v2)
 			|| ellp2==0 && u2 %in% c(u1,v1)
-			|| ellp2==e.dist[u2,v2] && v2 %in% c(u1,v1))
+			|| ellp2==get.dist(u2,v2,e.dist) && v2 %in% c(u1,v1))
 		result <- 1
 	# general case
 	else
@@ -323,15 +350,15 @@ aux.straightness.point.point <- function(graph, e.dist, g.dist, u1, v1, ellp1, u
 		# u1v2
 		else if(ellp1<=lambdau && ellp1<=lambdav && ellp2>lambda2
 			|| ellp1>lambdau && ellp1<=lambdav && ellp2>lambda2)
-			result <- edp1p2 / (ellp1 + g.dist[u1,v2] + e.dist[u2,v2] - ellp2)
+			result <- edp1p2 / (ellp1 + g.dist[u1,v2] + get.dist(u2,v2,e.dist) - ellp2)
 		# v1u2
 		else if(ellp1>lambdau && ellp1<=lambdav && ellp2<=lambda2
 			|| ellp1>lambdau && ellp1>lambdav && ellp2<=lambda2)
-			result <- edp1p2 / (e.dist[u1,v1] - ellp1 + g.dist[v1,u2] + ellp2)
+			result <- edp1p2 / (get.dist(u1,v1,e.dist) - ellp1 + g.dist[v1,u2] + ellp2)
 		# v1v2
 		else if(ellp1<=lambdau && ellp1>lambdav && ellp2>lambda2
 			|| ellp1>lambdau && ellp1>lambdav && ellp2>lambda2)
-			result <- edp1p2 / (e.dist[u1,v1] - ellp1 + g.dist[v1,v2] + e.dist[u2,v2] - ellp2)
+			result <- edp1p2 / (get.dist(u1,v1,e.dist) - ellp1 + g.dist[v1,v2] + get.dist(u2,v2,e.dist) - ellp2)
 	}
 		
 	return(result)
@@ -375,38 +402,44 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 	# if the points are disconnected
 	if(is.infinite(g.dist[u1,u2]))
 		result <- 0
+	# if u_2 and v_2 are at the same position
+	else if(tol.eq(xu2,xv2) && tol.eq(yu2,yv2)) 
+		result <- 0
 	# if p_1 lies on link (u_2,v_2)
 	else if(setequal(c(u1,v1),c(u2,v2))
 			|| ellp1==0 && u1 %in% c(u2,v2)
-			|| ellp1==e.dist[u1,v1] && v1 %in% c(u2,v2))
-		result <- e.dist[u2,v2]
+			|| ellp1==get.dist(u1,v1,e.dist) && v1 %in% c(u2,v2))
+		result <- get.dist(u2,v2,e.dist)
 	# if p_1 is aligned with (u_2,v_2) and optimally connected to this link
-	else if(tol.eq(ellp1,0) && check.alignment(xu1,yu1,xu2,yu2,xv2,yv2) && tol.eq(e.dist[u1,u2],g.dist[u1,u2])
-			|| tol.eq(ellp1,e.dist[u1,v1]) && check.alignment(xv1,yv1,xu2,yu2,xv2,yv2) && tol.eq(e.dist[v1,u2],g.dist[v1,u2]))
+	else if(tol.eq(ellp1,0) && check.alignment(xu1,yu1,xu2,yu2,xv2,yv2) && tol.eq(get.dist(u2,v2,e.dist),g.dist[u1,u2])
+			|| tol.eq(ellp1,get.dist(u1,v1,e.dist)) && check.alignment(xv1,yv1,xu2,yu2,xv2,yv2) && tol.eq(get.dist(u2,v2,e.dist),g.dist[v1,u2]))
 			# this can be the case only if p_1 is u_1 or v_1
-		result <- e.dist[u2,v2]
+		result <- get.dist(u2,v2,e.dist)
 	# general case
 	else
 	{	# if the point is aligned with the link, we sometimes get some rounding problems (could not find why, exactly): 
-		# in this case we need to use the numerical integration
-		if(use.primitive && check.alignment(xu1+ellp1/e.dist[u1,v1]*(xv1-xu1),yu1+ellp1/e.dist[u1,v1]*(yv1-yu1),xu2,yu2,xv2,yv2))
-		{	if(disp) cat("......Point aligned with the link (and not optimally connected) >> no primitive\n")
+		# in this case we need to use the numerical integration instead of the primitive
+		if(use.primitive && check.alignment(xu1+ellp1/get.dist(u1,v1,e.dist)*(xv1-xu1),yu1+ellp1/get.dist(u1,v1,e.dist)*(yv1-yu1),xu2,yu2,xv2,yv2))
+		{	if(disp)
+			{	cat("......Point aligned with the link (and not optimally connected) >> no primitive\n")
+				cat("......",xu1+ellp1/get.dist(u1,v1,e.dist)*(xv1-xu1),",",yu1+ellp1/get.dist(u1,v1,e.dist)*(yv1-yu1),",",xu2,",",yu2,",",xv2,",",yv2,"\n",sep="")
+			}
 			use.primitive <- FALSE
 		}
 		
 		# integrate using the antiderivative
 		if(use.primitive)
-		{	if(disp) cat("......(u1,v1)=(",u1,",",v1,") - ellp1=",ellp1," - (u2,v2)=(",u2,",",v2,") - lambda2=",lambda2," - e.dist[u2,v2]:",e.dist[u2,v2],"\n",sep="")
+		{	if(disp) cat("......(u1,v1)=(",u1,",",v1,") - ellp1=",ellp1," - (u2,v2)=(",u2,",",v2,") - lambda2=",lambda2," - e.dist[u2,v2]:",get.dist(u2,v2,e.dist),"\n",sep="")
 			if(disp) cat("......lambda_u=",lambdau," - lambda_v=",lambdav,"\n",sep="")
 			
 			# set the common parameters
-			a <- xu2 - xu1 - ellp1*(xv1-xu1)/e.dist[u1,v1]
-			b <- (xv2-xu2)/e.dist[u2,v2]
-			c <- yu2 - yu1 - ellp1*(yv1-yu1)/e.dist[u1,v1]
-			d <- (yv2-yu2)/e.dist[u2,v2]
+			a <- xu2 - xu1 - ellp1*(xv1-xu1)/get.dist(u1,v1,e.dist)
+			b <- (xv2-xu2)/get.dist(u2,v2,e.dist)
+			c <- yu2 - yu1 - ellp1*(yv1-yu1)/get.dist(u1,v1,e.dist)
+			d <- (yv2-yu2)/get.dist(u2,v2,e.dist)
 			
 			# set the variable parameters
-			e1 <-  ellp1 + g.dist[u1,u2]	; e2 <- ellp1 + g.dist[u1,v2] + e.dist[u2,v2]	; e3 <- e.dist[u1,v1] - ellp1 + g.dist[v1,u2]	; e4 <- e.dist[u1,v1] - ellp1 + g.dist[v1,v2] + e.dist[u2,v2]
+			e1 <-  ellp1 + g.dist[u1,u2]	; e2 <- ellp1 + g.dist[u1,v2] + get.dist(u2,v2,e.dist)	; e3 <- get.dist(u1,v1,e.dist) - ellp1 + g.dist[v1,u2]	; e4 <- get.dist(u1,v1,e.dist) - ellp1 + g.dist[v1,v2] + get.dist(u2,v2,e.dist)
 			f1 <- 1							; f2 <- -1										; f3 <- 1										; f4 <- -1
 			
 			# process the integral
@@ -417,22 +450,22 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 				{	if(disp) cat("......case ellp1 <= lambdau, lambdav\n",sep="")
 					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e1,f1,0)
-					if(!tol.eq(lambda2,e.dist[u2,v2]))
-						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
+					if(!tol.eq(lambda2,get.dist(u2,v2,e.dist)))
+						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
 				}
 				else if(ellp1 <= lambdav)
 				{	if(disp) cat("......case lambdau < ellp1 <= lambdav\n",sep="")
 					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e3,f3,0)
-					if(!tol.eq(lambda2,e.dist[u2,v2]))
-						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
+					if(!tol.eq(lambda2,get.dist(u2,v2,e.dist)))
+						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
 				}
 				else
 				{	if(disp) cat("......case lambdau, lambdav < ellp1\n",sep="")
 					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e3,f3,0)
-					if(!tol.eq(lambda2,e.dist[u2,v2]))
-						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
+					if(!tol.eq(lambda2,get.dist(u2,v2,e.dist)))
+						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
 				}
 			}
 			else
@@ -440,27 +473,27 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 				{	if(disp) cat("......case ellp1 <= lambdau, lambdav\n",sep="")
 					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e1,f1,0)
-					if(!tol.eq(lambda2,e.dist[u2,v2]))
-						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
+					if(!tol.eq(lambda2,get.dist(u2,v2,e.dist)))
+						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e2,f2,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e2,f2,lambda2)
 				}
 				else if(ellp1 <= lambdau)
 				{	if(disp) cat("......case lambdau < ellp1 <= lambdau\n",sep="")
 					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e1,f1,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e1,f1,0)
-					if(!tol.eq(lambda2,e.dist[u2,v2]))
-						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
+					if(!tol.eq(lambda2,get.dist(u2,v2,e.dist)))
+						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
 				}
 				else
 				{	if(disp) cat("......case lambdau, lambdav < ellp1\n",sep="")
 					if(!tol.eq(lambda2,0))
 						part1 <- aux.process.straightness.antiderivative(a,b,c,d,e3,f3,lambda2) 	- 	aux.process.straightness.antiderivative(a,b,c,d,e3,f3,0)
-					if(!tol.eq(lambda2,e.dist[u2,v2]))
-						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,e.dist[u2,v2]) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
+					if(!tol.eq(lambda2,get.dist(u2,v2,e.dist)))
+						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
 				}
 			}
 			
 			# combine to get the result
-			if(disp) cat("......part1:",part1," (max:",lambda2,") part2:",part2," (max:",e.dist[u2,v2]-lambda2,")\n",sep="")
+			if(disp) cat("......part1:",part1," (max:",lambda2,") part2:",part2," (max:",get.dist(u2,v2,e.dist)-lambda2,")\n",sep="")
 			result <- part1 + part2
 		}
 		
@@ -472,7 +505,7 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 				return(res)
 			})
 			# perform the approximate integration
-			result <- integrate(f=fun,lower=0,upper=e.dist[u2,v2],abs.tol=1e-15)$value
+			result <- integrate(f=fun,lower=0,upper=get.dist(u2,v2,e.dist),abs.tol=1e-15)$value
 		}
 	}
 	
@@ -502,10 +535,10 @@ aux.mean.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ellp
 	
 	# get the total straightness between the point and the link
 	total <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
-	if(disp) cat("....u1:",u1," v1:",v1," ellp1:",ellp1," -- u2:",u2," v2:",v2," -- Total:",total," e.dist[u2,v2]:",e.dist[u2,v2],"\n",sep="")
+	if(disp) cat("....u1:",u1," v1:",v1," ellp1:",ellp1," -- u2:",u2," v2:",v2," -- Total:",total," e.dist[u2,v2]:",get.dist(u2,v2,e.dist),"\n",sep="")
 	
 	# normalize to get the mean
-	result <- total / e.dist[u2,v2]
+	result <- total / get.dist(u2,v2,e.dist)
 	
 	return(result)
 }
@@ -520,20 +553,29 @@ aux.mean.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ellp
 # e: link of interest.
 # use.primitive: whether to use the pre-processed primitive (faster), or to
 # 				 to integrate numerically.
+# e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
+#		  If missing, it processed by the function (processing once before 
+#		  calling this function can speed up the processing, if there are
+#		  several calls).
+# g.dist: graph distance between all pairs of nodes. Same remark than for
+#		  parameter e.dist.
 # 
 # returns: vector containing the average straightness between each node of u
 #          and the link e=(u_2,v_2). 
 ############################################################################
-mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primitive=TRUE)
+mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primitive=TRUE, e.dist, g.dist)
 {	disp <- FALSE
 	
 	# init the result vector
 	result <- c()
 	
 	# init the distances
-	pos <- cbind(V(graph)$x,V(graph)$y)
-	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
-	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	if(missing(e.dist))
+	{	pos <- cbind(V(graph)$x,V(graph)$y)
+		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	}
+	if(missing(g.dist))
+		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# get the second link
 	el <- get.edgelist(graph)
@@ -555,7 +597,7 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 			if(tmp<u[i])
 			{	u1 <- tmp
 				v1 <- u[i]
-				ellp1 <- e.dist[u1,v1]
+				ellp1 <- get.dist(u1,v1,e.dist)
 			}
 			else
 			{	u1 <- u[i]
@@ -616,11 +658,11 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 		
 		# get the mean straightness between the point and the link
 		part.str <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
-#if(is.infinite(part.str))
-#	stop("..Infinite total straightness in aux.total.straightness.point.link")
-		if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",e.dist[u2,v2],"\n",sep="")
+if(is.infinite(part.str))
+	stop("..Infinite total straightness in aux.total.straightness.point.link")
+		if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",get.dist(u2,v2,e.dist),"\n",sep="")
 		total.str <- total.str + part.str
-		total.lgt <- total.lgt + e.dist[u2,v2]
+		total.lgt <- total.lgt + get.dist(u2,v2,e.dist)
 	}
 	
 	# normalize to get the mean
@@ -641,20 +683,29 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 # u: vector of nodes of interest.
 # use.primitive: whether to use the pre-processed primitive (faster), or to
 # 				 to integrate numerically.
+# e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
+#		  If missing, it processed by the function (processing once before 
+#		  calling this function can speed up the processing, if there are
+#		  several calls).
+# g.dist: graph distance between all pairs of nodes. Same remark than for
+#		  parameter e.dist.
 # 
 # returns: vector containing the average straightness between each node of u
 #          and the points constituting the graph.
 ############################################################################
-mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitive=TRUE)
+mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitive=TRUE, e.dist, g.dist)
 {	disp <- FALSE
 	
 	# init the result vector
 	result <- c()
 	
 	# init the distances
-	pos <- cbind(V(graph)$x,V(graph)$y)
-	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
-	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	if(missing(e.dist))
+	{	pos <- cbind(V(graph)$x,V(graph)$y)
+		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	}
+	if(missing(g.dist))
+		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# process each specified node
 	for(i in 1:length(u))
@@ -671,7 +722,7 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 			if(tmp<u[i])
 			{	u1 <- tmp
 				v1 <- u[i]
-				ellp1 <- e.dist[u1,v1]
+				ellp1 <- get.dist(u1,v1,e.dist)
 			}
 			else
 			{	u1 <- u[i]
@@ -682,8 +733,8 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 			# get the mean straightness between the point and the graph
 			str <- aux.mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1, use.primitive)
 			if(disp) cat("Avg Straightness: ",str,"\n",sep="")
-#if(is.infinite(str))
-#	stop("Error: infinite straightness")
+if(is.infinite(str))
+	stop("Error: infinite straightness")
 		}
 		
 		# add to the result vector
@@ -730,10 +781,16 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 		result <- 0
 	# if the links are the same
 	else if(setequal(c(u1,v1),c(u2,v2)))
-		result <- (e.dist[u1,v1]^2)/2
+		result <- (get.dist(u1,v1,e.dist)^2)/2
+	# if u_1 and v_1 are at the same position
+	else if(tol.eq(xu1,xv1) && tol.eq(yu1,yv1))
+		result <- get.dist(u2,v2,e.dist)
+	# if u_2 and v_2 are at the same position
+	else if(tol.eq(xu2,xv2) && tol.eq(yu2,yv2)) 
+		result <- get.dist(u1,v1,e.dist)
 	# if both links are aligned and connected by optimal paths
-	else if(check.alignment(xu1,yu1,xv1,yv1,xu2,yu2) && check.alignment(xu1,yu1,xv1,yv1,xv2,yv2) && tol.eq(e.dist[u1,u2],g.dist[u1,u2]))
-		result <- e.dist[u1,v1]*e.dist[u2,v2]
+	else if(check.alignment(xu1,yu1,xv1,yv1,xu2,yu2) && check.alignment(xu1,yu1,xv1,yv1,xv2,yv2) && tol.eq(get.dist(u2,v2,e.dist),g.dist[u1,u2]))
+		result <- get.dist(u1,v1,e.dist)*get.dist(u2,v2,e.dist)
 	# general case
 	else
 	{	# if the point is aligned with the link, we sometimes get some rounding problems (could not find why, exactly): 
@@ -752,46 +809,46 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 			# possibly round the lambdas
 			if(tol.eq(lambdau,0))
 				lambdau <- 0
-			else if(tol.eq(lambdau,e.dist[u1,v1]))
-				lambdau <- e.dist[u1,v1]
+			else if(tol.eq(lambdau,get.dist(u1,v1,e.dist)))
+				lambdau <- get.dist(u1,v1,e.dist)
 			if(tol.eq(lambdav,0))
 				lambdav <- 0
-			else if(tol.eq(lambdav,e.dist[u1,v1]))
-				lambdav <- e.dist[u1,v1]
+			else if(tol.eq(lambdav,get.dist(u1,v1,e.dist)))
+				lambdav <- get.dist(u1,v1,e.dist)
 			
 			# function used to process lambda2
 			fellp2 <- function(ellp1) aux.process.lambda2(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 			
 			# common constants
 			a0 <- xu2 - xu1
-			b0 <- (xu1 - xv1) / e.dist[u1,v1]
-			c0 <- (xv2 - xu2) / e.dist[u2,v2]
+			b0 <- (xu1 - xv1) / get.dist(u1,v1,e.dist)
+			c0 <- (xv2 - xu2) / get.dist(u2,v2,e.dist)
 			d0 <- yu2 - yu1
-			e0 <- (yu1 - yv1) / e.dist[u1,v1]
-			f0 <- (yv2 - yu2) / e.dist[u2,v2]
+			e0 <- (yu1 - yv1) / get.dist(u1,v1,e.dist)
+			f0 <- (yv2 - yu2) / get.dist(u2,v2,e.dist)
 			
 			# specific cases
 			gu1u2 <- g.dist[u1,u2]									; hu1u2 <- 1	; iu1u2 <- 1
-			gu1v2 <- g.dist[u1,v2] + e.dist[u2,v2]					; hu1v2 <- 1	; iu1v2 <- -1
-			gv1u2 <- g.dist[v1,u2] + e.dist[u1,v1]					; hv1u2 <- -1	; iv1u2 <- 1
-			gv1v2 <- g.dist[v1,v2] + e.dist[u1,v1] + e.dist[u2,v2]	; hv1v2 <- -1	; iv1v2 <- -1
+			gu1v2 <- g.dist[u1,v2] + get.dist(u2,v2,e.dist)					; hu1v2 <- 1	; iu1v2 <- -1
+			gv1u2 <- g.dist[v1,u2] + get.dist(u1,v1,e.dist)					; hv1u2 <- -1	; iv1u2 <- 1
+			gv1v2 <- g.dist[v1,v2] + get.dist(u1,v1,e.dist) + get.dist(u2,v2,e.dist)	; hv1v2 <- -1	; iv1v2 <- -1
 			
 			part1 <- 0 ; part2 <- 0 ; part3 <- 0
 			if(lambdau <= lambdav)
 			{	# from 0 to lambda_u
-				part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdau)
+				part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=get.dist(u2,v2,e.dist), lb=0,       ub=lambdau)
 				# from lambda_u to lambda_v
-				part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=lambdav)
+				part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=get.dist(u2,v2,e.dist), lb=lambdau, ub=lambdav)
 				# from lambda_v to ||u1v1||
-				part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=e.dist[u1,v1])
+				part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=get.dist(u2,v2,e.dist), lb=lambdav, ub=get.dist(u1,v1,e.dist))
 			}
 			else
 			{	# from 0 to lambda_v
-				part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=0,       ub=lambdav)
+				part1 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gu1v2,h2=hu1v2, i2=iu1v2, fellp2=fellp2, ell2pup=get.dist(u2,v2,e.dist), lb=0,       ub=lambdav)
 				# from lambda_v to lambda_u
-				part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdav, ub=lambdau)
+				part2 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gu1u2,h1=hu1u2, i1=iu1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=get.dist(u2,v2,e.dist), lb=lambdav, ub=lambdau)
 				# from lambda_u to ||u1v1||
-				part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=e.dist[u2,v2], lb=lambdau, ub=e.dist[u1,v1])
+				part3 <- aux.process.straightness.integral(a0,b0, c0, d0,e0, f0, g1=gv1u2,h1=hv1u2, i1=iv1u2, g2=gv1v2,h2=hv1v2, i2=iv1v2, fellp2=fellp2, ell2pup=get.dist(u2,v2,e.dist), lb=lambdau, ub=get.dist(u1,v1,e.dist))
 			}
 			result <- part1 + part2 + part3
 		}
@@ -810,7 +867,7 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 			# perform the approximate integration
 			res1 <- integrate(f=fun,lower=0,upper=b1,abs.tol=1e-15)$value
 			res2 <- integrate(f=fun,lower=b1,upper=b2,abs.tol=1e-15)$value
-			res3 <- integrate(f=fun,lower=b2,upper=e.dist[u1,v1],abs.tol=1e-15)$value
+			res3 <- integrate(f=fun,lower=b2,upper=get.dist(u1,v1,e.dist),abs.tol=1e-15)$value
 			result <- res1 + res2 + res3
 		}
 	}
@@ -846,7 +903,7 @@ aux.mean.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, v
 	{	# get the total straightness between the links
 		total <- aux.total.straightness.link.link(graph, e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 		# normalize to get the mean
-		result <- total / (e.dist[u2,v2]*e.dist[u1,v1])
+		result <- total / (get.dist(u2,v2,e.dist)*get.dist(u1,v1,e.dist))
 	}
 	
 	return(result)
@@ -862,19 +919,28 @@ aux.mean.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, v
 # e2: id of the second link. 
 # use.primitive: whether to use the pre-processed primitive (faster), or to
 # 				 to integrate numerically.
+# e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
+#		  If missing, it processed by the function (processing once before 
+#		  calling this function can speed up the processing, if there are
+#		  several calls).
+# g.dist: graph distance between all pairs of nodes. Same remark than for
+#		  parameter e.dist.
 # 
 # returns: average straightness between e_1=(u_1,v_1) and e_2=(u_2,v_2). 
 ############################################################################
-mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE)
+mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, e.dist, g.dist)
 {	disp <- FALSE
 	
 	result <- NA
 	el <- get.edgelist(graph)
 	
 	# init the distances
-	pos <- cbind(V(graph)$x,V(graph)$y)
-	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
-	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	if(missing(e.dist))
+	{	pos <- cbind(V(graph)$x,V(graph)$y)
+		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	}
+	if(missing(g.dist))
+		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# get the first link end-nodes
 	u1 <- el[e1,1]
@@ -934,7 +1000,7 @@ aux.mean.straightness.link.graph <- function(graph, e.dist, g.dist, u1, v1, excl
 			str <- aux.total.straightness.link.link(graph, e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 			# add to result
 			total.str <- total.str + str
-			total.length <- total.length + e.dist[u1,v1]*e.dist[u2,v2]
+			total.length <- total.length + get.dist(u1,v1,e.dist)*get.dist(u2,v2,e.dist)
 		}
 	}
 	
@@ -942,7 +1008,7 @@ aux.mean.straightness.link.graph <- function(graph, e.dist, g.dist, u1, v1, excl
 	if(exclude.self)
 		denom <- total.length
 	else
-		denom <- total.length - (e.dist[u1,v1]^2)/2
+		denom <- total.length - (get.dist(u1,v1,e.dist)^2)/2
 	
 	# process the average
 	result <- total.str / denom
@@ -963,19 +1029,28 @@ aux.mean.straightness.link.graph <- function(graph, e.dist, g.dist, u1, v1, excl
 #				should be considered in the average.
 # use.primitive: whether to use the pre-processed primitive (faster), or to
 # 				 to integrate numerically.
+# e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
+#		  If missing, it processed by the function (processing once before 
+#		  calling this function can speed up the processing, if there are
+#		  several calls).
+# g.dist: graph distance between all pairs of nodes. Same remark than for
+#		  parameter e.dist.
 # 
 # returns: vector containing the average straightness between each node of u
 #          and the points constituting the graph.
 ############################################################################
-mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self=FALSE, use.primitive=TRUE)
+mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self=FALSE, use.primitive=TRUE, e.dist, g.dist)
 {	# init the result vector
 	result <- c()
 	el <- get.edgelist(graph)
 	
 	# init the distances
-	pos <- cbind(V(graph)$x,V(graph)$y)
-	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
-	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	if(missing(e.dist))
+	{	pos <- cbind(V(graph)$x,V(graph)$y)
+		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	}
+	if(missing(g.dist))
+		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# process averages based on the previous totals
 	for(i in e)
@@ -1003,18 +1078,27 @@ mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self
 #				should be considered in the average.
 # use.primitive: whether to use the pre-processed primitive (faster), or to
 # 				 to integrate numerically.
+# e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
+#		  If missing, it processed by the function (processing once before 
+#		  calling this function can speed up the processing, if there are
+#		  several calls).
+# g.dist: graph distance between all pairs of nodes. Same remark than for
+#		  parameter e.dist.
 # 
 # returns: a single value representing the average straightness for the whole
 #		   graph.
 ############################################################################
-mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRUE)
+mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRUE, e.dist, g.dist)
 {	result <- NA
 	el <- get.edgelist(graph)
 	
 	# init the distances
-	pos <- cbind(V(graph)$x,V(graph)$y)
-	e.dist <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2))
-	g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	if(missing(e.dist))
+	{	pos <- cbind(V(graph)$x,V(graph)$y)
+		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	}
+	if(missing(g.dist))
+		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
 	
 	# process all pairs of links
 	total.str <- 0
@@ -1040,7 +1124,7 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 				str <- aux.total.straightness.link.link(graph, e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 				# add to result
 				total.str <- total.str + str
-				total.length <- total.length + e.dist[u1,v1]*e.dist[u2,v2]
+				total.length <- total.length + get.dist(u1,v1,e.dist)*get.dist(u2,v2,e.dist)
 			}
 		}
 	}
@@ -1050,7 +1134,7 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 		denom <- total.length
 	else
 	{	denom <- total.length
-		temp <- sapply(1:nrow(el), function(i) (e.dist[el[i,1],el[i,2]]^2)/2)
+		temp <- sapply(1:nrow(el), function(i) (get.dist(el[i,1],el[i,2],e.dist)^2)/2)
 		denom <- denom - sum(temp)
 	}
 	

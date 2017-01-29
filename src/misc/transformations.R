@@ -48,7 +48,7 @@ distances.as.weights <- function(g)
 # spatial length position of each link, it is automatically added.
 # 
 # g: the original graph.
-# granularity: approximate size of the edges in the returned graph (the smaller, the better).
+# granularity: approximate length of the edges in the returned graph (the smaller, the better).
 #			   Zero means no change at all.
 #
 # returns: the same graph, with additional nodes.

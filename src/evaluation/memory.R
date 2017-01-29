@@ -1,7 +1,9 @@
 ############################################################################
 # Generate the memory-related plots from the article cited in the project
 # readme file. This script must be executed *after* the one dealing with
-# processing times, because it takes advantages of certain files it produces. 
+# processing times, because it takes advantages of certain files it produces.
+# This script focuses on the random graphs, the road networks being processed 
+# with the script urban.R.
 # 
 # Note: the memory profiler of R is kind of buggy. I had to launch this script
 # a bunch of time to gather enough data.
@@ -18,7 +20,7 @@ source("src/evaluation/common.R")
 
 
 data.folder <- "data"
-eval.folder <- file.path(data.folder,"eval")
+urban.folder <- file.path(data.folder,"eval")
 
 
 
@@ -49,7 +51,7 @@ load.disc.table <- function(n=5, type="randplanar", iteration=1, g)
 {	tlog(2,"Loading the discretization table")
 	
 	# init file names
-	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
 	disc.file <- file.path(it.folder,"discretizations.txt")
 	
 	# get the table
@@ -77,7 +79,7 @@ load.disc.table <- function(n=5, type="randplanar", iteration=1, g)
 ############################################################################
 process.continuous.straightness <- function(n=5, type="randplanar", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
-	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
 	
 	# for the whole graph
 	table.file <- file.path(it.folder,"continuous-graph.txt")
@@ -181,7 +183,7 @@ process.continuous.straightness <- function(n=5, type="randplanar", iteration=1,
 ############################################################################
 process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
-	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
 	
 	# load the discretization table
 	disc.file <- file.path(it.folder,"discretizations.txt")
@@ -347,7 +349,7 @@ process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g
 ############################################################################
 generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, cont.tables, disc.tables)
 {	tlog("Generating plots and tables for the iteration ",iteration)
-	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
 	nm <- paste0("d=",0:(nrow(disc.table)-1))
 	
 	# build the graph table
@@ -450,7 +452,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 ############################################################################
 generate.overall.plots <- function(n=10, type="randplanar", discretizations, data.cont, data.disc)
 {	tlog("Generating plots and tables for all the repetitions")
-	folder <- file.path(eval.folder,type,paste0("n=",n))
+	folder <- file.path(urban.folder,type,paste0("n=",n))
 	
 	# collecting the data
 	ngran <- nrow(data.disc[[1]]$graph)
@@ -553,7 +555,7 @@ monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 	discretizations <- list()
 	for(r in 1:repetitions)
 	{	# retrieve or create the graph
-		g <- init.graph(n, type, iteration=r, folder=eval.folder)
+		g <- init.graph(n, type, iteration=r, folder=urban.folder)
 		
 		# retrieve the discretization table
 		disc.table <- load.disc.table(n, type, iteration=r, g)
