@@ -380,14 +380,17 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 	for(xaxis in c("nodes","avgseg","granularity"))
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
+			log.axes <- ""
 			xvals <- disc.table[,"Nodes"]
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
-			xvals <- disc.table[,"AverageSegmentation"]
+			log.axes <- "x" 
+			xvals <- disc.table[,"AverageSegmentation"] + 1
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
+			log.axes <- ""
 			xvals <- disc.table[,"Granularity"]
 		} 
 		
@@ -405,10 +408,14 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot(x=xvals, y=graph.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
+					log=log.axes,
 					ylim=c(min(c(graph.yvals,graph.cont.val),na.rm=TRUE),max(c(graph.yvals,graph.cont.val),na.rm=TRUE))
 			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),y=rep(graph.cont.val,2),col="RED")
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					y=rep(graph.cont.val,2),
+					col="RED")
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -418,6 +425,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
+					log=log.axes,
 					ylim=c(min(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE),max(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE))
 			)
 			for(j in 1:length(nodes.cont.vals))
@@ -426,7 +434,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
@@ -481,14 +490,17 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 	for(xaxis in c("nodes","avgseg","granularity"))
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
+			log.axes <- "" 
 			xvals <- nodes
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
-			xvals <- avgseg
+			log.axes <- "x" 
+			xvals <- avgseg + 1
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
+			log.axes <- "" 
 			xvals <- granularities
 		} 
 		
@@ -502,6 +514,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			plot(x=xvals, y=graph.disc.memory,
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
+					log=log.axes,
 					ylim=c(min(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE),max(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE))
 			)
 			for(j in 1:length(graph.cont.memory))
@@ -510,7 +523,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -520,6 +534,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			plot(x=rep(xvals,nrow(nodes.disc.memory)), y=c(t(nodes.disc.memory)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
+					log=log.axes,
 					ylim=c(min(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE),max(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE))
 			)
 			for(j in 1:length(nodes.cont.memory))
@@ -528,7 +543,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}

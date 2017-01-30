@@ -224,12 +224,9 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables, avg
 	else
 	{	# discretize the graph
 		tlog(2,"Discretizing the graph once and for all")
+		gran <- mean(E(g)$dist)/avgseg
 		start.time <- Sys.time()
 			g2 <- add.intermediate.nodes(g, granularity=gran)
-# TODO should actually use the average segmentation instead.
-# maybe normalize first depending on the graph spread?
-avgseg <- mean(E(g)$dist/grans[d])
-			
 		end.time <- Sys.time()
 		duration <- difftime(end.time,start.time,units="s")
 		additional.duration <- additional.duration + duration
@@ -375,14 +372,17 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 	for(xaxis in c("nodes","avgseg","granularity"))
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
+			log.axes <- ""
 			xvals <- disc.table[,"Nodes"]
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
-			xvals <- disc.table[,"AverageSegmentation"]
+			log.axes <- "x"
+			xvals <- disc.table[,"AverageSegmentation"] + 1
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
+			log.axes <- ""
 			xvals <- disc.table[,"Granularity"]
 		} 
 		
@@ -400,10 +400,15 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot(x=xvals, y=graph.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
+					log=log.axes,
 					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
 			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),y=rep(graph.cont.val,2),col="RED")
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					y=rep(graph.cont.val,2),
+					col="RED"
+			)
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -414,13 +419,15 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 				plot(x=xvals, y=nodes.yvals[j,],
 						xlab=xlab, ylab=ylab,
 						col="BLUE",
+						log=log.axes,
 						ylim=c(min(c(nodes.yvals[j,],nodes.cont.vals[j])),max(c(nodes.yvals[j,],nodes.cont.vals[j])))
 				)
 				lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
 						y=rep(nodes.cont.vals[j],2),
 						col="RED"
 				)
-				legend(x="bottomright",legend=c("Approximation","Exact value"),
+				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+						inset=0.03,
 						fill=c("BLUE","RED"))
 				dev.off()
 			}
@@ -440,10 +447,15 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot(x=xvals, y=graph.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
+					log=log.axes,
 					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
 			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),y=rep(graph.cont.val,2),col="RED")
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					y=rep(graph.cont.val,2),
+					col="RED"
+			)
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -453,6 +465,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
+					log=log.axes,
 					ylim=c(min(c(nodes.yvals,nodes.cont.vals)),max(c(nodes.yvals,nodes.cont.vals)))
 			)
 			for(j in 1:length(nodes.cont.vals))
@@ -461,7 +474,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
-			legend(x="bottomright",legend=c("Approximation","Exact value"),
+			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+					inset=0.03,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
@@ -476,10 +490,14 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
 			plot(NULL,ylim=c(min(graph.yvals),max(graph.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
+					log=log.axes,
 					xlab=xlab, ylab=ylab
 			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
+			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
+					y=c(0,0), 
+					col="BLACK", lty=2
+			)
 			points(x=xvals, y=graph.yvals,
 					col="BLUE"
 			)
@@ -489,10 +507,14 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
 			plot(NULL,ylim=c(min(nodes.yvals),max(nodes.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
+					log=log.axes,
 					xlab=xlab, ylab=ylab
 			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)), y=c(0,0), col="BLACK", lty=2)
+			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
+					y=c(0,0), 
+					col="BLACK", lty=2
+			)
 			points(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
 					col="BLUE"#add.alpha("BLUE", 0.25),pch=20					
 			)

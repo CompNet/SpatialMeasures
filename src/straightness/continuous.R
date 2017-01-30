@@ -40,7 +40,7 @@ get.dist <- function(u, v, d)
 {	if(u==v)
 		res <- 0
 	else
-	{	n <- attr(do, "Size")
+	{	n <- attr(d, "Size")
 		if(u>v)
 		{	tmp <- v
 			v <- u
