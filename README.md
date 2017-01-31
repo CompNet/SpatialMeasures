@@ -1,4 +1,4 @@
-# SpatialMeasures v.0.1
+# SpatialMeasures v.0.2
 =======
 *Continuous average Straightness for spatial graphs*
 
@@ -90,7 +90,7 @@ You may want to apply the approach described in our paper to average other spati
 
 
 # To-do List
-* <To be completed>
+* Check if tolerance is now actually needed (after dealing with the specific cases).
 
 
 # References

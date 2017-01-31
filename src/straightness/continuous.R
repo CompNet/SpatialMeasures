@@ -42,11 +42,9 @@ get.dist <- function(u, v, d)
 	else
 	{	n <- attr(d, "Size")
 		if(u>v)
-		{	tmp <- v
-			v <- u
-			u <- tmp
-		}
-		res <- d[n*(u-1) - u*(u-1)/2 + v-u]
+			res <- d[n*(v-1) - v*(v-1)/2 + u-v]
+		else
+			res <- d[n*(u-1) - u*(u-1)/2 + v-u]
 	}
 	
 	return(res)
@@ -285,7 +283,7 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 		if(error.flag)
 		{	cat("......",a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,"\n",sep="")
 			print(fellp2)
-stop()
+#stop()
 		}
 		else
 		{	result <- intres$value
