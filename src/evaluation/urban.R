@@ -8,6 +8,10 @@
 # setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/evaluation/urban.R")
 ############################################################################
+source("src/misc/log.R")
+source("src/misc/plot.R")
+source("src/misc/transformations.R")
+
 source("src/straightness/continuous.R")
 source("src/straightness/discrete.R")
 
