@@ -8,12 +8,15 @@
 # Vincent Labatut 01/2017
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
-# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/misc/extraction.R")
 ############################################################################
 library("tools")
 library("igraph")
 library("osmar")
+
+
+source("src/misc/transformations.R")
 
 
 
@@ -88,7 +91,7 @@ cities <- list(
 #	
 #	# export as graphml
 #	#net.file <- paste0(file_path_sans_ext(osm.file),".graphml")
-#	net.file <- file.path(city.folder,"graph.graphml")
+#	net.file <- file.path(city.folder,"graph_orig.graphml")
 #	write.graph(g, net.file, format="graphml")
 #}
 
@@ -99,7 +102,7 @@ cities <- list(
 #c <- 1
 #name <- names(cities)[c]
 #city.folder <- file.path(urban.folder,name)
-#net.file <- file.path(city.folder,"graph.graphml")
+#net.file <- file.path(city.folder,"graph_orig.graphml")
 #g <- read.graph(net.file,format="graphml")
 #temp <- c(V(g)$x,V(g)$y)
 #V(g)$x <- (V(g)$x - min(temp)) / (max(temp) - min(temp)) * 100
@@ -119,7 +122,7 @@ cities <- list(
 #	city.folder <- file.path(urban.folder,name)
 #	
 #	# load the graph exported from gephi
-#	in.file <- file.path(city.folder,"graph2.graphml")
+#	in.file <- file.path(city.folder,"graph_cleaned.graphml")
 #	g <- read.graph(in.file, format="graphml")
 #	
 #	# remove useless node attributes
@@ -133,7 +136,7 @@ cities <- list(
 #
 #	eatt <- list.edge.attributes(g)
 #	cat("  Link attributes before removal: ",paste(eatt,collapse=", "),"\n",sep="")
-#	for(att in c("Edge Label","name","id"))
+#	for(att in c("Edge Label","name","id","weight"))
 #	{	if(att %in% eatt)
 #			g <- remove.edge.attribute(graph=g,name=att)
 #	}
@@ -152,7 +155,30 @@ cities <- list(
 #	g <- delete_vertices(graph=g,v=idx)
 #	cat("  Keeping giant component only: ",gorder(g)," nodes - ",gsize(g)," links\n")
 #	
+#	# add the link lengths
+#	g <- distances.as.weights(g)
+#	
 #	# record the cleaned graph
-#	out.file <- file.path(city.folder,"graph3.graphml")
+#	out.file <- file.path(city.folder,"graph.graphml")
 #	write.graph(g,out.file,format="graphml")
 #}
+
+for(c in 1:length(cities))
+{	name <- names(cities)[c]
+	city.folder <- file.path(urban.folder,name)
+	in.file <- file.path(city.folder,"graph.graphml")
+	g <- read.graph(in.file,format="graphml")
+	g <- distances.as.weights(g)
+	vatt <- list.vertex.attributes(g)
+	for(att in c("id","r","g","b","label","size","name","lon","lat"))
+	{	if(att %in% vatt)
+			g <- remove.vertex.attribute(graph=g,name=att)
+	}
+	eatt <- list.edge.attributes(g)
+	for(att in c("Edge Label","name","id","weight"))
+	{	if(att %in% eatt)
+			g <- remove.edge.attribute(graph=g,name=att)
+		out.file <- file.path(city.folder,"graph_dist.graphml")
+		write.graph(g,out.file,format="graphml")
+	}
+}
