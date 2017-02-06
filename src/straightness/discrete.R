@@ -31,77 +31,80 @@ source("src/straightness/continuous.R")
 #		  several calls).
 # g.dist: graph distance between all pairs of nodes. Same remark than for
 #		  parameter e.dist.
+# slow: which mode to use. TRUE to select the method that uses much less memory,
+# 		but is much slower, or FALSE (the default) to use the method that needs
+# 		much more memory, but is much faster.
 # 
 # returns: a matrix containing length(v) rows and vcount(graph) columns, whose 
 #		   (i,j) element represents the straightness between nodes i and j.
 ############################################################################
-straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist)
+straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
 {	disp <- TRUE
 	
-# v1: more memory, shorter processing	
-	# process Euclidean distances
-	if(missing(e.dist))
-	{	if(disp) tlog(2,"Processing the Euclidean distances")
-		pos <- cbind(V(graph)$x,V(graph)$y)
-		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	# v2: less memory, longer processing	
+	if(slow)
+	{	# process Euclidean distances
+		if(missing(e.dist))
+		{	pos <- cbind(V(graph)$x,V(graph)$y)
+			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+		}
+		
+		# process geodesic distances
+		if(missing(g.dist))
+			denominators <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
+		else
+			denominators <- g.dist[v,] 
+		
+		# process the ratio
+		res <- matrix(NA,nrow=nrow(denominators),ncol=ncol(denominators))
+		for(i in 1:nrow(res))
+		{	for(j in 1:ncol(res))
+			{	if(j==v[i])
+					res[i,j] <- 1
+				else
+				{	val <- get.dist(v[i],j,e.dist) / denominators[i,j]
+					if(is.na(val))
+						res[i,j] <- 0
+					else
+						res[i,j] <- val
+				}
+			}
+		}
 	}
-	numerators <- as.matrix(e.dist)[v,]
 	
-	# process geodesic distances
-	if(missing(g.dist))
-	{	if(disp) tlog(2,"Processing the graph distances")
-		denominators <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
-	}
+	# v1: more memory, shorter processing
 	else
-		denominators <- g.dist[v,] 
-	
-	# process the ratio
-	if(disp) tlog(2,"Processing the ratio")
-	res <- numerators / denominators
-	
-	# straightness between a node and itself must be 1
-	if(disp) tlog(2,"Correcting self straightness")
-	for(i in 1:length(v))
-		res[i,v[i]] <- 1
-	
-	# unconnected nodes get a 0 straightness
-	if(disp) tlog(2,"Correcting NA values")
-	res[is.na(res)] <- 0
-	
-	
-	
-	
-# v2: less memory, longer processing	
-#	# process Euclidean distances
-#	if(missing(e.dist))
-#	{	pos <- cbind(V(graph)$x,V(graph)$y)
-#		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
-#	}
-#	
-#	# process geodesic distances
-#	if(missing(g.dist))
-#		denominators <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
-#	else
-#		denominators <- g.dist[v,] 
-#	
-#	# process the ratio
-#	res <- matrix(NA,nrow=nrow(denominators),ncol=ncol(denominators))
-#	for(i in 1:nrow(res))
-#	{	for(j in 1:ncol(res))
-#		{	if(j==v[i])
-#				res[i,j] <- 1
-#			else
-#			{	val <- get.dist(v[i],j,e.dist) / denominators[i,j]
-#				if(is.na(val))
-#					res[i,j] <- 0
-#				else
-#					res[i,j] <- val
-#			}
-#		}
-#	}
-	
-	
-	
+	{	# process Euclidean distances
+		if(missing(e.dist))
+		{	if(disp) tlog(2,"Processing the Euclidean distances")
+			pos <- cbind(V(graph)$x,V(graph)$y)
+			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+		}
+		numerators <- as.matrix(e.dist)[v,,drop=FALSE]
+		
+		# process geodesic distances
+		if(missing(g.dist))
+		{	if(disp) tlog(2,"Processing the graph distances")
+			denominators <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
+		}
+		else
+			denominators <- g.dist[v,,drop=FALSE]
+		
+		# process the ratio
+		if(disp) tlog(2,"Processing the ratio")
+		res <- numerators / denominators
+		
+		# straightness between a node and itself must be 1
+		if(disp) tlog(2,"Correcting self straightness")
+		for(i in 1:length(v))
+		{	#if(disp) tlog("i=",i," v[i]=",v[i]," nrow=",nrow(res)," ncol=",ncol(res))
+			res[i,v[i]] <- 1
+		}
+		
+		# unconnected nodes get a 0 straightness
+		if(disp) tlog(2,"Correcting NA values")
+		res[is.na(res)] <- 0
+	}
 	
 	return(res)
 }
