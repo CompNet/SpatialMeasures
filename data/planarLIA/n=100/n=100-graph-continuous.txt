@@ -1,2 +1,0 @@
-"Straightness" "Duration" "Memory"
-0 0 0
