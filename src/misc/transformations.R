@@ -24,7 +24,7 @@ library("geometry")	# used for the triangulation when generating random planar g
 ############################################################################
 distances.as.weights <- function(g)
 {	# process spatial distances
-	pos <- cbind(V(g)$x,V(g)$y)
+	pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
 	m <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p = 2))
 	
 	# select the values corresponding to the existing links
@@ -82,16 +82,16 @@ add.intermediate.nodes <- function(g, granularity)
 			# split the link
 			else
 			{	delta <- d / k
-				delta.x <- (V(g)[n.to]$x - V(g)[n.from]$x) / k
-				delta.y <- (V(g)[n.to]$y - V(g)[n.from]$y) / k
+				delta.x <- (vertex_attr(g, name="x", index=n.to) - vertex_attr(g, name="x", index=n.from)) / k
+				delta.y <- (vertex_attr(g, name="y", index=n.to) - vertex_attr(g, name="y", index=n.from)) / k
 				#cat(sprintf("%.10f", d/granularity),"\n")		
 				#cat("d/g=",d/granularity," rnd=",round(d/granularity)," int=",as.integer(d/granularity)," trc=",trunc(d/granularity)," k=",k," delta=",delta," delta.x=",delta.x," delta.y=",delta.y,"\n",sep="")
 				
 				# add the corresponding nodes and links
 				prev.node <- n.from
 				if(k>1)
-				{	pos.x <- V(g)[n.from]$x
-					pos.y <- V(g)[n.from]$y
+				{	pos.x <- vertex_attr(g, name="x", index=n.from)
+					pos.y <- vertex_attr(g, name="y", index=n.from)
 					for(i in 1:(k-1))
 					{	# process the spatial position of the new node
 						pos.x <- pos.x + delta.x
@@ -127,7 +127,7 @@ add.intermediate.nodes <- function(g, granularity)
 ############################################################################################
 connect.triangulation <- function(g, k=NA)
 {	# triangulation
-	pos <- cbind(V(g)$x,V(g)$y)
+	pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
 	triangles <- delaunayn(p=pos)
 	links <- rbind(triangles[,1:2],triangles[,2:3],triangles[,c(3,1)])
 	

@@ -676,6 +676,7 @@ monitor.time <- function(n=5, type="randplanar", repetitions=10)
 	data.cont <- list()
 	discretizations <- list()
 	for(r in 1:repetitions)
+#	r <- 10
 	{	# retrieve or create the graph
 		g <- init.graph(n, type, iteration=r, folder=urban.folder)
 		
@@ -704,3 +705,6 @@ monitor.time(n=10, type="randplanar", repetitions=10)
 #monitor.time(n=25, type="randplanar", repetitions=10)
 #monitor.time(n=50, type="randplanar", repetitions=10)
 #monitor.time(n=100, type="randplanar", repetitions=10)
+
+
+# setwd("~/eclipse/workspaces/Networks/SpatialMeasures");source("src/evaluation/time.R")

@@ -570,6 +570,7 @@ monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 	data.cont <- list()
 	discretizations <- list()
 	for(r in 1:repetitions)
+#	r <- 10
 	{	# retrieve or create the graph
 		g <- init.graph(n, type, iteration=r, folder=urban.folder)
 		
@@ -607,3 +608,5 @@ monitor.memory(n=10, type="randplanar", repetitions=10)
 #temp(g,node=xxx,disc=xxxx)
 #mem.stats <- summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]]
 #memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
+
+# setwd("~/eclipse/workspaces/Networks/SpatialMeasures");source("src/evaluation/memory.R")

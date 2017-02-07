@@ -285,7 +285,7 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 		if(error.flag)
 		{	cat("......",a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,"\n",sep="")
 			print(fellp2)
-stop()
+#stop("Error during the numerical integration.)
 		}
 		else
 		{	result <- intres$value
@@ -316,14 +316,23 @@ stop()
 ############################################################################
 aux.straightness.point.point <- function(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2, lambdau, lambdav, lambda2)
 {	# get the node coordinates
-	xu1 <- V(graph)$x[u1]
-	yu1 <- V(graph)$y[u1]
-	xu2 <- V(graph)$x[u2]
-	yu2 <- V(graph)$y[u2]
-	xv1 <- V(graph)$x[v1]
-	yv1 <- V(graph)$y[v1]
-	xv2 <- V(graph)$x[v2]
-	yv2 <- V(graph)$y[v2]
+	#xu1 <- V(graph)$x[u1]
+	#yu1 <- V(graph)$y[u1]
+	#xu2 <- V(graph)$x[u2]
+	#yu2 <- V(graph)$y[u2]
+	#xv1 <- V(graph)$x[v1]
+	#yv1 <- V(graph)$y[v1]
+	#xv2 <- V(graph)$x[v2]
+	#yv2 <- V(graph)$y[v2]
+	# note: although supposedly equivalent, the below version is much faster than the above one
+	xu1 <- vertex_attr(graph, name="x", index=u1)
+	yu1 <- vertex_attr(graph, name="y", index=u1)
+	xu2 <- vertex_attr(graph, name="x", index=u2)
+	yu2 <- vertex_attr(graph, name="y", index=u2)
+	xv1 <- vertex_attr(graph, name="x", index=v1)
+	yv1 <- vertex_attr(graph, name="y", index=v1)
+	xv2 <- vertex_attr(graph, name="x", index=v2)
+	yv2 <- vertex_attr(graph, name="y", index=v2)
 	
 	# euclidean distance between the points
 	edp1p2 <- sqrt((xu2 + ellp2/get.dist(u2,v2,e.dist)*(xv2-xu2) - xu1 - ellp1/get.dist(u1,v1,e.dist)*(xv1-xu1))^2 
@@ -388,14 +397,23 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 	lambda2 <- aux.process.lambda2(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav)
 	
 	# get the node coordinates
-	xu1 <- V(graph)$x[u1]
-	yu1 <- V(graph)$y[u1]
-	xu2 <- V(graph)$x[u2]
-	yu2 <- V(graph)$y[u2]
-	xv1 <- V(graph)$x[v1]
-	yv1 <- V(graph)$y[v1]
-	xv2 <- V(graph)$x[v2]
-	yv2 <- V(graph)$y[v2]
+	#xu1 <- V(graph)$x[u1]
+	#yu1 <- V(graph)$y[u1]
+	#xu2 <- V(graph)$x[u2]
+	#yu2 <- V(graph)$y[u2]
+	#xv1 <- V(graph)$x[v1]
+	#yv1 <- V(graph)$y[v1]
+	#xv2 <- V(graph)$x[v2]
+	#yv2 <- V(graph)$y[v2]
+	# note: although supposedly equivalent, the below version is much faster than the above one
+	xu1 <- vertex_attr(graph, name="x", index=u1)
+	yu1 <- vertex_attr(graph, name="y", index=u1)
+	xu2 <- vertex_attr(graph, name="x", index=u2)
+	yu2 <- vertex_attr(graph, name="y", index=u2)
+	xv1 <- vertex_attr(graph, name="x", index=v1)
+	yv1 <- vertex_attr(graph, name="y", index=v1)
+	xv2 <- vertex_attr(graph, name="x", index=v2)
+	yv2 <- vertex_attr(graph, name="y", index=v2)
 	
 	# process the straightness
 	result <- NA
@@ -445,6 +463,7 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 			# process the integral
 			part1 <- 0
 			part2 <- 0
+start.time <- Sys.time()			
 			if(lambdau <= lambdav)
 			{	if(ellp1 <= lambdau)
 				{	if(disp) cat("......case ellp1 <= lambdau, lambdav\n",sep="")
@@ -491,21 +510,29 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,get.dist(u2,v2,e.dist)) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
 				}
 			}
+end.time <- Sys.time()
+duration <- difftime(end.time,start.time,units="s")
+#cat(duration,"")	
 			
 			# combine to get the result
 			if(disp) cat("......part1:",part1," (max:",lambda2,") part2:",part2," (max:",get.dist(u2,v2,e.dist)-lambda2,")\n",sep="")
 			result <- part1 + part2
+#z<-0;while(z<10e1){z<-z+1;result<-0}
 		}
 		
 		# numerical integration (much slower)
 		else
 		{	# define the function to integrate
+start.time <- Sys.time()
 			fun <- Vectorize(function(x)
 			{	res <- aux.straightness.point.point(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, ellp2=x, lambdau, lambdav, lambda2)
 				return(res)
 			})
 			# perform the approximate integration
 			result <- integrate(f=fun,lower=0,upper=get.dist(u2,v2,e.dist),abs.tol=1e-15)$value
+end.time <- Sys.time()
+duration <- difftime(end.time,start.time,units="s")
+#cat(duration,"")	
 		}
 	}
 	
@@ -571,7 +598,7 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 	
 	# init the distances
 	if(missing(e.dist))
-	{	pos <- cbind(V(graph)$x,V(graph)$y)
+	{	pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
@@ -657,10 +684,13 @@ aux.mean.straightness.point.graph <- function(graph, e.dist, g.dist, u1, v1, ell
 		lambdav <- temp[2]
 		
 		# get the mean straightness between the point and the link
-		part.str <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
-if(is.infinite(part.str))
-	stop("..Infinite total straightness in aux.total.straightness.point.link")
-		if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",get.dist(u2,v2,e.dist),"\n",sep="")
+		start.time <- Sys.time()
+			part.str <- aux.total.straightness.point.link(graph, e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
+		end.time <- Sys.time()
+		duration <- difftime(end.time,start.time,units="s")
+#if(is.infinite(part.str))
+#	stop("..Infinite total straightness in aux.total.straightness.point.link")
+		if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",get.dist(u2,v2,e.dist)," (duration: ",duration,"s)\n",sep="")
 		total.str <- total.str + part.str
 		total.lgt <- total.lgt + get.dist(u2,v2,e.dist)
 	}
@@ -701,11 +731,14 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 	
 	# init the distances
 	if(missing(e.dist))
-	{	pos <- cbind(V(graph)$x,V(graph)$y)
+	{	if(disp) cat("The Euclidean distance is missing: we must process it\n",sep="")
+		pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
+	{	if(disp) cat("The graph distance is missing: we must process it\n",sep="")
 		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	}
 	
 	# process each specified node
 	for(i in 1:length(u))
@@ -731,10 +764,13 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 			}
 			
 			# get the mean straightness between the point and the graph
-			str <- aux.mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1, use.primitive)
-			if(disp) cat("Avg Straightness: ",str,"\n",sep="")
-if(is.infinite(str))
-	stop("Error: infinite straightness")
+			start.time <- Sys.time()
+				str <- aux.mean.straightness.point.graph(graph, e.dist, g.dist, u1, v1, ellp1, use.primitive)
+			end.time <- Sys.time()
+			duration <- difftime(end.time,start.time,units="s")
+			if(disp) cat("Avg Straightness: ",str," (duration: ",duration,"s)\n",sep="")
+#if(is.infinite(str))
+#	stop("Error: infinite straightness")
 		}
 		
 		# add to the result vector
@@ -765,14 +801,23 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 	if(disp) cat("..Processing links (",u1,",",v1,") and (",u2,",",v2,")\n",sep="")
 	
 	# get the node coordinates
-	xu1 <- V(graph)$x[u1]
-	yu1 <- V(graph)$y[u1]
-	xu2 <- V(graph)$x[u2]
-	yu2 <- V(graph)$y[u2]
-	xv1 <- V(graph)$x[v1]
-	yv1 <- V(graph)$y[v1]
-	xv2 <- V(graph)$x[v2]
-	yv2 <- V(graph)$y[v2]
+	#xu1 <- V(graph)$x[u1]
+	#yu1 <- V(graph)$y[u1]
+	#xu2 <- V(graph)$x[u2]
+	#yu2 <- V(graph)$y[u2]
+	#xv1 <- V(graph)$x[v1]
+	#yv1 <- V(graph)$y[v1]
+	#xv2 <- V(graph)$x[v2]
+	#yv2 <- V(graph)$y[v2]
+	# note: although supposedly equivalent, the below version is much faster than the above one
+	xu1 <- vertex_attr(graph, name="x", index=u1)
+	yu1 <- vertex_attr(graph, name="y", index=u1)
+	xu2 <- vertex_attr(graph, name="x", index=u2)
+	yu2 <- vertex_attr(graph, name="y", index=u2)
+	xv1 <- vertex_attr(graph, name="x", index=v1)
+	yv1 <- vertex_attr(graph, name="y", index=v1)
+	xv2 <- vertex_attr(graph, name="x", index=v2)
+	yv2 <- vertex_attr(graph, name="y", index=v2)
 	
     # process the straightness
 	result <- NA
@@ -936,7 +981,7 @@ mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, e.dis
 	
 	# init the distances
 	if(missing(e.dist))
-	{	pos <- cbind(V(graph)$x,V(graph)$y)
+	{	pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
@@ -1046,7 +1091,7 @@ mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self
 	
 	# init the distances
 	if(missing(e.dist))
-	{	pos <- cbind(V(graph)$x,V(graph)$y)
+	{	pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
@@ -1094,7 +1139,7 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 	
 	# init the distances
 	if(missing(e.dist))
-	{	pos <- cbind(V(graph)$x,V(graph)$y)
+	{	pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))

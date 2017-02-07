@@ -45,7 +45,7 @@ straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
 	if(slow)
 	{	# process Euclidean distances
 		if(missing(e.dist))
-		{	pos <- cbind(V(graph)$x,V(graph)$y)
+		{	pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		}
 		
@@ -77,7 +77,7 @@ straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
 	{	# process Euclidean distances
 		if(missing(e.dist))
 		{	if(disp) tlog(2,"Processing the Euclidean distances")
-			pos <- cbind(V(graph)$x,V(graph)$y)
+			pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		}
 		numerators <- as.matrix(e.dist)[v,,drop=FALSE]
