@@ -39,7 +39,7 @@ source("src/straightness/continuous.R")
 #		   (i,j) element represents the straightness between nodes i and j.
 ############################################################################
 straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
-{	disp <- TRUE
+{	disp <- FALSE
 	
 	# v2: less memory, longer processing	
 	if(slow)
