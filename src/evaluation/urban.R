@@ -68,7 +68,7 @@ init.result.tables <- function(g, city.folder)
 	}
 	else
 	{	tlog(4,"The graph table does no exist yet >> we create it")
-		cnames <- c(RES_EDIST_TIME,RES_GDIST_TIME,RES_CONT_STR,RES_CONT_TIME,RES_CONT_MEM,RES_DISC_STR,RES_DISC_DIFF,RES_DISC_TIME,RES_DISC_MEM,RES_NODE_NBR,RES_LINK_NBR,RES_DENSITY)
+		cnames <- c(RES_DISCRETIZATION_TIME,RES_EDIST_TIME,RES_GDIST_TIME,RES_CONT_STR,RES_CONT_TIME,RES_CONT_MEM,RES_DISC_STR,RES_DISC_DIFF,RES_DISC_TIME,RES_DISC_MEM,RES_NODE_NBR,RES_LINK_NBR,RES_DENSITY)
 		res.tables$graph <- matrix(NA,nrow=1,ncol=length(cnames))
 		colnames(res.tables$graph) <- cnames
 		res.tables$graph[1,RES_NODE_NBR] <- gorder(g)
