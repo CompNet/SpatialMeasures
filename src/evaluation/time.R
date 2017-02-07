@@ -351,16 +351,22 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
 			xvals <- disc.table[,"Nodes"]
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
-			xvals <- disc.table[,"AverageSegmentation"] + 1
+			xvals <- disc.table[,"AverageSegmentation"]
+			xvals.zero <- which(xvals==0)
+			xvals.positive <- which(xvals>0)
+			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
+			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x" 
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
 			xvals <- disc.table[,"Granularity"]
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
 		} 
 		
@@ -375,16 +381,23 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# graph plot
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
+			plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.yvals[xvals.positive] else graph.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
 			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+					y=graph.yvals[xvals.zero],
+					col="BLUE"
+			)
+			lines(x=x.lim,
 					y=rep(graph.cont.val,2),
 					col="RED"
 			)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -394,16 +407,23 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			for(j in 1:length(nodes.cont.vals))
 			{	plot.file <- file.path(it.folder,paste0("node=",j,"-",yaxis,"-vs-",xaxis,".pdf"))
 				pdf(file=plot.file)
-				plot(x=xvals, y=nodes.yvals[j,],
+				plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+						y=if(log.axes=="x") nodes.yvals[j,xvals.positive] else nodes.yvals[j,],
 						xlab=xlab, ylab=ylab,
 						col="BLUE",
 						log=log.axes,
+						xlim=x.lim,
 						ylim=c(min(c(nodes.yvals[j,],nodes.cont.vals[j])),max(c(nodes.yvals[j,],nodes.cont.vals[j])))
 				)
-				lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+				if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+							y=nodes.yvals[j,xvals.zero],
+							col="BLUE"
+					)
+				lines(x=x.lim,
 						y=rep(nodes.cont.vals[j],2),
 						col="RED"
 				)
+				if(log.axes=="x") axis.break2(1,0.6,style="gap")
 				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 						inset=0.03,
 						fill=c("BLUE","RED"))
@@ -422,16 +442,23 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# graph plots
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
+			plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.yvals[xvals.positive] else graph.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
 			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+						y=graph.yvals[xvals.zero],
+						col="BLUE"
+				)
+			lines(x=x.lim,
 					y=rep(graph.cont.val,2),
 					col="RED"
 			)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -440,18 +467,25 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# node plots
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
+			plot(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.yvals)) else rep(xvals,nrow(nodes.yvals)), 
+					y=if(log.axes=="x") c(t(nodes.yvals[,xvals.positive])) else c(t(nodes.yvals)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(nodes.yvals,nodes.cont.vals)),max(c(nodes.yvals,nodes.cont.vals)))
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.yvals)),
+						y=c(t(nodes.yvals[,xvals.zero])),
+						col="BLUE"
+				)
 			for(j in 1:length(nodes.cont.vals))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(nodes.cont.vals[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -467,35 +501,47 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# graph plots
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(graph.yvals),max(graph.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
+			plot(NULL,
+					xlim=c(x.lim[1],x.lim[2]*1.1),
+					ylim=c(min(graph.yvals),max(graph.yvals)),
 					log=log.axes,
 					xlab=xlab, ylab=ylab
 			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
+			lines(x=c(x.lim[1],x.lim[2]*1.1), 
 					y=c(0,0), 
 					col="BLACK", lty=2)
-			points(x=xvals, 
-					y=graph.yvals,
+			points(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.yvals[xvals.positive] else graph.yvals,
 					col="BLUE"
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+						y=graph.yvals[xvals.zero],
+						col="BLUE"
+				)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			dev.off()
 			
 			# node plots
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(nodes.yvals),max(nodes.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
+			plot(NULL,
+					xlim=c(x.lim[1],x.lim[2]*1.1),
+					ylim=c(min(nodes.yvals),max(nodes.yvals)),
 					log=log.axes,
 					xlab=xlab, ylab=ylab
 			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
+			lines(x=c(x.lim[1],x.lim[2]*1.1), 
 					y=c(0,0), 
 					col="BLACK", lty=2)
-			points(x=rep(xvals,nrow(nodes.yvals)), 
-					y=c(t(nodes.yvals)),
+			points(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.yvals)) else rep(xvals,nrow(nodes.yvals)), 
+					y=if(log.axes=="x") c(t(nodes.yvals[,xvals.positive])) else c(t(nodes.yvals)),
 					col="BLUE"#add.alpha("BLUE", 0.25),pch=20					
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.yvals)),
+						y=c(t(nodes.yvals[,xvals.zero])),
+						col="BLUE"
+				)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			dev.off()
 		}
 	}
@@ -556,16 +602,22 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
 			xvals <- nodes
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- ""
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
-			xvals <- avgseg + 1
+			xvals <- avgseg
+			xvals.zero <- which(xvals==0)
+			xvals.positive <- which(xvals>0)
+			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
+			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
 			xvals <- granularities
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
 		} 
 		
@@ -576,18 +628,25 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# graph plots
 			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.disc.durations,
+			plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.disc.durations[xvals.positive] else graph.disc.durations,
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(graph.disc.durations,graph.cont.durations)),max(c(graph.disc.durations,graph.cont.durations)))
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+						y=graph.disc.durations[xvals.zero],
+						col="BLUE"
+				)
 			for(j in 1:length(graph.cont.durations))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(graph.cont.durations[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -596,18 +655,25 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# node plots
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.disc.durations)), y=c(t(nodes.disc.durations)),
+			plot(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.disc.durations)) else rep(xvals,nrow(nodes.disc.durations)), 
+					y=if(log.axes=="x") c(t(nodes.disc.durations[,xvals.positive])) else c(t(nodes.disc.durations)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(nodes.disc.durations,nodes.cont.durations)),max(c(nodes.disc.durations,nodes.cont.durations)))
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.disc.durations)),
+						y=c(t(nodes.disc.durations[,xvals.zero])),
+						col="BLUE"
+				)
 			for(j in 1:length(nodes.cont.durations))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(nodes.cont.durations[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -621,37 +687,49 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# graph plots
 			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(graph.disc.differences),max(graph.disc.differences)),
-				xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
+			plot(NULL,
+				xlim=c(x.lim[1],x.lim[2]*1.1),
+				ylim=c(min(graph.disc.differences),max(graph.disc.differences)),
 				log=log.axes,
 				xlab=xlab, ylab=ylab
 			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
+			lines(x=c(x.lim[1],x.lim[2]*1.1), 
 					y=c(0,0), 
 					col="BLACK", lty=2
 			)
-			points(x=xvals, 
-					y=graph.disc.differences,
+			points(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.disc.differences[xvals.positive] else graph.disc.differences,
 					col="BLUE"#add.alpha("BLUE", 0.25),pch=20
 				)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+						y=graph.disc.differences[xvals.zero],
+						col="BLUE"
+				)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			dev.off()
 			
 			# node plots
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(nodes.disc.differences),max(nodes.disc.differences)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
+			plot(NULL,
+					xlim=c(x.lim[1],x.lim[2]*1.1),
+					ylim=c(min(nodes.disc.differences),max(nodes.disc.differences)),
 					log=log.axes,
 					xlab=xlab, ylab=ylab
 			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
+			lines(x=c(x.lim[1],x.lim[2]*1.1), 
 					y=c(0,0), 
 					col="BLACK", lty=2
 			)
-			points(x=rep(xvals,nrow(nodes.disc.differences)), 
-					y=c(t(nodes.disc.differences)),
+			points(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.disc.differences)) else rep(xvals,nrow(nodes.disc.differences)), 
+					y=if(log.axes=="x") c(t(nodes.disc.differences[,xvals.positive])) else c(t(nodes.disc.differences)),
 					col="BLUE"#add.alpha("BLUE", 0.25),pch=20
 				)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.disc.differences)),
+						y=c(t(nodes.disc.differences[,xvals.zero])),
+						col="BLUE"
+				)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			dev.off()
 		}
 	}

@@ -5,7 +5,7 @@
 # Vincent Labatut 09/2016
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
-# setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/evaluation/memory2.R")
 ############################################################################
 source("src/evaluation/common.R")
@@ -14,7 +14,7 @@ source("src/evaluation/common.R")
 
 
 data.folder <- "data"
-urban.folder <- file.path(data.folder,"memory")
+eval.folder <- file.path(data.folder,"eval")
 
 
 
@@ -45,7 +45,7 @@ load.disc.table <- function(n=5, type="randplanar", iteration=1, g)
 {	tlog(2,"Loading the discretization table")
 	
 	# init file names
-	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
 	disc.file <- file.path(it.folder,"discretizations.txt")
 	
 	# get the table
@@ -73,8 +73,8 @@ load.disc.table <- function(n=5, type="randplanar", iteration=1, g)
 ############################################################################
 process.continuous.straightness <- function(n=5, type="randplanar", iteration=1, g)
 {	tlog("Processing the continuous average straightness")
-	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
-	graph.file <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration),paste0("disc=0",".graphml"))
+	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
+	graph.file <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration),paste0("disc=0",".graphml"))
 	
 	# for the whole graph
 	table.file <- file.path(it.folder,"continuous-graph.txt")
@@ -83,9 +83,9 @@ process.continuous.straightness <- function(n=5, type="randplanar", iteration=1,
 	else
 		stop("Whole graph table not found (\"",table.file,"\"). You must first execute the time.R script.")
 	# check if memory usage was already measured
-	if("Memory" %in% colnames(graph.table) && !is.na(graph.table[1,"Memory"]))
-		tlog(2,"The memory usage for the graph is already available (",graph.table[1,"Memory"]," MB): nothing to do here")
-	else
+#	if("Memory" %in% colnames(graph.table) && !is.na(graph.table[1,"Memory"]))
+#		tlog(2,"The memory usage for the graph is already available (",graph.table[1,"Memory"]," MB): nothing to do here")
+#	else
 	{	tlog(2,"Processing average over the whole graph")
 		cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",0," ",0)
 		memuse <- NA
@@ -123,11 +123,11 @@ process.continuous.straightness <- function(n=5, type="randplanar", iteration=1,
 	memuses <- c()
 	for(i in 1:vcount(g))
 	{	# check if memory usage was already measured
-		if("Memory" %in% colnames(nodes.table) && !is.na(nodes.table[i,"Memory"]))
-		{	tlog(4,"The memory usage for the node is already available (",nodes.table[i,"Memory"]," MB): nothing to do here")
-			memuses <- c(memuses,nodes.table[i,"Memory"])
-		}
-		else
+#		if("Memory" %in% colnames(nodes.table) && !is.na(nodes.table[i,"Memory"]))
+#		{	tlog(4,"The memory usage for the node is already available (",nodes.table[i,"Memory"]," MB): nothing to do here")
+#			memuses <- c(memuses,nodes.table[i,"Memory"])
+#		}
+#		else
 		{	cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",0," ",i)
 			memuse <- NA
 			again <- TRUE
@@ -176,8 +176,8 @@ process.continuous.straightness <- function(n=5, type="randplanar", iteration=1,
 ############################################################################
 process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g, cont.tables)
 {	tlog("Processing the discrete approximation of the average straightness")
-	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
-	graph.file <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration),paste0("disc=0",".graphml"))
+	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
+	graph.file <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration),paste0("disc=0",".graphml"))
 	
 	# load the discretization table
 	disc.file <- file.path(it.folder,"discretizations.txt")
@@ -198,9 +198,9 @@ process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g
 		else
 			stop("Whole graph table not found (\"",table.file,"\"). You must first execute the time.R script.")
 		# check if memory usage was already measured
-		if("Memory" %in% colnames(graph.table) && !is.na(graph.table[1,"Memory"]))
-			tlog(4,"The memory usage for the graph is already available (",graph.table[1,"Memory"]," MB): nothing to do here")
-		else
+#		if("Memory" %in% colnames(graph.table) && !is.na(graph.table[1,"Memory"]))
+#			tlog(4,"The memory usage for the graph is already available (",graph.table[1,"Memory"]," MB): nothing to do here")
+#		else
 		{	tlog(4,"Processing average over the whole graph")
 			memuse <- NA
 			if(d>0)
@@ -255,11 +255,11 @@ process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g
 		memuses <- c()
 		for(i in 1:vcount(g))
 		{	# check if memory usage was already measured
-			if("Memory" %in% colnames(nodes.table) && !is.na(nodes.table[i,"Memory"]))
-			{	tlog(4,"The memory usage for the node is already available (",nodes.table[i,"Memory"]," MB): nothing to do here")
-				memuses <- c(memuses,nodes.table[i,"Memory"])
-			}
-			else
+#			if("Memory" %in% colnames(nodes.table) && !is.na(nodes.table[i,"Memory"]))
+#			{	tlog(4,"The memory usage for the node is already available (",nodes.table[i,"Memory"]," MB): nothing to do here")
+#				memuses <- c(memuses,nodes.table[i,"Memory"])
+#			}
+#			else
 			{	memuse <- NA
 				if(d>0)
 				{	cmd <- paste0("Rscript --vanilla ",file.path(getwd(),"src","evaluation","memory-aux.R")," ",getwd()," ",graph.file," ",disc.table[d+1,"Granularity"]," ",i)
@@ -326,7 +326,7 @@ process.discrete.straightness <- function(n=5, type="randplanar", iteration=1, g
 ############################################################################
 generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, cont.tables, disc.tables)
 {	tlog("Generating plots and tables for the iteration ",iteration)
-	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
+	it.folder <- file.path(eval.folder,type,paste0("n=",n),paste0("it=",iteration))
 	nm <- paste0("d=",0:(nrow(disc.table)-1))
 	
 	# build the graph table
@@ -357,18 +357,24 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 	for(xaxis in c("nodes","avgseg","granularity"))
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
-			log.axes <- ""
 			xvals <- disc.table[,"Nodes"]
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
+			log.axes <- ""
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
+			xvals <- disc.table[,"AverageSegmentation"]
+			xvals.zero <- which(xvals==0)
+			xvals.positive <- which(xvals>0)
+			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
+			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
-			xvals <- disc.table[,"AverageSegmentation"] + 1
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
-			log.axes <- ""
 			xvals <- disc.table[,"Granularity"]
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
+			log.axes <- ""
 		} 
 		
 		# memory
@@ -382,16 +388,23 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# graph plots
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
+			plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.yvals[xvals.positive] else graph.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(graph.yvals,graph.cont.val),na.rm=TRUE),max(c(graph.yvals,graph.cont.val),na.rm=TRUE))
 			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+					y=graph.yvals[xvals.zero],
+					col="BLUE"
+				)
+			lines(x=x.lim,
 					y=rep(graph.cont.val,2),
 					col="RED"
 			)
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -400,18 +413,25 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# node plots
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
+			plot(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.yvals)) else rep(xvals,nrow(nodes.yvals)), 
+					y=if(log.axes=="x") c(t(nodes.yvals[,xvals.positive])) else c(t(nodes.yvals)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE),max(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE))
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.yvals)),
+					y=c(t(nodes.yvals[,xvals.zero])),
+					col="BLUE"
+				)
 			for(j in 1:length(nodes.cont.vals))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(nodes.cont.vals[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -439,7 +459,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 ############################################################################
 generate.overall.plots <- function(n=10, type="randplanar", discretizations, data.cont, data.disc)
 {	tlog("Generating plots and tables for all the repetitions")
-	folder <- file.path(urban.folder,type,paste0("n=",n))
+	folder <- file.path(eval.folder,type,paste0("n=",n))
 	
 	# collecting the data
 	ngran <- nrow(data.disc[[1]]$graph)
@@ -468,18 +488,24 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 	for(xaxis in c("nodes","avgseg","granularity"))
 	{	if(xaxis=="nodes")
 		{	xlab <- "Total number of nodes"
-			log.axes <- ""
 			xvals <- nodes
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
+			log.axes <- ""
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
+			xvals <- avgseg
+			xvals.zero <- which(xvals==0)
+			xvals.positive <- which(xvals>0)
+			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
+			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
-			xvals <- avgseg + 1
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
-			log.axes <- ""
 			xvals <- granularities
+			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
+			log.axes <- ""
 		} 
 		
 		# memory
@@ -489,18 +515,25 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# graph plots
 			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.disc.memory,
+			plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+					y=if(log.axes=="x") graph.disc.memory[xvals.positive] else graph.disc.memory,
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE),max(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE))
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
+					y=graph.disc.memory[xvals.zero],
+					col="BLUE"
+				)
 			for(j in 1:length(graph.cont.memory))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(graph.cont.memory[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -509,18 +542,25 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# node plots
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.disc.memory)), y=c(t(nodes.disc.memory)),
+			plot(x=if(log.axes=="x") rep(xvals[,xvals.positive],nrow(nodes.disc.memory)) else rep(xvals,nrow(nodes.disc.memory)), 
+					y=if(log.axes=="x") c(t(nodes.disc.memory[xvals.positive])) else c(t(nodes.disc.memory)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
+					xlim=x.lim,
 					ylim=c(min(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE),max(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE))
 			)
+			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.disc.memory)),
+					y=c(t(nodes.disc.memory[xvals.zero])),
+					col="BLUE"
+				)
 			for(j in 1:length(nodes.cont.memory))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(nodes.cont.memory[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
+			if(log.axes=="x") axis.break2(1,0.6,style="gap")
 			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 					inset=0.03,
 					fill=c("BLUE","RED"))
@@ -547,7 +587,7 @@ monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 	discretizations <- list()
 	for(r in 1:repetitions)
 	{	# retrieve or create the graph
-		g <- init.graph(n, type, iteration=r, folder=urban.folder)
+		g <- init.graph(n, type, iteration=r, folder=eval.folder)
 		
 		# retrieve the discretization table
 		disc.table <- load.disc.table(n, type, iteration=r, g)
@@ -569,7 +609,7 @@ monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-#monitor.memory(n=10, type="randplanar", repetitions=10)
+monitor.memory(n=10, type="randplanar", repetitions=10)
 #monitor.memory(n=25, type="randplanar", repetitions=10)
 #monitor.memory(n=50, type="randplanar", repetitions=10)
-monitor.memory(n=100, type="randplanar", repetitions=10)
+#monitor.memory(n=100, type="randplanar", repetitions=10)
