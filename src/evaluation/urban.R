@@ -126,7 +126,7 @@ init.distances <- function(g, city.folder, res.tables)
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		end.time <- Sys.time()
 		e.duration <- difftime(end.time,start.time,units="s")
-		tlog(6,"Recording Euclidean distances")
+		tlog(6,"Recording Euclidean distances (",e.duration,"s)")
 		save(e.dist,file=e.file)
 	}
 	
@@ -144,7 +144,7 @@ init.distances <- function(g, city.folder, res.tables)
 			g.dist <- shortest.paths(graph=g, weights=E(g)$dist)
 		end.time <- Sys.time()
 		g.duration <- difftime(end.time,start.time,units="s")
-		tlog(6,"Recording graph distances")
+		tlog(6,"Recording graph distances (",g.duration,"s)")
 		save(g.dist,file=g.file)
 	}
 	
