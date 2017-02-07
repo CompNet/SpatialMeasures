@@ -52,7 +52,6 @@ get.dist <- function(u, v, d)
 
 
 
-
 ############################################################################
 # Checks if the three specified points are aligned. 
 #
@@ -130,6 +129,7 @@ aux.process.lambdauv <- function(e.dist, g.dist, u1, v1, u2, v2)
 }
 
 
+
 ############################################################################
 # Auxiliary functions processing the lambda_2 threshold for specified links
 # and point.
@@ -168,6 +168,7 @@ aux.process.lambda2 <- function(e.dist, g.dist, u1, v1, ellp1, u2, v2, lambdau, 
 	
 	return(result)
 }
+
 
 
 ############################################################################
@@ -237,6 +238,7 @@ aux.process.straightness.antiderivative <- function(a, b, c, d, e, f, ell)
 }
 
 
+
 ############################################################################
 # Auxilary function used during the processing of the straightness, corresponds
 # to the double integral of the f function performed in the article.
@@ -295,6 +297,7 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 	
 	return(result)
 }
+
 
 
 ############################################################################
@@ -361,6 +364,7 @@ aux.straightness.point.point <- function(graph, e.dist, g.dist, u1, v1, ellp1, u
 		
 	return(result)
 }
+
 
 
 ############################################################################
@@ -512,6 +516,7 @@ aux.total.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ell
 }
 
 
+
 ############################################################################
 # Processes the average straightness between a point and a link (i.e. all the 
 # points constituting this link).
@@ -540,6 +545,7 @@ aux.mean.straightness.point.link <- function(graph, e.dist, g.dist, u1, v1, ellp
 	
 	return(result)
 }
+
 
 
 ############################################################################
@@ -573,7 +579,12 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
-		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	{	eatt <- list.edge.attributes(graph)
+		if("dist" %in% eatt)
+			g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+		else
+			stop("You need to either provide the graph distances (using parameter g.dist) or a graph possessing an edge attribute called \"dist\"")
+	}
 	
 	# get the second link
 	el <- get.edgelist(graph)
@@ -619,6 +630,7 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 	
 	return(result)
 }
+
 
 
 ############################################################################
@@ -670,6 +682,7 @@ if(is.infinite(part.str))
 }
 
 
+
 ############################################################################
 # Processes the average straightness between each one of the specified nodes 
 # and the graph (i.e. all the points constituting the graph). 
@@ -703,7 +716,12 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
-		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	{	eatt <- list.edge.attributes(graph)
+		if("dist" %in% eatt)
+			g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+		else
+			stop("You need to either provide the graph distances (using parameter g.dist) or a graph possessing an edge attribute called \"dist\"")
+	}
 	
 	# process each specified node
 	for(i in 1:length(u))
@@ -741,6 +759,7 @@ if(is.infinite(str))
 	
 	return(result)
 }
+
 
 
 ############################################################################
@@ -875,6 +894,7 @@ aux.total.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, 
 }
 	
 
+
 ############################################################################
 # Processes the average straightness between two links (i.e. all the pairs of 
 # points such that each point of the pair is located on a different link).
@@ -908,6 +928,7 @@ aux.mean.straightness.link.link <- function(graph, e.dist, g.dist, u1, v1, u2, v
 }
 
 
+
 ############################################################################
 # Processes the average straightness between two links (i.e. all the pairs of 
 # points such that each point of the pair is located on a different link).
@@ -938,7 +959,12 @@ mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, e.dis
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
-		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	{	eatt <- list.edge.attributes(graph)
+		if("dist" %in% eatt)
+			g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+		else
+			stop("You need to either provide the graph distances (using parameter g.dist) or a graph possessing an edge attribute called \"dist\"")
+	}
 	
 	# get the first link end-nodes
 	u1 <- el[e1,1]
@@ -957,6 +983,7 @@ mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, e.dis
 	result <- aux.mean.straightness.link.link(graph, e.dist, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 	return(result)
 }
+
 
 
 ############################################################################
@@ -1012,8 +1039,9 @@ aux.mean.straightness.link.graph <- function(graph, e.dist, g.dist, u1, v1, excl
 	result <- total.str / denom
 	return(result)
 }
-	
-	
+
+
+
 ############################################################################
 # Processes the average straightness between each one of the specified links 
 # and the graph (i.e. all the points constituting the graph). 
@@ -1048,7 +1076,12 @@ mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
-		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	{	eatt <- list.edge.attributes(graph)
+		if("dist" %in% eatt)
+			g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+		else
+			stop("You need to either provide the graph distances (using parameter g.dist) or a graph possessing an edge attribute called \"dist\"")
+	}
 	
 	# process averages based on the previous totals
 	for(i in e)
@@ -1065,6 +1098,7 @@ mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self
 	
 	return(result)
 }
+
 
 
 ############################################################################
@@ -1096,7 +1130,12 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 	}
 	if(missing(g.dist))
-		g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+	{	eatt <- list.edge.attributes(graph)
+		if("dist" %in% eatt)
+			g.dist <- shortest.paths(graph=graph, weights=E(graph)$dist)
+		else
+			stop("You need to either provide the graph distances (using parameter g.dist) or a graph possessing an edge attribute called \"dist\"")
+	}
 	
 	# process all pairs of links
 	total.str <- 0
