@@ -122,7 +122,7 @@ init.distances <- function(g, city.folder, res.tables)
 	else
 	{	tlog(4,"Processing Euclidean distances")
 		start.time <- Sys.time()
-			pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
+			pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		end.time <- Sys.time()
 		e.duration <- difftime(end.time,start.time,units="s")
