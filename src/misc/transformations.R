@@ -14,25 +14,64 @@ library("geometry")	# used for the triangulation when generating random planar g
 
 
 ############################################################################
+# Returns the distance extracted from a dist object, for the specified nodes.
+#
+# u,v: the concerned nodes.
+# d: the dist object.
+#
+# returns: the distance between u and v as represented by d.
+############################################################################
+get.dist <- function(u, v, d)
+{	if(u==v)
+		res <- 0
+	else
+	{	n <- attr(d, "Size")
+		if(u>v)
+			res <- d[n*(v-1) - v*(v-1)/2 + u-v]
+		else
+			res <- d[n*(u-1) - u*(u-1)/2 + v-u]
+	}
+	
+	return(res)
+}
+
+
+
+############################################################################
 # Processes the spatial distances between each pair of connected nodes of the 
 # graph, and stores them as an edge numerical attribute named "dist", which 
 # can be used as an edge weight by igraph for various calculations.
 #
 # g : the graph to process.
+# slow: which mode to use. TRUE to select the method that uses much less
+#		memory, but is much slower, or FALSE to use the method that uses
+#		much more memory, but is much faster.
 #
 # returns: the modified graph.
 ############################################################################
-distances.as.weights <- function(g)
-{	# process spatial distances
-	pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
-	m <- as.matrix(dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p = 2))
+distances.as.weights <- function(g, slow=FALSE)
+{	# slow but memory-cheap (for large graphs)
+	if(slow)
+	{	# retrieve the list of links
+		el <- get.edgelist(graph=g, names=FALSE)
+		# process each one individually
+		weights <- apply(el, 1, function(nodes) sqrt((V(g)$x[nodes[1]]+V(g)$x[nodes[2]])^2+(V(g)$y[nodes[1]]+V(g)$y[nodes[2]])^2))
+	}
 	
-	# select the values corresponding to the existing links
-	el <- get.edgelist(graph=g, names=FALSE)
-	weights <- apply(el, 1, function(nodes) m[nodes[1],nodes[2]])
+	# fast but memory-expansive (for not so large graphs)
+	else
+	{	# process all the Euclidean distances at once
+		pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
+		e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+		
+		# process the link weights
+		el <- get.edgelist(graph=g, names=FALSE)
+		weights <- apply(el, 1, function(nodes) get.dist(nodes[1],nodes[2],e.dist))
+	}
 	
-	# set them in the graph
+	# update the graph
 	g <- set.edge.attribute(graph=g, name="dist", value=weights)
+	
 	#print(E(g)$dist)
 	#plot(g,edge.label=E(g)$dist)
 	
