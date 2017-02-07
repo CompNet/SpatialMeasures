@@ -199,12 +199,12 @@ process.continuous.straightness <- function(g, city.folder, dists, res.tables)
 	{	tlog(2,"Processing continuous average for each individual node")
 		imax <- vcount(g)
 		for(i in 1:imax)
-#		for(i in rep(1,imax))
+		#for(i in rep(1,imax))
 		{	#if(is.na(res.tables$nodes[i,RES_CONT_STR]))
 			{	# process straightness
 				start.time <- Sys.time()
 					value <- mean.straightness.nodes.graph(graph=g, u=i, e.dist=dists$e.dist, g.dist=dists$g.dist, use.primitive=TRUE) #TODO if we decide to switch to mean only: would be faster to process all nodes at once
-#					value <- mean.straightness.nodes(graph, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
+					#value <- mean.straightness.nodes(graph, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s") + additional.duration
 				tlog(4,"Continuous average straightness for node ",i,"/",imax,": ",value," - Duration: ",duration," s")
@@ -352,19 +352,19 @@ generate.city.plots <- function(city.folder, res.tables)
 	# cont duration vs. disc duration
 	plot.file <- file.path(city.folder,paste0("comparison-durations.pdf"))
 	pdf(file=plot.file)
-	plot(x=res.tables$nodes[,RES_DISC_TIME],
+		plot(x=res.tables$nodes[,RES_DISC_TIME],
 			y=res.tables$nodes[,RES_CONT_TIME],
 			xlab="Discrete average processing time (s)",ylab="Continuous average processing time (s)"
-	)
+		)
 	dev.off()
 	
 	# cont straightness vs. disc straightness
 	plot.file <- file.path(city.folder,paste0("comparison-straightness.pdf"))
 	pdf(file=plot.file)
-	plot(x=res.tables$nodes[,RES_DISC_STR],
+		plot(x=res.tables$nodes[,RES_DISC_STR],
 			y=res.tables$nodes[,RES_CONT_STR],
 			xlab="Discrete average Straightness",ylab="Continuous average Straightness"
-	)
+		)
 	dev.off()
 	
 	# cont memory vs. disc memory
@@ -641,7 +641,7 @@ monitor.time <- function(cities)
 
 
 cities <- c(
-	"abidjan"
+		"abidjan"
 #	"alicesprings",
 #	"avignon",
 #	"beijin",

@@ -42,11 +42,9 @@ get.dist <- function(u, v, d)
 	else
 	{	n <- attr(d, "Size")
 		if(u>v)
-		{	tmp <- v
-			v <- u
-			u <- tmp
-		}
-		res <- d[n*(u-1) - u*(u-1)/2 + v-u]
+			res <- d[n*(v-1) - v*(v-1)/2 + u-v]
+		else
+			res <- d[n*(u-1) - u*(u-1)/2 + v-u]
 	}
 	
 	return(res)
