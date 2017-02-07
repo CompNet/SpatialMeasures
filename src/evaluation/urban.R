@@ -280,7 +280,7 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables, avg
 #	{	# process straightness
 #		tlog(4,"Processing average over the whole graph")
 #		start.time <- Sys.time()
-#			value <- mean.straightness.nodes(graph=g2, v=NA)[1]
+#			value <- mean.straightness.nodes(graph=g2, v=NA, e.dist=dists$e.dist, g.dist=dists$g.dist)[1]
 #		end.time <- Sys.time()
 #		duration <- difftime(end.time,start.time,units="s") + additional.duration
 #		diff <- value - res.tables$graph[1,RES_CONT_STR]
@@ -309,7 +309,7 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables, avg
 		{	if(is.na(res.tables$nodes[i,RES_DISC_STR]))
 			{	# process straightness
 				start.time <- Sys.time()
-					value <- mean.straightness.nodes(graph=g2,v=i)[1,1]
+					value <- mean.straightness.nodes(graph=g2, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s") + additional.duration
 				diff <- value - res.tables$nodes[i,RES_CONT_STR]
