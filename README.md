@@ -56,6 +56,7 @@ Here are the folders composing the project:
 2. Install the following R packages:
    * [`geometry`](https://cran.r-project.org/web/packages/geometry/index.html): required (tested with version 0.3.6).
    * [`igraph`](http://igraph.org/r/): required (tested with version 1.0.1).
+   * [`plotrix`](https://cran.r-project.org/web/packages/plotrix/): required (tested with version 3.5-11).
    * [`osmar`](https://cran.r-project.org/web/packages/osmar/index.html): only if you want to extract new road networks via the `src/misc/extraction.R script` (tested with version 1.1-7)
 3. Download this project from GitHub and unzip the archive.
 
@@ -76,7 +77,7 @@ If you just want to apply the measures to your own graph, then you need to use t
 Note the specified graph must be an `igraph` object, and its nodes must be described by their position in a 2D space taking.
 For this purpose, the graph must contain two nodal attributes called `x` and `y`. See the `igraph` documentation to know how to define such attributes.
 
-Also, note you only need the `R` script `src/straightness/continuous.R` to process the variants of the continuous average straightness on your graphs. The rest of the scripts is just there for plotting, testing, evaluating, comparing, etc.
+Also, note you only need the `R` script `src/straightness/continuous.R` to process the variants of the continuous average straightness on your graphs. The rest of the scripts is just there for plotting, testing, evaluating, comparing, etc. You need to uncomment the function `get.dist` in `continuous.R`, though.
   
 
 # Extension
@@ -86,6 +87,7 @@ You may want to apply the approach described in our paper to average other spati
 # Dependencies
 * [`igraph`](http://igraph.org/r/) package: used to build and handle graphs.
 * [`geometry`](https://cran.r-project.org/web/packages/geometry/index.html) package: used to triangulate and generate planar random graphs.
+* [`plotrix`](https://cran.r-project.org/web/packages/plotrix/) package: used to generate certain plots.
 * [`osmar`](https://cran.r-project.org/web/packages/osmar/index.html) package: used to extract real-world road networks.
 
 
