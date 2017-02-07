@@ -306,7 +306,7 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables, avg
 	{	tlog(4,"Processing discrete average for each individual node")
 		imax <- vcount(g)
 		for(i in 1:imax)
-		{	if(is.na(res.tables$nodes[i,RES_CONT_STR]))
+		{	if(is.na(res.tables$nodes[i,RES_DISC_STR]))
 			{	# process straightness
 				start.time <- Sys.time()
 					value <- mean.straightness.nodes(graph=g2,v=i)[1,1]
