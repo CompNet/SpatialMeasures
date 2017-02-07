@@ -63,6 +63,7 @@ Here are the folders composing the project:
 
 # Use
 In order to replicate the experiments from the article, perform the following operations:
+
 1. Open the `R` console.
 2. Set the current directory as the working directory, using `setwd("<my directory>")`.
 3. Run one of the scripts `src/figures/exp2.R` to generate the article graph figures, `src/evaluation/time.R` or `src/evaluation/memory.R` to produce the plots related to performance.
