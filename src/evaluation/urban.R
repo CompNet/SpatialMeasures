@@ -68,7 +68,7 @@ init.result.tables <- function(g, city.folder)
 	}
 	else
 	{	tlog(4,"The graph table does no exist yet >> we create it")
-		cnames <- c(RES_EDIST_TIME,RES_GDIST_TIME,RES_CONT_STR,RES_CONT_TIME,RES_CONT_MEM,RES_DISC_STR,RES_DISC_DIFF,RES_DISC_TIME,RES_DISC_MEM,RES_NODE_NBR,RES_LINK_NBR,RES_DENSITY)
+		cnames <- c(RES_DISCRETIZATION_TIME,RES_EDIST_TIME,RES_GDIST_TIME,RES_CONT_STR,RES_CONT_TIME,RES_CONT_MEM,RES_DISC_STR,RES_DISC_DIFF,RES_DISC_TIME,RES_DISC_MEM,RES_NODE_NBR,RES_LINK_NBR,RES_DENSITY)
 		res.tables$graph <- matrix(NA,nrow=1,ncol=length(cnames))
 		colnames(res.tables$graph) <- cnames
 		res.tables$graph[1,RES_NODE_NBR] <- gorder(g)
@@ -122,11 +122,11 @@ init.distances <- function(g, city.folder, res.tables)
 	else
 	{	tlog(4,"Processing Euclidean distances")
 		start.time <- Sys.time()
-			pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
+			pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		end.time <- Sys.time()
 		e.duration <- difftime(end.time,start.time,units="s")
-		tlog(6,"Recording Euclidean distances")
+		tlog(6,"Recording Euclidean distances (",e.duration,"s)")
 		save(e.dist,file=e.file)
 	}
 	
@@ -144,7 +144,7 @@ init.distances <- function(g, city.folder, res.tables)
 			g.dist <- shortest.paths(graph=g, weights=E(g)$dist)
 		end.time <- Sys.time()
 		g.duration <- difftime(end.time,start.time,units="s")
-		tlog(6,"Recording graph distances")
+		tlog(6,"Recording graph distances (",g.duration,"s)")
 		save(g.dist,file=g.file)
 	}
 	
@@ -280,7 +280,7 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables, avg
 #	{	# process straightness
 #		tlog(4,"Processing average over the whole graph")
 #		start.time <- Sys.time()
-#			value <- mean.straightness.nodes(graph=g2, v=NA)[1]
+#			value <- mean.straightness.nodes(graph=g2, v=NA, e.dist=dists$e.dist, g.dist=dists$g.dist)[1]
 #		end.time <- Sys.time()
 #		duration <- difftime(end.time,start.time,units="s") + additional.duration
 #		diff <- value - res.tables$graph[1,RES_CONT_STR]
@@ -306,10 +306,10 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables, avg
 	{	tlog(4,"Processing discrete average for each individual node")
 		imax <- vcount(g)
 		for(i in 1:imax)
-		{	if(is.na(res.tables$nodes[i,RES_CONT_STR]))
+		{	if(is.na(res.tables$nodes[i,RES_DISC_STR]))
 			{	# process straightness
 				start.time <- Sys.time()
-					value <- mean.straightness.nodes(graph=g2,v=i)[1,1]
+					value <- mean.straightness.nodes(graph=g2, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s") + additional.duration
 				diff <- value - res.tables$nodes[i,RES_CONT_STR]

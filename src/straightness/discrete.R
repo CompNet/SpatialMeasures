@@ -128,16 +128,19 @@ straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
 #		  several calls).
 # g.dist: graph distance between all pairs of nodes. Same remark than for
 #		  parameter e.dist.
+# slow: which mode to use. TRUE to select the method that uses much less memory,
+# 		but is much slower, or FALSE (the default) to use the method that needs
+# 		much more memory, but is much faster.
 # 
 # returns: if v is NA, a vector of two values (average straightness and standard deviation),
 #		   otherwise a matrix of length(v) rows and 2 columns (average straightnes and
 #		   standard deviation for each node specified in v).
 ############################################################################
-mean.straightness.nodes <- function(graph, v=NA, self=TRUE, e.dist, g.dist)
+mean.straightness.nodes <- function(graph, v=NA, self=TRUE, e.dist, g.dist, slow=FALSE)
 {	# global average
 	if(all(is.na(v)))
 	{	# process the straightness values
-		strn <- straightness.nodes(graph, v=V(graph), e.dist, g.dist)
+		strn <- straightness.nodes(graph, v=V(graph), e.dist, g.dist, slow)
 		strn <- strn[upper.tri(strn,diag=self)]
 		# average them
 		res1 <- mean(strn)
