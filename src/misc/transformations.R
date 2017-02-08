@@ -55,7 +55,9 @@ distances.as.weights <- function(g, slow=FALSE)
 	{	# retrieve the list of links
 		el <- get.edgelist(graph=g, names=FALSE)
 		# process each one individually
-		weights <- apply(el, 1, function(nodes) sqrt((V(g)$x[nodes[1]]+V(g)$x[nodes[2]])^2+(V(g)$y[nodes[1]]+V(g)$y[nodes[2]])^2))
+		weights <- apply(el, 1, function(nodes) 
+					sqrt((V(g)$x[nodes[1]] - V(g)$x[nodes[2]])^2
+					+ (V(g)$y[nodes[1]] - V(g)$y[nodes[2]])^2))
 	}
 	
 	# fast but memory-expansive (for not so large graphs)
