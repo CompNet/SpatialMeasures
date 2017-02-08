@@ -10,30 +10,8 @@
 library("igraph")
 library("geometry")	# used for the triangulation when generating random planar graphs
 
+source("src/misc/distances.R")
 
-
-
-############################################################################
-# Returns the distance extracted from a dist object, for the specified nodes.
-#
-# u,v: the concerned nodes.
-# d: the dist object.
-#
-# returns: the distance between u and v as represented by d.
-############################################################################
-get.dist <- function(u, v, d)
-{	if(u==v)
-		res <- 0
-	else
-	{	n <- attr(d, "Size")
-		if(u>v)
-			res <- d[n*(v-1) - v*(v-1)/2 + u-v]
-		else
-			res <- d[n*(u-1) - u*(u-1)/2 + v-u]
-	}
-	
-	return(res)
-}
 
 
 
@@ -55,7 +33,9 @@ distances.as.weights <- function(g, slow=FALSE)
 	{	# retrieve the list of links
 		el <- get.edgelist(graph=g, names=FALSE)
 		# process each one individually
-		weights <- apply(el, 1, function(nodes) sqrt((V(g)$x[nodes[1]]+V(g)$x[nodes[2]])^2+(V(g)$y[nodes[1]]+V(g)$y[nodes[2]])^2))
+		weights <- apply(el, 1, function(nodes) 
+					sqrt((vertex_attr(g, name="x", index=nodes[1]) - vertex_attr(g, name="x", index=nodes[2]))^2
+						+ (vertex_attr(g, name="y", index=nodes[1]) - vertex_attr(g, name="y", index=nodes[2]))^2))
 	}
 	
 	# fast but memory-expansive (for not so large graphs)
