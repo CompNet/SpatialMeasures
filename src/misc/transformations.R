@@ -53,7 +53,7 @@ distances.as.weights <- function(g, slow=FALSE)
 	g <- set.edge.attribute(graph=g, name="dist", value=weights)
 	
 	#print(E(g)$dist)
-	#plot(g,edge.label=E(g)$dist)
+	#plot(g,edge.label=E(g)$dist) 
 	
 	return(g)
 }
