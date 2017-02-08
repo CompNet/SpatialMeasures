@@ -89,10 +89,6 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 			pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		}
-#em.dist <- as.matrix(e.dist)		
-#print(v)
-#print(dim(em.dist))
-#numerators <- em.dist[v,,drop=F]
 		numerators <- as.matrix(e.dist)[v,,drop=FALSE]
 		
 		# process geodesic distances
@@ -127,7 +123,7 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 # Processes the average straightness between the specified nodes and the rest
 # of the graph, or between all pairs of nodes in the graph. Also returns the 
 # corresponding standard deviations. If self=TRUE, the straigthness between one 
-# nodeand itself is taken into account (otherwise, it is ignored).
+# node and itself is taken into account (otherwise, it is ignored).
 # 
 # g: graph to consider.
 # v: if NA, then the average is processed over all pairs of nodes. If a numerical
