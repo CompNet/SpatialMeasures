@@ -47,7 +47,7 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 	{	if(missing(graph))
 			v <- 1:attr(e.dist, "Size")
 		else
-			v <- V(g)
+			v <- V(graph)
 	}
 	
 	# v2: less memory, longer processing	
