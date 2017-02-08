@@ -22,11 +22,12 @@ source("src/straightness/continuous.R")
 #  3) Divide the first by the second.
 # If the node are not connected by some path, their straightness is zero.
 #
-# graph: the graph to process.
+# graph: the graph to process. Can be omited if both distances are specified.
 # v: ids of the nodes whose straightness must be returned. The values are
-#    processed by considering all the nodes in the graph, though.
+#    processed by considering all the nodes in the graph, though. If this 
+# 	 parameter is NA, then we consider all the nodes (v=V(g)).
 # e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
-#		  If missing, it processed by the function (processing once before 
+#		  If missing, it is processed by the function (processing once before 
 #		  calling this function can speed up the processing, if there are
 #		  several calls).
 # g.dist: graph distance between all pairs of nodes. Same remark than for
@@ -38,8 +39,16 @@ source("src/straightness/continuous.R")
 # returns: a matrix containing length(v) rows and vcount(graph) columns, whose 
 #		   (i,j) element represents the straightness between nodes i and j.
 ############################################################################
-straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
+straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 {	disp <- FALSE
+	
+	# possibly set up v
+	if(all(is.na(v)))
+	{	if(missing(graph))
+			v <- 1:attr(e.dist, "Size")
+		else
+			v <- V(g)
+	}
 	
 	# v2: less memory, longer processing	
 	if(slow)
@@ -80,6 +89,10 @@ straightness.nodes <- function(graph, v=V(graph), e.dist, g.dist, slow=FALSE)
 			pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
 			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
 		}
+#em.dist <- as.matrix(e.dist)		
+#print(v)
+#print(dim(em.dist))
+#numerators <- em.dist[v,,drop=F]
 		numerators <- as.matrix(e.dist)[v,,drop=FALSE]
 		
 		# process geodesic distances
@@ -140,7 +153,7 @@ mean.straightness.nodes <- function(graph, v=NA, self=TRUE, e.dist, g.dist, slow
 {	# global average
 	if(all(is.na(v)))
 	{	# process the straightness values
-		strn <- straightness.nodes(graph, v=V(graph), e.dist, g.dist, slow)
+		strn <- straightness.nodes(graph, v, e.dist, g.dist, slow)
 		strn <- strn[upper.tri(strn,diag=self)]
 		# average them
 		res1 <- mean(strn)
@@ -153,7 +166,7 @@ mean.straightness.nodes <- function(graph, v=NA, self=TRUE, e.dist, g.dist, slow
 	# individual averages
 	else
 	{	# process the straightness values
-		strn <- straightness.nodes(graph, v, e.dist, g.dist)
+		strn <- straightness.nodes(graph, v, e.dist, g.dist, slow)
 		# average them
 		result <- sapply(1:length(v),function(i)
 				{	vals <- strn[i,]
