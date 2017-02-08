@@ -98,8 +98,11 @@ add.intermediate.nodes <- function(g, granularity)
 {	if(granularity==0)
 		g2 <- g
 	else
-	{	# process the spatial distances in the original graph
-		g <- distances.as.weights(g)
+	{	# possibly process the spatial distances in the original graph
+		eatt <- list.edge.attributes(graph)
+		if("dist" %in% eatt)
+			g <- distances.as.weights(g)
+		
 		# create an empty graph (same nodes, no link)
 		g2 <- delete.edges(graph=g,edges=E(g))
 		V(g2)$type <- "original"
