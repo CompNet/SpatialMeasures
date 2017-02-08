@@ -22,7 +22,7 @@ source("src/straightness/continuous.R")
 #  3) Divide the first by the second.
 # If the node are not connected by some path, their straightness is zero.
 #
-# graph: the graph to process. Can be omited if both distances are specified.
+# graph: the graph to process. Can be omitted if both distances are specified.
 # v: ids of the nodes whose straightness must be returned. The values are
 #    processed by considering all the nodes in the graph, though. If this 
 # 	 parameter is NA, then we consider all the nodes (v=V(g)).
