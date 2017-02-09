@@ -5,7 +5,7 @@
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
-# source("src/misc/distancess.R")
+# source("src/misc/distances.R")
 ############################################################################
 library("igraph")
 
@@ -13,18 +13,40 @@ library("igraph")
 
 
 ############################################################################
-# Processes the Euclidean distance between various sets of nodes.
+# Processes the Euclidean distance between the specified nodes and the rest
+# of the graph. If v is NA, then all the nodes are considered for v.
 #
-# u,v: the concerned nodes.
-# d: the dist object.
+# Note that, paradoxically, processing all distances can be faster than
+# focusing only on certain nodes. This is due to the fact that these cases
+# are handled using different functions. Similarly, if v contains more than
+# hald the nodes of the considered graph, the dist object returned when 
+# processing all nodes will be smaller than the rectangular matrix returned 
+# when focusing on the nodes from v.
 #
-# returns: the distance between u and v as represented by d.
+# g: the concerned graphs.
+# v: the source nodes (the function processes the distance between them
+#	 and all the nodes in the graph, including themselves).
+#
+# returns: either a rectangular matrix (if v is neither NA nor V(g)) or a dist
+#		   object if v is NA or V(g) (i.e. we want the distance between all 
+#		   pairs of nodes in the graph).
 ############################################################################
-process.euclidean.distance <- function()
-{
-	
-}
+process.euclidean.distance <- function(g, v=NA)
+{	pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
 
+	if(all(is.na(v)))
+		v <- V(g)
+		
+	# all nodes at once
+	if(length(v)==gorder(g))
+		result <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+	
+	# only certain nodes
+	else
+		result <- t(sapply(v, function(n) sqrt(apply(cbind(pos[,1]-pos[n,1],pos[,2]-pos[n,2])^2, 1, sum))))
+	
+	return(result)
+}
 
 
 

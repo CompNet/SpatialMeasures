@@ -77,7 +77,7 @@ add.intermediate.nodes <- function(g, granularity)
 		g2 <- g
 	else
 	{	# possibly process the spatial distances in the original graph
-		eatt <- list.edge.attributes(graph)
+		eatt <- list.edge.attributes(g)
 		if("dist" %in% eatt)
 			g <- distances.as.weights(g)
 		
