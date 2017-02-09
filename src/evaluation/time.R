@@ -779,7 +779,7 @@ monitor.time <- function(n=5, type="randplanar", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-#monitor.time(n=10, type="randplanar", repetitions=10)
-monitor.time(n=25, type="randplanar", repetitions=10)
+monitor.time(n=10, type="randplanar", repetitions=10)
+#monitor.time(n=25, type="randplanar", repetitions=10)
 #monitor.time(n=50, type="randplanar", repetitions=10)
 #monitor.time(n=100, type="randplanar", repetitions=10)

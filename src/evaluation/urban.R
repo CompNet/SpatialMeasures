@@ -266,7 +266,7 @@ process.continuous.straightness <- function(g, city.folder, dists, res.tables)
 	{	# process straightness
 		tlog(4,"Processing average over the whole graph")
 		start.time <- Sys.time()
-			value <- mean.straightness.graph(graph=g, e.dist=dists$e.dist, g.dist=dists$g.dist)
+			value <- mean.straightness.graph(graph=g, g.dist=dists$g.dist)
 		end.time <- Sys.time()
 		duration <- difftime(end.time,start.time,units="s") + additional.duration
 		tlog(6,"Continuous average straightness: ",value," - Duration: ",duration," s")
@@ -294,7 +294,6 @@ process.continuous.straightness <- function(g, city.folder, dists, res.tables)
 			{	# process straightness
 				start.time <- Sys.time()
 					value <- mean.straightness.nodes.graph(graph=g, u=i, e.dist=dists$e.dist, g.dist=dists$g.dist, use.primitive=TRUE) #TODO if we decide to switch to mean only: would be faster to process all nodes at once
-					#value <- mean.straightness.nodes(graph, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s") + additional.duration
 				tlog(4,"Continuous average straightness for node ",i,"/",imax,": ",value," - Duration: ",duration," s")
