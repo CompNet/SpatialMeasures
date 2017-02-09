@@ -42,6 +42,8 @@ source("src/straightness/continuous.R")
 ############################################################################
 straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 {	disp <- FALSE
+	# for some reason, displaying text helps measuring the memory usage!
+	if(disp) for(i in 1:1000) cat("x")
 	
 	# set up the number of nodes
 	if(missing(graph))

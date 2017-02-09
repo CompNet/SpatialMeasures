@@ -383,6 +383,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			xvals <- disc.table[,"Nodes"]
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- ""
+			mem.inset <- 0.03
+			mem.leg.pos <- "topleft"
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
@@ -392,12 +394,16 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x" 
+			mem.inset <- c(0.10, 0.03)
+			mem.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
 			xvals <- disc.table[,"Granularity"]
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- ""
+			mem.inset <- 0.03
+			mem.leg.pos <- "topright"
 		} 
 		
 		# memory
@@ -427,8 +433,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 					y=rep(graph.cont.val,2),
 					col="RED")
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=mem.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -448,14 +454,14 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 					col="BLUE"
 				)
 			for(j in 1:length(nodes.cont.vals))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
+			{	lines(x=x.lim,
 						y=rep(nodes.cont.vals[j],2),
 						col="RED"#add.alpha("RED", 0.25)
 				)
 			}
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=mem.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
@@ -513,6 +519,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			xvals <- nodes
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
+			mem.inset <- 0.03
+			mem.leg.pos <- "topleft"
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
@@ -522,12 +530,16 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))			
 			log.axes <- "x" 
+			mem.inset <- c(0.10, 0.03)
+			mem.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
 			xvals <- granularities
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
+			mem.inset <- 0.03
+			mem.leg.pos <- "topright"
 		} 
 		
 		# memory
@@ -556,16 +568,16 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 				)
 			}
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=mem.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
 			# node plots
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=if(log.axes=="x") rep(xvals[,xvals.positive],nrow(nodes.disc.memory)) else rep(xvals,nrow(nodes.disc.memory)), 
-					y=if(log.axes=="x") c(t(nodes.disc.memory[xvals.positive])) else c(t(nodes.disc.memory)),
+			plot(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.disc.memory)) else rep(xvals,nrow(nodes.disc.memory)), 
+					y=if(log.axes=="x") c(t(nodes.disc.memory[,xvals.positive])) else c(t(nodes.disc.memory)),
 					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
 					xlab=xlab, ylab=ylab,
 					log=log.axes,
@@ -573,7 +585,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 					ylim=c(min(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE),max(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE))
 			)
 			if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.disc.memory)),
-					y=c(t(nodes.disc.memory[xvals.zero])),
+					y=c(t(nodes.disc.memory[,xvals.zero])),
 					col="BLUE"
 				)
 			for(j in 1:length(nodes.cont.memory))
@@ -583,8 +595,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 				)
 			}
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=mem.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
@@ -610,7 +622,7 @@ monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 	data.cont <- list()
 	discretizations <- list()
 	for(r in 1:repetitions)
-#	r <- 10
+#	r <- 1
 	{	# retrieve or create the graph
 		g <- init.graph(n, type, iteration=r, folder=eval.folder)
 		

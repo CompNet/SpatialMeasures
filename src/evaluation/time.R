@@ -353,6 +353,10 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			xvals <- disc.table[,"Nodes"]
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
+			str.inset <- 0.03
+			dur.inset <- 0.03
+			str.leg.pos <- "topright"
+			dur.leg.pos <- "topleft"
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
@@ -362,12 +366,20 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x" 
+			str.inset <- 0.03
+			dur.inset <- c(0.10, 0.03)
+			str.leg.pos <- "topright"
+			dur.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
 			xvals <- disc.table[,"Granularity"]
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
+			str.inset <- 0.03
+			dur.inset <- 0.03
+			str.leg.pos <- "topleft"
+			dur.leg.pos <- "topright"
 		} 
 		
 		# straightness
@@ -398,8 +410,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 					col="RED"
 			)
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=str.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=str.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -424,8 +436,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						col="RED"
 				)
 				if(log.axes=="x") axis.break2(1,0.6,style="gap")
-				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-						inset=0.03,
+				legend(x=str.leg.pos,legend=c("Discrete average","Continuous average"),
+						inset=str.inset,
 						fill=c("BLUE","RED"))
 				dev.off()
 			}
@@ -459,8 +471,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 					col="RED"
 			)
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=dur.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -486,8 +498,8 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 				)
 			}
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=dur.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
@@ -604,6 +616,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			xvals <- nodes
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- ""
+			dur.inset <- 0.03
+			dur.leg.pos <- "topleft"
 		}
 		else if(xaxis=="avgseg")
 		{	xlab <- "Average segmentation"
@@ -613,12 +627,16 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
+			dur.inset <- c(0.10, 0.03)
+			dur.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
 		{	xlab <- "Granularity"
 			xvals <- granularities
 			x.lim <- c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE))
 			log.axes <- "" 
+			dur.inset <- 0.03
+			dur.leg.pos <- "topright"
 		} 
 		
 		# durations
@@ -647,8 +665,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 				)
 			}
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=dur.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 			
@@ -674,8 +692,8 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 				)
 			}
 			if(log.axes=="x") axis.break2(1,0.6,style="gap")
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
+			legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=dur.inset,
 					fill=c("BLUE","RED"))
 			dev.off()
 		}
@@ -754,7 +772,7 @@ monitor.time <- function(n=5, type="randplanar", repetitions=10)
 	data.cont <- list()
 	discretizations <- list()
 	for(r in 1:repetitions)
-#	r <- 10
+#	r <- 1
 	{	# retrieve or create the graph
 		g <- init.graph(n, type, iteration=r, folder=urban.folder)
 		
@@ -783,3 +801,7 @@ monitor.time(n=10, type="randplanar", repetitions=10)
 #monitor.time(n=25, type="randplanar", repetitions=10)
 #monitor.time(n=50, type="randplanar", repetitions=10)
 #monitor.time(n=100, type="randplanar", repetitions=10)
+
+
+#setwd("~/eclipse/workspaces/Networks/SpatialMeasures");source("src/evaluation/time.R")
+#TODO plot: change the 0.5 label to a zero, maybe remove the decimal parts

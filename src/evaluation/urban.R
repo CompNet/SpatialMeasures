@@ -766,3 +766,7 @@ monitor.time(cities)
 #TODO only process the values that have not been processed yet
 #(so need to record them)
 # maybe just focus on certain nodes ? dealing with all distances seems too much
+
+
+
+#TODO must process only the necessary distances when specifying nodes
