@@ -323,8 +323,15 @@ axis.break2 <- function (axis = 1, breakpos = NULL, pos = NA, bgcol = "white", b
 
 
 ############################################################################################
+# Draws two histograms on the same plot.
+#
+# x1, x2: the raw series whose histograms are desired.
+# breaks: number of breaks (processed over both series).
+# x.label: text label of the x axis.
+# series.names: names of the series (two values text vector).
+# leg.pos: position of the legend ("topleft", "bottomright", etc.)
 ############################################################################################
-multi.hist <- function(x1, x2, breaks=10, xlabel, series.names)
+multi.hist <- function(x1, x2, breaks=10, x.label, series.names, leg.pos)
 {	# compute common breaks
 	data <- c(x1,x2)
 	mn <- min(data)
@@ -335,13 +342,31 @@ multi.hist <- function(x1, x2, breaks=10, xlabel, series.names)
 	histo1 <- hist(x1, breaks=bk, plot=FALSE)
 	histo2 <- hist(x2, breaks=bk, plot=FALSE)
 	
-	# plot everything
+	# process y limits
+	y.lim <- c(0, max(c(histo1$counts,histo2$counts)))
+	
+	# set colors
+	c1 <- add.alpha("BLUE", 0.25)
+	c2 <- add.alpha("RED", 0.25)
+	
+	# create an empty plot
+	plot(NULL, 
+			xlab=x.label, main="",
+			ylim=y.lim, xlim=c(mn,mx),
+	)
+	
+	# add the histograms
 	plot(histo1, 
-			xlab=x.label,
-			col=c1, border=NA
+			col=c1, border=NA,
+			add=TRUE
 	)
 	plot(histo2, 
 			col=c2, border=NA, 
 			add=TRUE
 	)
+	
+	# add the legend
+	legend(x=leg.pos,legend=series.names,
+			inset=0.03,
+			fill=c("BLUE","RED"))
 }
