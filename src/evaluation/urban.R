@@ -22,6 +22,7 @@ data.folder <- "data"
 urban.folder <- file.path(data.folder,"urban")
 res.graph.filename <- "table-graph.txt"
 res.nodes.filename <- "table-nodes.txt"
+sample.size <- 25
 
 
 
@@ -29,8 +30,7 @@ res.nodes.filename <- "table-nodes.txt"
 ############################################################################
 # Column headers
 ############################################################################
-CONT_EDIST_TIME <- "Cont-Edist-Time"
-CONT_GDIST_TIME <- "Cont-Gdist-Time"
+ORIG_GDIST_TIME <- "Orig-Gdist-Time"
 DISCRETIZATION_TIME <- "Discretization-Time"
 DISC_EDIST_TIME <- "Disc-Edist-Time"
 DISC_GDIST_TIME <- "Disc-Gdist-Time"
@@ -44,6 +44,7 @@ STRAIGHT_DIFFERENCE <- "Straight-Diff"
 PROP_NODE_NBR <- "Node-Nbr"
 PROP_LINK_NBR <- "Link-Nbr"
 PROP_DENSITY <- "Density"
+NODE_ID <- "Node-ID"
 
 
 
@@ -54,11 +55,13 @@ PROP_DENSITY <- "Density"
 #
 # g: the concerned graph.
 # city.folder: folder of the currently processed city.
+# light.process: whether the whole graph (FALSE) or only a sample of the nodes
+#				 (TRUE) should be processed.
 #
 # returns: a list containing two tables: one for the whole graph, and one for
 #		   the individual nodes.
 ############################################################################
-init.result.tables <- function(g, city.folder)
+init.result.tables <- function(g, city.folder, light.process)
 {	tlog(2,"Initializing the stats table for city ",basename(city.folder))
 	res.tables <- list()
 	
@@ -70,7 +73,7 @@ init.result.tables <- function(g, city.folder)
 	}
 	else
 	{	tlog(4,"The graph table does no exist yet >> we create it")
-		cnames <- c(CONT_EDIST_TIME,CONT_GDIST_TIME,DISCRETIZATION_TIME,DISC_EDIST_TIME,DISC_GDIST_TIME,
+		cnames <- c(ORIG_GDIST_TIME,DISCRETIZATION_TIME,DISC_EDIST_TIME,DISC_GDIST_TIME,
 				CONT_STRAIGHT,CONT_PROC_TIME,CONT_MEM_USE,DISC_STRAIGHT,DISC_PROC_TIME,DISC_MEM_USE,STRAIGHT_DIFFERENCE,
 				PROP_NODE_NBR,PROP_LINK_NBR,PROP_DENSITY)
 		res.tables$graph <- matrix(NA,nrow=1,ncol=length(cnames))
@@ -90,7 +93,13 @@ init.result.tables <- function(g, city.folder)
 	else
 	{	tlog(4,"The nodes table does no exist yet >> we create it")
 		cnames <- c(CONT_STRAIGHT,CONT_PROC_TIME,CONT_MEM_USE,DISC_STRAIGHT,DISC_PROC_TIME,DISC_MEM_USE,STRAIGHT_DIFFERENCE)
-		res.tables$nodes <- matrix(NA,nrow=gorder(g),ncol=length(cnames))
+		if(light.process)
+		{	cnames <- c(NODE_ID,cnames)
+			res.tables$nodes <- matrix(NA,nrow=sample.size,ncol=length(cnames))
+			res.tables$nodes[,NODE_ID] <- sample(sample.size)
+		}
+		else
+			res.tables$nodes <- matrix(NA,nrow=gorder(g),ncol=length(cnames))
 		colnames(res.tables$nodes) <- cnames
 		write.table(x=res.tables$nodes,file=res.nodes.file,row.names=FALSE,col.names=TRUE)
 	}
@@ -115,23 +124,6 @@ init.result.tables <- function(g, city.folder)
 init.distances <- function(g, city.folder, res.tables)
 {	tlog(2,"Initializing both distances for city ",basename(city.folder))
 	
-	# process the Euclidean distances if needed
-	e.file <- file.path(city.folder,"e-dist-original.data")
-	if(!file.exists(e.file))
-	{	tlog(4,"Processing Euclidean distances")
-		start.time <- Sys.time()
-			pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
-			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
-		end.time <- Sys.time()
-		e.duration <- difftime(end.time,start.time,units="s")
-		tlog(6,"Recording Euclidean distances (",e.duration,"s)")
-		save(e.dist,file=e.file)
-		# update table
-		res.tables$graph[1,CONT_EDIST_TIME] <- e.duration
-		table.file <- file.path(city.folder,res.graph.filename)
-		write.table(x=res.tables$graph,file=table.file,row.names=FALSE,col.names=TRUE)
-	}
-	
 	# process the graph distances if needed
 	g.file <- file.path(city.folder,"g-dist-original.data")
 	if(!file.exists(g.file))
@@ -143,7 +135,7 @@ init.distances <- function(g, city.folder, res.tables)
 		tlog(6,"Recording graph distances (",g.duration,"s)")
 		save(g.dist,file=g.file)
 		# update table
-		res.tables$graph[1,CONT_GDIST_TIME] <- g.duration
+		res.tables$graph[1,ORIG_GDIST_TIME] <- g.duration
 		table.file <- file.path(city.folder,res.graph.filename)
 		write.table(x=res.tables$graph,file=table.file,row.names=FALSE,col.names=TRUE)
 	}
@@ -242,58 +234,68 @@ init.discretization <- function(g, city.folder, res.tables, avgseg=50)
 # city.folder: folder of the currently processed city.
 # dists: previously retrieved distances (both of them: Euclidean and graph).
 # res.tables: list containing both result tables.
+# light.process: whether the whole graph (FALSE) or only a sample of the nodes
+#				 (TRUE) should be processed.
 #
 # returns: the list of tables containing the average straightness and corresponding
 #		   durations values for the graph ($graph) and each node ($nodes).
 ############################################################################
-process.continuous.straightness <- function(g, city.folder, dists, res.tables)
+process.continuous.straightness <- function(g, city.folder, dists, res.tables, light.process)
 {	tlog(2,"Processing the continuous average straightness for city ",basename(city.folder))
 	gc()
-	additional.duration <- res.tables$graph[1,CONT_EDIST_TIME] + res.tables$graph[1,CONT_GDIST_TIME]
-	
-	# load the previously processed distances
-	e.file <- file.path(city.folder,"e-dist-original.data")
-	tlog(4,"Loading cached Euclidean distances")
-	load(e.file)
-	tlog(6,"Euclidean distances processing time: ",res.tables$graph[1,CONT_EDIST_TIME]," s")
-	g.file <- file.path(city.folder,"g-dist-original.data")
-	tlog(4,"Loading cached graph distances")
-	load(g.file)
-	tlog(6,"Graph distances processing time: ",res.tables$graph[1,CONT_GDIST_TIME]," s")
-	
-	# check if results already exist, in which case we don't process them again
-	if(is.na(res.tables$graph[1,CONT_STRAIGHT]))
-	{	# process straightness
-		tlog(4,"Processing average over the whole graph")
-		start.time <- Sys.time()
-			value <- mean.straightness.graph(graph=g, g.dist=dists$g.dist)
-		end.time <- Sys.time()
-		duration <- difftime(end.time,start.time,units="s") + additional.duration
-		tlog(6,"Continuous average straightness: ",value," - Duration: ",duration," s")
-		gc()
-		
-		# record the result table
-		res.tables$graph[1,CONT_STRAIGHT] <- value
-		res.tables$graph[1,CONT_PROC_TIME] <- duration
-		table.file <- file.path(city.folder,res.graph.filename)
-		write.table(x=res.tables$graph,file=table.file,row.names=FALSE,col.names=TRUE)
-	}
+	if(light.process)
+		additional.duration <- res.tables$graph[1,ORIG_GDIST_TIME]
 	else
-	{	value <- res.tables$graph[1,CONT_STRAIGHT]
-		duration <- res.tables$graph[1,CONT_PROC_TIME]
-		tlog(4,"Continuous average straightness: already processed (",value," - ",duration," s)")
+		additional.duration <- 0
+	
+	# possibly load the previously processed distances
+	if(light.process)
+	{	g.file <- file.path(city.folder,"g-dist-original.data")
+		tlog(4,"Loading cached graph distances")
+		load(g.file)
+		tlog(6,"Graph distances processing time: ",res.tables$graph[1,ORIG_GDIST_TIME]," s")
 	}
 	
-	# process each node in the graph
+	# possibly process the whole graph
+	if(light.process)
+		tlog(4,"Light process, so not dealing with the whole graph")
+	else
+	{	# check if results already exist, in which case we don't process them again
+		if(is.na(res.tables$graph[1,CONT_STRAIGHT]))
+		{	# process straightness
+			tlog(4,"Processing average over the whole graph")
+			start.time <- Sys.time()
+				value <- mean.straightness.graph(graph=g, g.dist=dists$g.dist)
+			end.time <- Sys.time()
+			duration <- difftime(end.time,start.time,units="s") + additional.duration
+			tlog(6,"Continuous average straightness: ",value," - Duration: ",duration," s")
+			gc()
+			
+			# record the result table
+			res.tables$graph[1,CONT_STRAIGHT] <- value
+			res.tables$graph[1,CONT_PROC_TIME] <- duration
+			table.file <- file.path(city.folder,res.graph.filename)
+			write.table(x=res.tables$graph,file=table.file,row.names=FALSE,col.names=TRUE)
+		}
+		else
+		{	value <- res.tables$graph[1,CONT_STRAIGHT]
+			duration <- res.tables$graph[1,CONT_PROC_TIME]
+			tlog(4,"Continuous average straightness: already processed (",value," - ",duration," s)")
+		}
+	}
+	
+	# process the nodes individually
 	if(is.na(res.tables$nodes[nrow(res.tables$nodes),CONT_STRAIGHT]))
-	{	tlog(2,"Processing continuous average for each individual node")
-		imax <- vcount(g)
+	{	tlog(2,"Processing continuous average for the individual node")
+		imax <- nrow(res.tables$nodes)
 		for(i in 1:imax)
-		#for(i in rep(1,imax))
 		{	if(is.na(res.tables$nodes[i,CONT_STRAIGHT]))
 			{	# process straightness
 				start.time <- Sys.time()
-					value <- mean.straightness.nodes.graph(graph=g, u=i, e.dist=dists$e.dist, g.dist=dists$g.dist, use.primitive=TRUE) #TODO if we decide to switch to mean only: would be faster to process all nodes at once
+					if(light.process)
+						value <- mean.straightness.nodes.graph(graph=g, u=res.tables$nodes[i,NODE_ID], use.primitive=TRUE)
+					else
+						value <- mean.straightness.nodes.graph(graph=g, u=i, e.dist=dists$e.dist, g.dist=dists$g.dist, use.primitive=TRUE)
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s") + additional.duration
 				tlog(4,"Continuous average straightness for node ",i,"/",imax,": ",value," - Duration: ",duration," s")
@@ -327,14 +329,19 @@ process.continuous.straightness <- function(g, city.folder, dists, res.tables)
 # city.folder: folder of the currently processed city.
 # dists: previously retrieved distances (both of them: Euclidean and graph).
 # res.tables: list containing both result tables.
+# light.process: whether the whole graph (FALSE) or only a sample of the nodes
+#				 (TRUE) should be processed.
 #
 # returns: the list of tables containing the average straightness and corresponding
 #		   durations values for the graph ($graph) and each node ($nodes).
 ############################################################################
-process.discrete.straightness <- function(g, city.folder, dists, res.tables)
+process.discrete.straightness <- function(g, city.folder, dists, res.tables, light.process)
 {	tlog(2,"Processing the discrete approximation of the average straightness for city ",basename(city.folder))
 	gc()
-	additional.duration <- res.tables$graph[1,DISC_EDIST_TIME] + res.tables$graph[1,DISC_GDIST_TIME]
+	if(light.process)
+		additional.duration <- 0
+	else
+		additional.duration <- res.tables$graph[1,DISC_EDIST_TIME] + res.tables$graph[1,DISC_GDIST_TIME]
 	
 	# retrieve the discretized graph
 	graph.file <- file.path(city.folder,"graph_discretized.graphml")
@@ -342,51 +349,61 @@ process.discrete.straightness <- function(g, city.folder, dists, res.tables)
 	g2 <- read.graph(graph.file, format="graphml")
 	additional.duration <- additional.duration + res.tables$graph[1,DISCRETIZATION_TIME]
 	
-	# load the previously processed distances
-	e.file <- file.path(city.folder,"e-dist-discr.data")
-	tlog(4,"Loading cached Euclidean distances")
-	load(e.file)
-	tlog(6,"Euclidean distances processing time: ",res.tables$graph[1,DISC_EDIST_TIME]," s")
-	g.file <- file.path(city.folder,"g-dist-discr.data")
-	tlog(4,"Loading cached graph distances")
-	load(g.file)
-	tlog(6,"Graph distances processing time: ",res.tables$graph[1,DISC_GDIST_TIME]," s")
-	
-	# check if results already exist, in which case we don't process them again
-	if(is.na(res.tables$graph[1,DISC_STRAIGHT]))
-	{	# process straightness
-		tlog(4,"Processing average over the whole graph")
-		start.time <- Sys.time()
-			value <- mean.straightness.nodes(graph=g2, v=NA, e.dist=dists$e.dist, g.dist=dists$g.dist)[1]
-		end.time <- Sys.time()
-		duration <- difftime(end.time,start.time,units="s") + additional.duration
-		diff <- value - res.tables$graph[1,CONT_STRAIGHT]
-		tlog(6,"Discrete average straightness: ",value," (Difference: ",diff,") - Duration: ",duration," s")
-		gc()
-		
-		# record the result table
-		res.tables$graph[1,DISC_STRAIGHT] <- value
-		res.tables$graph[1,DISC_PROC_TIME] <- duration
-		res.tables$graph[1,STRAIGHT_DIFFERENCE] <- diff
-		table.file <- file.path(city.folder,res.graph.filename)
-		write.table(x=res.tables$graph,file=table.file,row.names=FALSE,col.names=TRUE)
+	# possibly load the previously processed distances
+	if(light.process)
+	{	e.file <- file.path(city.folder,"e-dist-discr.data")
+		tlog(4,"Loading cached Euclidean distances")
+		load(e.file)
+		tlog(6,"Euclidean distances processing time: ",res.tables$graph[1,DISC_EDIST_TIME]," s")
+		g.file <- file.path(city.folder,"g-dist-discr.data")
+		tlog(4,"Loading cached graph distances")
+		load(g.file)
+		tlog(6,"Graph distances processing time: ",res.tables$graph[1,DISC_GDIST_TIME]," s")
 	}
+	
+	# possibly process the whole graph
+	if(light.process)
+		tlog(4,"Light process, so not dealing with the whole graph")
 	else
-	{	value <- res.tables$graph[1,DISC_STRAIGHT]
-		duration <- res.tables$graph[1,RES_DISCT_TIME]
-		diff <- res.tables$graph[1,STRAIGHT_DIFFERENCE]
-		tlog(4,"Continuous average straightness: already processed (",value," - ",duration," s)")
+	{	# check if results already exist, in which case we don't process them again
+		if(is.na(res.tables$graph[1,DISC_STRAIGHT]))
+		{	# process straightness
+			tlog(4,"Processing average over the whole graph")
+			start.time <- Sys.time()
+				value <- mean.straightness.nodes(graph=g2, v=NA, e.dist=dists$e.dist, g.dist=dists$g.dist)[1]
+			end.time <- Sys.time()
+			duration <- difftime(end.time,start.time,units="s") + additional.duration
+			diff <- value - res.tables$graph[1,CONT_STRAIGHT]
+			tlog(6,"Discrete average straightness: ",value," (Difference: ",diff,") - Duration: ",duration," s")
+			gc()
+			
+			# record the result table
+			res.tables$graph[1,DISC_STRAIGHT] <- value
+			res.tables$graph[1,DISC_PROC_TIME] <- duration
+			res.tables$graph[1,STRAIGHT_DIFFERENCE] <- diff
+			table.file <- file.path(city.folder,res.graph.filename)
+			write.table(x=res.tables$graph,file=table.file,row.names=FALSE,col.names=TRUE)
+		}
+		else
+		{	value <- res.tables$graph[1,DISC_STRAIGHT]
+			duration <- res.tables$graph[1,RES_DISCT_TIME]
+			diff <- res.tables$graph[1,STRAIGHT_DIFFERENCE]
+			tlog(4,"Continuous average straightness: already processed (",value," - ",duration," s)")
+		}
 	}
 	
-	# process each node in the graph
+	# process the nodes individually
 	if(is.na(res.tables$nodes[nrow(res.tables$nodes),DISC_STRAIGHT]))
 	{	tlog(4,"Processing discrete average for each individual node")
-		imax <- vcount(g)
+		imax <- nrow(res.tables$nodes)
 		for(i in 1:imax)
 		{	if(is.na(res.tables$nodes[i,DISC_STRAIGHT]))
 			{	# process straightness
 				start.time <- Sys.time()
-					value <- mean.straightness.nodes(graph=g2, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
+					if(light.process)
+						value <- mean.straightness.nodes(graph=g2, v=res.tables$nodes[i,NODE_ID])[1,1]
+					else
+						value <- mean.straightness.nodes(graph=g2, v=i, e.dist=dists$e.dist, g.dist=dists$g.dist)[1,1]
 				end.time <- Sys.time()
 				duration <- difftime(end.time,start.time,units="s") + additional.duration
 				diff <- value - res.tables$nodes[i,CONT_STRAIGHT]
@@ -452,6 +469,22 @@ generate.city.plots <- function(city.folder, res.tables)
 #			xlab="Discrete average memory usage (MB)",ylab="Continuous average memory usage (MB)"
 #		)
 #	dev.off()
+	
+	# histogram of the durations for cont and disc straightness processing
+	plot.file <- file.path(city.folder,paste0("histo-durations.pdf"))
+	pdf(file=plot.file)
+		hist(x=res.tables$nodes[,STRAIGHT_DIFFERENCE],
+			xlab="Processing time (s)",ylab="Frequency"
+		)
+	dev.off()
+	
+	# histogram of the straightness differences
+	plot.file <- file.path(city.folder,paste0("histo-differences.pdf"))
+	pdf(file=plot.file)
+		hist(x=res.tables$nodes[,STRAIGHT_DIFFERENCE],
+			xlab="Straightness difference",ylab="Frequency"
+		)
+	dev.off()
 }
 
 
@@ -467,11 +500,13 @@ generate.city.plots <- function(city.folder, res.tables)
 # disc.table: discretization table.
 # cont.tables: list of tables for the continuous average straightness.
 # disc.tables: list of tables for the discrete average straightness.
+# light.process: whether the whole graph (FALSE) or only a sample of the nodes
+#				 (TRUE) should be processed.
 #
 # returns: list of tables corresponding to a more compact representation of
 #		   the previously processed values.
 ############################################################################
-generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, cont.tables, disc.tables)
+generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, cont.tables, disc.tables, light.process)
 {	tlog("Generating plots and tables for the iteration ",iteration)
 	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
 	nm <- paste0("d=",0:(nrow(disc.table)-1))
@@ -681,8 +716,10 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 # city: name of the graph.
 ############################################################################
 monitor.time <- function(cities)
-{	for(city in cities)
-	{	tlog("Processing city ",city)
+{	for(c in 1:length(cities))
+	{	city <- names(cities)[c]
+		light.process <- cities[[c]][1]
+		tlog("Processing city ",city,if(light.process) " (light process)" else " (complete process)")
 		gc()
 		
 		# retrieve the graph
@@ -692,19 +729,20 @@ monitor.time <- function(cities)
 		g <- read.graph(file=net.file,format="graphml")
 		
 		# init/retrieve the result tables
-		res.tables <- init.result.tables(g, city.folder)		
+		res.tables <- init.result.tables(g, city.folder, light.process)		
 		
 		# process both distances once and for all
-		res.tables <- init.distances(g, city.folder, res.tables)
+		if(!light.process)
+			res.tables <- init.distances(g, city.folder, res.tables)
 		# process the discretized graph once and for all / init the corresponding distances
 		res.tables <- init.discretization(g, city.folder, res.tables)
 		
 		# deal with the continuous version
-		res.tables <- process.continuous.straightness(g, city.folder, dists, res.tables) 
+		res.tables <- process.continuous.straightness(g, city.folder, dists, res.tables, light.process) 
 		gc()
 		
 		# deal with the discrete version
-		res.tables <- process.discrete.straightness(g, city.folder, dists, res.tables)
+		res.tables <- process.discrete.straightness(g, city.folder, dists, res.tables, light.process)
 		gc()
 		
 		# generate plots for the current city only
@@ -712,31 +750,34 @@ monitor.time <- function(cities)
 	}
 	
 	# generate plots considering all cities
-#	generate.overall.plots(cities)
+#	generate.overall.plots(cities, light.process)
 }
 
 
-cities <- c(
-		"abidjan"
-#	"alicesprings",
-#	"avignon",
-#	"beijin",
-#	"bordeaux",
-#	"dakar",
-#	"hongkong",
-#	"istanbul",
-#	"karlskrona",
-#	"lisbon",
-#	"liverpool",
-#	"ljubljana",
-#	"maastricht",
-#	"manhattan",
-#	"stpetersburg",
-#	"roma",
-#	"sfax",
-#	"soustons",
-#	"tokyo",
-#	"troisrivieres"
+# the boolean value controls the processing: complete (FALSE) or light (TRUE)
+# "light" means: only certain nodes, and not the whole graph (appropriate for large graphs)
+cities <- list(
+#	abidjan=c(FALSE),
+#	alicesprings=c(TRUE),
+#	avignon=c(TRUE),
+#	beijin=c(TRUE),
+#	bordeaux=c(TRUE),
+#	dakar=c(TRUE),
+#	hongkong=c(TRUE),
+#	istanbul=c(TRUE),
+#	karlskrona=c(TRUE),
+#	lisbon=c(TRUE),
+#	liverpool=c(TRUE),
+#	ljubljana=c(TRUE),
+#	maastricht=c(TRUE),
+#	manhattan=c(TRUE),
+###	newyork=c(FALSE),
+#	stpetersburg=c(TRUE),
+#	roma=c(TRUE),
+#	sfax=c(TRUE),
+	soustons=c(FALSE)
+#	tokyo=c(TRUE),
+#	troisrivieres=c(FALSE)
 )
 
 monitor.time(cities)
@@ -768,5 +809,11 @@ monitor.time(cities)
 # maybe just focus on certain nodes ? dealing with all distances seems too much
 
 
-
 #TODO must process only the necessary distances when specifying nodes
+#TODO possility to restrict the processing:
+#	- do not preprocess the distances
+#	- not the whole graph
+#	- only a sample of the nodes (not all of them)
+
+
+# setwd("~/eclipse/workspaces/Networks/SpatialMeasures");source("src/evaluation/urban.R")

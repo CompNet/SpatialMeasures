@@ -20,7 +20,7 @@ source("src/straightness/discrete.R")
 
 
 graph.types <- c(
-#	"abidjan",
+	"abidjan",
 	"alicesprings",
 	"avignon",
 	"beijin",

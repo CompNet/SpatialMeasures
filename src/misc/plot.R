@@ -318,3 +318,30 @@ axis.break2 <- function (axis = 1, breakpos = NULL, pos = NA, bgcol = "white", b
 	segments(xbegin, ybegin, xend, yend, col = breakcol, lty = 1)
 	par(xpd = FALSE)
 }
+
+
+
+
+############################################################################################
+############################################################################################
+multi.hist <- function(x1, x2, breaks=10, xlabel, series.names)
+{	# compute common breaks
+	data <- c(x1,x2)
+	mn <- min(data)
+	mx <- max(data)
+	bk <- seq(from=mn,to=mx,by=(mx-mn)/breaks)
+	
+	# process bar sizes
+	histo1 <- hist(x1, breaks=bk, plot=FALSE)
+	histo2 <- hist(x2, breaks=bk, plot=FALSE)
+	
+	# plot everything
+	plot(histo1, 
+			xlab=x.label,
+			col=c1, border=NA
+	)
+	plot(histo2, 
+			col=c2, border=NA, 
+			add=TRUE
+	)
+}

@@ -27,7 +27,7 @@ urban.folder <- file.path(data.folder,"urban")
 
 
 
-# list the cities and their boxes
+# list the cities and their boxes (min lon, min lat, max lon, ma lat)
 cities <- list(
  		  abidjan=c( -4.0314,   5.3125,  -4.0100,   5.3359),
 	 alicesprings=c(133.8220, -23.7248, 133.9050, -23.6639),
