@@ -45,6 +45,7 @@ PROP_NODE_NBR <- "Node-Nbr"
 PROP_LINK_NBR <- "Link-Nbr"
 PROP_DENSITY <- "Density"
 NODE_ID <- "Node-ID"
+NETWORK_ID <- "Network-ID"
 
 
 
@@ -96,7 +97,7 @@ init.result.tables <- function(g, city.folder, light.process)
 		if(light.process)
 		{	cnames <- c(NODE_ID,cnames)
 			res.tables$nodes <- matrix(NA,nrow=sample.size,ncol=length(cnames))
-			res.tables$nodes[,NODE_ID] <- sample(sample.size)
+			res.tables$nodes[,NODE_ID] <- sample(gorder(g),sample.size)
 		}
 		else
 			res.tables$nodes <- matrix(NA,nrow=gorder(g),ncol=length(cnames))
@@ -462,20 +463,24 @@ generate.city.plots <- function(city.folder, res.tables)
 	dev.off()
 	
 	# cont memory vs. disc memory
-#	plot.file <- file.path(city.folder,paste0("comparison-memory.pdf"))
-#	pdf(file=plot.file)
-#		plot(x=res.tables$nodes[,RES_DISC_MEM],
-#			y=res.tables$nodes[,RES_CONT_MEM],
-#			xlab="Discrete average memory usage (MB)",ylab="Continuous average memory usage (MB)"
-#		)
-#	dev.off()
+	plot.file <- file.path(city.folder,paste0("comparison-memory.pdf"))
+	pdf(file=plot.file)
+		plot(x=res.tables$nodes[,RES_DISC_MEM],
+			y=res.tables$nodes[,RES_CONT_MEM],
+			xlab="Discrete average memory usage (MB)",ylab="Continuous average memory usage (MB)"
+		)
+	dev.off()
 	
-	# histogram of the durations for cont and disc straightness processing
+	# histogram of the processing times for cont and disc straightness processing
 	plot.file <- file.path(city.folder,paste0("histo-durations.pdf"))
 	pdf(file=plot.file)
-		hist(x=res.tables$nodes[,STRAIGHT_DIFFERENCE],
-			xlab="Processing time (s)",ylab="Frequency"
-		)
+		multi.hist(x1=res.tables$nodes[,CONT_PROC_TIME], 
+				x2=res.tables$nodes[,DISC_PROC_TIME], 
+				breaks=20,
+				x.label="Processing time (s)", 
+				series.names=c("Discrete average","Continuous average"), 
+				leg.pos="topleft"
+			)	
 	dev.off()
 	
 	# histogram of the straightness differences
@@ -485,13 +490,26 @@ generate.city.plots <- function(city.folder, res.tables)
 			xlab="Straightness difference",ylab="Frequency"
 		)
 	dev.off()
+	
+	# histogram of the memory usages for cont and disc straightness processing
+	plot.file <- file.path(city.folder,paste0("histo-memory.pdf"))
+	pdf(file=plot.file)
+	multi.hist(x1=res.tables$nodes[,CONT_MEM_USE], 
+			x2=res.tables$nodes[,DISC_MEM_USE], 
+			breaks=20,
+			x.label="Memory usage (MB)", 
+			series.names=c("Discrete average","Continuous average"), 
+			leg.pos="topleft"
+	)	
+	dev.off()
 }
 
 
 
 
 ############################################################################
-# Generates the plots for each iteration.
+# Generates the plots comparing the results obtained for the collection of
+# cities.
 #
 # n: number of nodes.
 # type: randplanar (planar random graph) or erdosrenyi (Erdös-Rényi random
@@ -506,206 +524,217 @@ generate.city.plots <- function(city.folder, res.tables)
 # returns: list of tables corresponding to a more compact representation of
 #		   the previously processed values.
 ############################################################################
-generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, cont.tables, disc.tables, light.process)
-{	tlog("Generating plots and tables for the iteration ",iteration)
-	it.folder <- file.path(urban.folder,type,paste0("n=",n),paste0("it=",iteration))
-	nm <- paste0("d=",0:(nrow(disc.table)-1))
+generate.overall.plots <- function(cities, light.process)
+{	tlog(2,"Generating overall plots, considering all cities")
 	
-	# build the graph table
-	tlog(2,"Building the graph table")
-	graph.all <- matrix(NA,nrow=nrow(disc.table),ncol=3)
-	colnames(graph.all) <- c("Straightness","Difference","Duration")
-	for(d in 0:(nrow(disc.table)-1))
-		graph.all[d+1,] <- c(disc.tables$graph[[as.character(d)]])
-	rownames(graph.all) <- nm
+	# get the city names
+	city.names <- c()
+	for(city in cities)
+		city.names <- c(city.names, city[[2]])
+	# colors taken from https://www.r-bloggers.com/the-paul-tol-21-color-salute/
+	city.colors <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")[1:length(cities)]
 	
-	# record the graph table
-	table.file <- file.path(it.folder,paste0("discrete-graph.txt"))
-	write.table(graph.all,file=table.file,col.names=TRUE,row.names=TRUE)
-	
-	# build the nodes tables
-	tlog(2,"Building the nodes tables")
-	nodes.values <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])
-	colnames(nodes.values) <- nm
-	nodes.differences <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])	
-	colnames(nodes.differences) <- nm
-	nodes.durations <- matrix(NA,ncol=nrow(disc.table),nrow=disc.table[1,"Nodes"])	
-	colnames(nodes.durations) <- nm
-	for(d in 0:(nrow(disc.table)-1))
-	{	nodes.values[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Straightness"]
-		nodes.differences[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Difference"]
-		nodes.durations[,d+1] <- disc.tables$nodes[[as.character(d)]][,"Duration"]
+	# retrieve all the necessary data
+	tlog(4,"Retrieve the data for each city")
+	for(c in 1:length(cities))
+	{	# get city folder
+		city <- names(cities)[c]
+		tlog(6,"Dealing with city ",city)
+		city.folder <- file.path(urban.folder,city)
+		
+		# retrieve the graph data 
+		tlog(8,"Loading the graph-related data")
+		res.graph.file <- file.path(city.folder,res.graph.filename)
+		temp <- as.matrix(read.table(res.graph.file,header=TRUE,check.names=FALSE))
+		if(c==1)
+			graph.table <- temp
+		else
+			graph.table <- rbind(graph.table, temp)
+
+		# retrieve the nodes data
+		tlog(8,"Loading the node-related data")
+		res.nodes.file <- file.path(city.folder,res.nodes.filename)
+		temp <- as.matrix(read.table(res.nodes.file,header=TRUE,check.names=FALSE))
+		if(nrow(temp)>sample.size)
+		{	idx <- sample(nrow(temp),sample.size)
+			temp <- temp[idx,]
+			temp[,NODE_ID] <- idx
+		}
+		temp <- cbind(temp,rep(c,nrow(temp)))
+		colnames(temp)[length(colnames(temp))] <- NETWORK_ID
+		if(c==1)
+			nodes.table <- temp
+		else
+			nodes.table <- rbind(graph.table, temp)
 	}
 	
-	# record the nodes tables
-	table.file <- file.path(it.folder,paste0("discrete-nodes-straightness.txt"))
-	write.table(nodes.values,file=table.file,col.names=TRUE,row.names=FALSE)
-	table.file <- file.path(it.folder,paste0("discrete-nodes-differences.txt"))
-	write.table(nodes.differences,file=table.file,col.names=TRUE,row.names=FALSE)
-	table.file <- file.path(it.folder,paste0("discrete-nodes-durations.txt"))
-	write.table(nodes.durations,file=table.file,col.names=TRUE,row.names=FALSE)
+	# generate the comparison plots
+	tlog(4,"Generate discr. perf vs. cont perf plots")
+	for(yaxis in c("duration","straightness","memory"))
+	{	if(yaxis=="duration")
+		{	d.col <- DISC_PROC_TIME
+			c.col <- CONT_PROC_TIME
+			x.lab <- "Discrete processing time (s)"
+			y.lab <- "Continuous processing time (s)"
+			leg.pos <- "topleft"
+			inser <- 0.3
+		}
+		else if(yaxis=="straightness")
+		{	d.col <- DISC_STRAIGHT
+			c.col <- CONT_STRAIGHT
+			x.lab <- "Discrete average Straightness"
+			y.lab <- "Continuous average Straightness"
+			leg.pos <- "topleft"
+			inser <- 0.3
+		}
+		else if(yaxis=="memory")
+		{	d.col <- DISC_PROC_TIME
+			c.col <- CONT_PROC_TIME
+			x.lab <- "Discrete memory usage (MB)"
+			y.lab <- "Continuous memory usage (MB)"
+			leg.pos <- "topleft"
+			inser <- 0.3
+		}
+		
+		plot.file <- file.path(urban.folder,paste0("comparison-",yaxis,".pdf"))
+		pdf(file=plot.file)
+			plot(x=nodes.table[which(nodes.table[,NETWORK_ID]==1),d.col],
+				y=nodes.table[which(nodes.table[,NETWORK_ID]==1),c.col],
+				xlab=x.lab,ylab=y.lab,
+				col=city.colors[1]
+			)
+			if(nrow(graph.table)>1)
+			{	for(net in 2:nrow(graph.table))
+				{	points(x=nodes.table[which(nodes.table[,NETWORK_ID]==net),d.col],
+						y=nodes.table[which(nodes.table[,NETWORK_ID]==net),c.col],
+						col=city.colors[net]
+					)
+				}
+			}
+			legend(x=leg.pos,legend=city.names,
+				inset=inset,
+				fill=city.colors
+			)
+		dev.off()
+	}
 	
-	# generate the plots
-	tlog(2,"Generating the plots for iteration ",iteration)
-	for(xaxis in c("nodes","avgseg","granularity"))
-	{	if(xaxis=="nodes")
-		{	xlab <- "Total number of nodes"
-			log.axes <- ""
-			xvals <- disc.table[,"Nodes"]
+	# generate the perf vs. prop plots
+	tlog(4,"Generate perf vs. prop plots")
+	for(prop in c(PROP_NODE_NBR,PROP_DENSITY,PROP_LINK_NBR))
+	{	xvals <- rep(graph.table[,prop],each=sample.size)
+		x.lim <- c(min(graph.table[,prop]),max(graph.table[,prop]))
+		
+		if(prop==PROP_NODE_NBR)
+		{	xaxis <- "nodes"
+			xlab <- "Number of nodes"
+			str.inset <- 0.03
+			str.leg.pos <- "topleft"
+			dur.inset <- 0.03
+			dur.leg.pos <- "topleft"
+			mem.inset <- 0.03
+			mem.leg.pos <- "topleft"
+			diff.inset <- 0.03
+			diff.leg.pos <- "topleft"
 		}
-		else if(xaxis=="avgseg")
-		{	xlab <- "Average segmentation"
-			log.axes <- "x"
-			xvals <- disc.table[,"AverageSegmentation"] + 1
+		else if(prop==PROP_DENSITY)
+		{	xaxis <- "density"
+			xlab <- "Density"
+			str.inset <- 0.03
+			str.leg.pos <- "topleft"
+			dur.inset <- 0.03
+			dur.leg.pos <- "topleft"
+			mem.inset <- 0.03
+			mem.leg.pos <- "topleft"
+			diff.inset <- 0.03
+			diff.leg.pos <- "topleft"
 		} 
-		else if(xaxis=="granularity")
-		{	xlab <- "Granularity"
-			log.axes <- ""
-			xvals <- disc.table[,"Granularity"]
+		else if(prop==PROP_LINK_NBR)
+		{	xaxis <- "links"
+			xlab <- "Number of edges"
+			str.inset <- 0.03
+			str.leg.pos <- "topleft"
+			dur.inset <- 0.03
+			dur.leg.pos <- "topleft"
+			mem.inset <- 0.03
+			mem.leg.pos <- "topleft"
+			diff.inset <- 0.03
+			diff.leg.pos <- "topleft"
 		} 
 		
-		# straightness
-		{	yaxis <- "straightness"
-			ylab <- "Straightness"
-			graph.yvals <- graph.all[,"Straightness"]
-			graph.cont.val <- cont.tables$graph[1,"Straightness"]
-			nodes.yvals <- nodes.values
-			nodes.cont.vals <- cont.tables$nodes[,"Straightness"]
+		for(yaxis in c("straightness","duration","memory"))
+		{	if(yaxis=="straightness")
+			{	ylab <- "Straightness"
+				disc.yvals <- nodes.table[,DISC_STRAIGHT]
+				cont.yvals <- nodes.table[,CONT_STRAIGHT]
+				inset <- str.inset
+			}
+			else if(yaxis=="duration")
+			{	ylab <- "Processing time (s)"
+				disc.yvals <- nodes.table[,DISC_PROC_TIME]
+				cont.yvals <- nodes.table[,CONT_PROC_TIME]
+				inset <- dur.inset
+			}
+			else if(yaxis=="memory")
+			{	ylab <- "Memory usage (MB)"
+				disc.yvals <- nodes.table[,DISC_MEM_USE]
+				cont.yvals <- nodes.table[,CONT_MEM_USE]
+				inset <- mem.inset
+			}
+			y.lim <- c(min(c(disc.yvals,cont.yvals)),max(c(disc.yvals,cont.yvals)))
 			
-			# graph plot
-			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
+			plot.file <- file.path(urban.folder,paste0(yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
+				plot(x=xvals, 
+					y=disc.yvals,
 					xlab=xlab, ylab=ylab,
 					col="BLUE",
-					log=log.axes,
-					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
-			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-					y=rep(graph.cont.val,2),
+					xlim=x.lim,
+					ylim=y.lim
+				)
+				points(x=xvals,
+					y=cont.yvals,
+					pch=4,	#cross instead of circle (1)
 					col="RED"
-			)
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
-					fill=c("BLUE","RED"))
-			dev.off()
-			
-			# node plots
-			for(j in 1:length(nodes.cont.vals))
-			{	plot.file <- file.path(it.folder,paste0("node=",j,"-",yaxis,"-vs-",xaxis,".pdf"))
-				pdf(file=plot.file)
-				plot(x=xvals, y=nodes.yvals[j,],
-						xlab=xlab, ylab=ylab,
-						col="BLUE",
-						log=log.axes,
-						ylim=c(min(c(nodes.yvals[j,],nodes.cont.vals[j])),max(c(nodes.yvals[j,],nodes.cont.vals[j])))
 				)
-				lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-						y=rep(nodes.cont.vals[j],2),
-						col="RED"
+				legend(x=str.leg.pos,legend=c("Discrete average","Continuous average"),
+					inset=inset,
+					fill=c("BLUE","RED")
 				)
-				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-						inset=0.03,
-						fill=c("BLUE","RED"))
-				dev.off()
-			}
-		}
-		
-		# durations
-		{	yaxis <- "durations"
-			ylab <- "Time (s)"
-			graph.yvals <- graph.all[,"Duration"]
-			graph.cont.val <- cont.tables$graph[1,"Duration"]
-			nodes.yvals <- nodes.durations
-			nodes.cont.vals <- cont.tables$nodes[,"Duration"]
-			
-			# graph plots
-			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(x=xvals, y=graph.yvals,
-					xlab=xlab, ylab=ylab,
-					col="BLUE",
-					log=log.axes,
-					ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
-			)
-			lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-					y=rep(graph.cont.val,2),
-					col="RED"
-			)
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
-					fill=c("BLUE","RED"))
-			dev.off()
-			
-			# node plots
-			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
-					col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
-					xlab=xlab, ylab=ylab,
-					log=log.axes,
-					ylim=c(min(c(nodes.yvals,nodes.cont.vals)),max(c(nodes.yvals,nodes.cont.vals)))
-			)
-			for(j in 1:length(nodes.cont.vals))
-			{	lines(x=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)),
-						y=rep(nodes.cont.vals[j],2),
-						col="RED"#add.alpha("RED", 0.25)
-				)
-			}
-			legend(x="bottomright",legend=c("Discrete average","Continuous average"),
-					inset=0.03,
-					fill=c("BLUE","RED"))
 			dev.off()
 		}
 		
-		# straightness differences
-		{	yaxis <- "differences"
+		{	yaxis <- "difference"
 			ylab <- "Straightness difference"
-			graph.yvals <- graph.all[,"Difference"]
-			nodes.yvals <- nodes.differences
+			yvals <- nodes.table[,STRAIGHT_DIFFERENCE]
+			inset <- diff.inset
+			y.lim <- c(min(yvals),max(yvals))
 			
-			# graph plots
-			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
+			plot.file <- file.path(urban.folder,paste0(yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(graph.yvals),max(graph.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
-					log=log.axes,
-					xlab=xlab, ylab=ylab
-			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
-					y=c(0,0), 
-					col="BLACK", lty=2
-			)
-			points(x=xvals, y=graph.yvals,
-					col="BLUE"
-			)
-			dev.off()
-			
-			# node plots
-			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
-			pdf(file=plot.file)
-			plot(NULL,ylim=c(min(nodes.yvals),max(nodes.yvals)),
-					xlim=c(min(xvals,na.rm=TRUE),max(xvals,na.rm=TRUE)+10),
-					log=log.axes,
-					xlab=xlab, ylab=ylab
-			)
-			lines(x=c(min(xvals,na.rm=TRUE), max(xvals,na.rm=TRUE)+10), 
-					y=c(0,0), 
-					col="BLACK", lty=2
-			)
-			points(x=rep(xvals,nrow(nodes.yvals)), y=c(t(nodes.yvals)),
-					col="BLUE"#add.alpha("BLUE", 0.25),pch=20					
-			)
+				plot(x=xvals[which(nodes.table[,NETWORK_ID]==1)], 
+					y=yvals[which(nodes.table[,NETWORK_ID]==1)],
+					xlab=xlab, ylab=ylab,
+					col=city.colors[1],
+					xlim=x.lim,
+					ylim=y.lim
+				)
+				if(nrow(graph.table)>1)
+				{	for(net in 2:nrow(graph.table))
+					{	points(x=xvals[which(nodes.table[,NETWORK_ID]==net)],
+							y=yvals[which(nodes.table[,NETWORK_ID]==net)],
+							col=city.colors[net]
+						)
+					}
+				}
+				legend(x=str.leg.pos,legend=city.names,
+					inset=inset,
+					fill=city.colors
+				)
 			dev.off()
 		}
 	}
-	
-	result <- 	list(graph=graph.all, 
-			nodes=list(straightness=nodes.values,
-					differences=nodes.differences,
-					durations=nodes.durations))
-	return(result)
 }
+
 
 
 
@@ -718,7 +747,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 monitor.time <- function(cities)
 {	for(c in 1:length(cities))
 	{	city <- names(cities)[c]
-		light.process <- cities[[c]][1]
+		light.process <- cities[[c]][[1]]
 		tlog("Processing city ",city,if(light.process) " (light process)" else " (complete process)")
 		gc()
 		
@@ -750,34 +779,36 @@ monitor.time <- function(cities)
 	}
 	
 	# generate plots considering all cities
-#	generate.overall.plots(cities, light.process)
+	generate.overall.plots(cities, light.process)
 }
+
+
 
 
 # the boolean value controls the processing: complete (FALSE) or light (TRUE)
 # "light" means: only certain nodes, and not the whole graph (appropriate for large graphs)
 cities <- list(
-#	abidjan=c(FALSE),
-#	alicesprings=c(TRUE),
-#	avignon=c(TRUE),
-#	beijin=c(TRUE),
-#	bordeaux=c(TRUE),
-#	dakar=c(TRUE),
-#	hongkong=c(TRUE),
-#	istanbul=c(TRUE),
-#	karlskrona=c(TRUE),
-#	lisbon=c(TRUE),
-#	liverpool=c(TRUE),
-#	ljubljana=c(TRUE),
-#	maastricht=c(TRUE),
-#	manhattan=c(TRUE),
-###	newyork=c(FALSE),
-#	stpetersburg=c(TRUE),
-#	roma=c(TRUE),
-#	sfax=c(TRUE),
-	soustons=c(FALSE)
-#	tokyo=c(TRUE),
-#	troisrivieres=c(FALSE)
+#	abidjan=list(FALSE,"Abidjan"),
+#	alicesprings=list(TRUE,"Alice Springs"),
+#	avignon=list(TRUE,"Avignon"),
+#	beijin=list(TRUE,"Beijin"),
+#	bordeaux=list(TRUE,"Bordeaux"),
+#	dakar=list(TRUE,"Dakar"),
+#	hongkong=list(TRUE,"Hong Kong"),
+#	istanbul=list(TRUE,"Istanbul"),
+#	karlskrona=list(TRUE,"Karlskrona"),
+#	lisbon=list(TRUE,"Lisbon"),
+#	liverpool=list(TRUE,"Liverpool"),
+#	ljubljana=list(TRUE,"Ljubljana"),
+#	maastricht=list(TRUE,"Maastricht"),
+#	manhattan=list(TRUE,"Manhattan"),
+###	newyork=list(FALSE,"New York"),
+#	stpetersburg=list(TRUE,"St-Petersburg"),
+#	roma=list(TRUE,"Roma"),
+#	sfax=list(TRUE,"Sfax"),
+	soustons=list(FALSE,"Soustons")
+#	tokyo=list(TRUE,"Tokyo"),
+#	troisrivieres=list(FALSE,"Trois-Rivières")
 )
 
 monitor.time(cities)
