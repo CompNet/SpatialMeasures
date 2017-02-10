@@ -195,7 +195,7 @@ for(c in 1:length(cities))
 	}
 	
 	cat("Add dist\n",sep="")
-	g <- distances.as.weights(g)
+	g <- distances.as.weights(g, slow=TRUE)
 	
 	cat("Record the graph\n",sep="")
 	out.file <- file.path(city.folder,"graph_dist.graphml")
