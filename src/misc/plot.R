@@ -351,7 +351,7 @@ multi.hist <- function(x1, x2, breaks=10, x.label, series.names, leg.pos)
 	
 	# create an empty plot
 	plot(NULL, 
-			xlab=x.label, main="",
+			xlab=x.label, ylab="Frequency", main="",
 			ylim=y.lim, xlim=c(mn,mx),
 	)
 	
