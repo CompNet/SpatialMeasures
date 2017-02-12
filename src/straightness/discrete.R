@@ -43,7 +43,7 @@ source("src/straightness/continuous.R")
 straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 {	disp <- FALSE
 	# for some reason, displaying text helps measuring the memory usage!
-	if(disp) for(i in 1:1000) cat("x")
+#	if(disp) for(i in 1:1000) cat("x")
 	
 	# set up the number of nodes
 	if(missing(graph))
@@ -81,10 +81,10 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 	else
 	{	# possibly process the Euclidean distances
 		if(missing(e.dist))
-		{	if(disp) tlog(2,"Processing the Euclidean distances")
+		{	if(disp) tlog(2,"Processing the Euclidean distances for ",length(v)," node(s) / ",n)
 			if(slow)
 			{	# if v contains more than half the nodes, it's worth using dist 
-				if(length(v)>n/2)
+				if(length(v)>(n/2))
 					e.dist <- process.euclidean.distance(graph, V(graph))
 				# otherwise, the slower approach
 				else

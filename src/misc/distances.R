@@ -32,10 +32,10 @@ library("igraph")
 #		   pairs of nodes in the graph).
 ############################################################################
 process.euclidean.distance <- function(g, v=NA)
-{	pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
-
-	if(all(is.na(v)))
+{	if(all(is.na(v)))
 		v <- V(g)
+	
+	pos <- cbind(vertex_attr(g, name="x"),vertex_attr(g, name="y"))
 		
 	# all nodes at once
 	if(length(v)==gorder(g))

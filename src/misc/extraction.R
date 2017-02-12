@@ -29,7 +29,7 @@ urban.folder <- file.path(data.folder,"urban")
 
 # list the cities and their boxes (min lon, min lat, max lon, ma lat)
 cities <- list(
- 		  abidjan=c( -4.0314,   5.3125,  -4.0100,   5.3359),
+		  abidjan=c( -4.0314,   5.3125,  -4.0100,   5.3359),
 	 alicesprings=c(133.8220, -23.7248, 133.9050, -23.6639),
 	      avignon=c(  4.7669,  43.9240,   4.8455,  43.9619),
 	       beijin=c(116.2635,  39.8233, 116.4887,  39.9897),
@@ -101,106 +101,91 @@ cities <- list(
 
 
 
-# normalization (finally not necessary)
-#c <- 1
-#name <- names(cities)[c]
-#city.folder <- file.path(urban.folder,name)
-#net.file <- file.path(city.folder,"graph_orig.graphml")
-#g <- read.graph(net.file,format="graphml")
-#temp <- c(V(g)$x,V(g)$y)
-#V(g)$x <- (V(g)$x - min(temp)) / (max(temp) - min(temp)) * 100
-#V(g)$y <- (V(g)$y - min(temp)) / (max(temp) - min(temp)) * 100
-#net.file <- file.path(city.folder,"graph0.graphml")
-#write.graph(g,net.file,format="graphml")
-
-
-
-
 # this part is used to clean the graphs after a first manual cleaning
 # the goal here is to remove useless attributes added by gephi, remove
 # multiple links, and keep only the giant component
-#for(c in 1:length(cities))
-#{	name <- names(cities)[c]
-#	cat("Processing city ",name,"\n",sep="")
-#	city.folder <- file.path(urban.folder,name)
-#	
-#	# load the graph exported from gephi
-#	in.file <- file.path(city.folder,"graph_cleaned.graphml")
-#	g <- read.graph(in.file, format="graphml")
-#	
-#	# remove useless node attributes
-#	vatt <- list.vertex.attributes(g)
-#	cat("  Node attributes before removal: ",paste(vatt,collapse=", "),"\n",sep="")
-#	for(att in c("id","r","g","b","label","size","name","lon","lat"))
-#	{	if(att %in% vatt)
-#			g <- remove.vertex.attribute(graph=g,name=att)
-#	}
-#	cat("  Node attributes after removal: ",paste(list.vertex.attributes(g),collapse=", "),"\n",sep="")
-#
-#	eatt <- list.edge.attributes(g)
-#	cat("  Link attributes before removal: ",paste(eatt,collapse=", "),"\n",sep="")
-#	for(att in c("Edge Label","name","id","weight"))
-#	{	if(att %in% eatt)
-#			g <- remove.edge.attribute(graph=g,name=att)
-#	}
-#	cat("  Link attributes after removal: ",paste(list.edge.attributes(g),collapse=", "),"\n",sep="")
-#	
-#	# remove loops and multiple links
-#	cat("  Before simplification: ",gorder(g)," nodes - ",gsize(g)," links\n")
-#	g <- simplify(graph=g, remove.multiple=TRUE, remove.loops=TRUE)
-#	cat("  After simplification: ",gorder(g)," nodes - ",gsize(g)," links\n")
-#	
-#	# keep only the giant component
-#	comp.res <- components(graph=g, mode="weak")
-#	cat("  Components (",comp.res$no,"): ",paste(comp.res$csize,collapse=", "),"\n",sep="")
-#	mx.comp <- which.max(comp.res$csize)
-#	idx <- which(comp.res$membership!=mx.comp)
-#	g <- delete_vertices(graph=g,v=idx)
-#	cat("  Keeping giant component only: ",gorder(g)," nodes - ",gsize(g)," links\n")
-#	
-#	# add the link lengths as a link attribute
-#	g <- distances.as.weights(g)
-#	
-#	# record the cleaned graph
-#	out.file <- file.path(city.folder,"graph.graphml")
-#	write.graph(g,out.file,format="graphml")
-#	
-#	g <- NULL
-#	gc()
-#}
-
-# at first I forgot to process the node distances as edge weights
-# this should be removed, it is now useless
 for(c in 1:length(cities))
 {	name <- names(cities)[c]
 	cat("Processing city ",name,"\n",sep="")
-	
-	cat("Load the graph\n",sep="")
 	city.folder <- file.path(urban.folder,name)
-	in.file <- file.path(city.folder,"graph.graphml")
-	g <- read.graph(in.file,format="graphml")
 	
-	cat("Remove id\n",sep="")
+	# load the graph exported from gephi
+	in.file <- file.path(city.folder,"graph_cleaned.graphml")
+	g <- read.graph(in.file, format="graphml")
+	
+	# remove useless node attributes
 	vatt <- list.vertex.attributes(g)
+	cat("  Node attributes before removal: ",paste(vatt,collapse=", "),"\n",sep="")
 	for(att in c("id","r","g","b","label","size","name","lon","lat"))
 	{	if(att %in% vatt)
 			g <- remove.vertex.attribute(graph=g,name=att)
 	}
-	
-	cat("Remove weight\n",sep="")
+	cat("  Node attributes after removal: ",paste(list.vertex.attributes(g),collapse=", "),"\n",sep="")
+
 	eatt <- list.edge.attributes(g)
+	cat("  Link attributes before removal: ",paste(eatt,collapse=", "),"\n",sep="")
 	for(att in c("Edge Label","name","id","weight"))
 	{	if(att %in% eatt)
 			g <- remove.edge.attribute(graph=g,name=att)
 	}
+	cat("  Link attributes after removal: ",paste(list.edge.attributes(g),collapse=", "),"\n",sep="")
 	
-	cat("Add dist\n",sep="")
+	# remove loops and multiple links
+	cat("  Before simplification: ",gorder(g)," nodes - ",gsize(g)," links\n")
+	g <- simplify(graph=g, remove.multiple=TRUE, remove.loops=TRUE)
+	cat("  After simplification: ",gorder(g)," nodes - ",gsize(g)," links\n")
+	
+	# keep only the giant component
+	comp.res <- components(graph=g, mode="weak")
+	cat("  Components (",comp.res$no,"): ",paste(comp.res$csize,collapse=", "),"\n",sep="")
+	mx.comp <- which.max(comp.res$csize)
+	idx <- which(comp.res$membership!=mx.comp)
+	g <- delete_vertices(graph=g,v=idx)
+	cat("  Keeping giant component only: ",gorder(g)," nodes - ",gsize(g)," links\n")
+	
+	# add the link lengths as a link attribute
 	g <- distances.as.weights(g)
 	
-	cat("Record the graph\n",sep="")
-	out.file <- file.path(city.folder,"graph_dist.graphml")
+	# record the cleaned graph
+	out.file <- file.path(city.folder,"graph.graphml")
 	write.graph(g,out.file,format="graphml")
 	
 	g <- NULL
 	gc()
 }
+
+# at first I forgot to process the node distances as edge weights
+# TODO this should be removed, it is now useless
+#for(c in 1:length(cities))
+#{	name <- names(cities)[c]
+#	cat("Processing city ",name,"\n",sep="")
+#	
+#	cat("Load the graph\n",sep="")
+#	city.folder <- file.path(urban.folder,name)
+#	in.file <- file.path(city.folder,"graph.graphml")
+#	g <- read.graph(in.file,format="graphml")
+#	
+#	cat("Remove id\n",sep="")
+#	vatt <- list.vertex.attributes(g)
+#	for(att in c("id","r","g","b","label","size","name","lon","lat"))
+#	{	if(att %in% vatt)
+#			g <- remove.vertex.attribute(graph=g,name=att)
+#	}
+#	
+#	cat("Remove weight\n",sep="")
+#	eatt <- list.edge.attributes(g)
+#	for(att in c("Edge Label","name","id","weight"))
+#	{	if(att %in% eatt)
+#			g <- remove.edge.attribute(graph=g,name=att)
+#	}
+#	
+#	cat("Add dist\n",sep="")
+#	g <- distances.as.weights(g)
+#	
+#	cat("Record the graph\n",sep="")
+#	out.file <- file.path(city.folder,"graph_dist.graphml")
+#	write.graph(g,out.file,format="graphml")
+#	
+#	g <- NULL
+#	gc()
+#}
