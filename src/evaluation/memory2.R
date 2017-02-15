@@ -23,6 +23,7 @@ MEM_FILE <- "data/profiling.txt"	# R profiler output file (temporary)
 MEM_SLEEP <- 2 						# sleep between to tries, in seconds
 TRY_LIMIT <- 100					# max number of tries
 DURATION_LIMIT <- 300 				# max duration for trying, in seconds
+fake.zero <- 0.05					# used when plotting with a log scale
 
 
 
@@ -367,7 +368,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			xvals.zero <- which(xvals==0)
 			xvals.positive <- which(xvals>0)
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
-			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
+			x.lim <- c(fake.zero,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
 		} 
 		else if(xaxis=="granularity")
@@ -388,22 +389,30 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# graph plots
 			plot.file <- file.path(it.folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-				plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
-						y=if(log.axes=="x") graph.yvals[xvals.positive] else graph.yvals,
+				plot(NULL,
 						xlab=xlab, ylab=ylab,
-						col="BLUE",
 						log=log.axes,
+						xaxt=if(log.axes=="x") "n" else "s",
 						xlim=x.lim,
 						ylim=c(min(c(graph.yvals,graph.cont.val),na.rm=TRUE),max(c(graph.yvals,graph.cont.val),na.rm=TRUE))
 				)
-				if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
-						y=graph.yvals[xvals.zero],
-						col="BLUE"
-					)
+				if(log.axes=="x")
+				{	aty <- axTicks(1)
+					x.labels <- c(0,aty[-1])
+					axis(1,at=aty,labels=x.labels)
+				}
 				lines(x=x.lim,
 						y=rep(graph.cont.val,2),
 						col="RED"
 				)
+				points(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+						y=if(log.axes=="x") graph.yvals[xvals.positive] else graph.yvals,
+						col="BLUE",
+				)
+				if(log.axes=="x") points(x=rep(fake.zero,length(xvals.zero)),
+						y=graph.yvals[xvals.zero],
+						col="BLUE"
+					)
 				if(log.axes=="x") axis.break2(1,0.6,style="gap")
 				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 						inset=0.03,
@@ -413,24 +422,32 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			# node plots
 			plot.file <- file.path(it.folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-				plot(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.yvals)) else rep(xvals,nrow(nodes.yvals)), 
-						y=if(log.axes=="x") c(t(nodes.yvals[,xvals.positive])) else c(t(nodes.yvals)),
-						col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
+				plot(NULL,
 						xlab=xlab, ylab=ylab,
 						log=log.axes,
+						xaxt=if(log.axes=="x") "n" else "s",
 						xlim=x.lim,
 						ylim=c(min(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE),max(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE))
 				)
-				if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.yvals)),
-						y=c(t(nodes.yvals[,xvals.zero])),
-						col="BLUE"
-					)
+				if(log.axes=="x")
+				{	aty <- axTicks(1)
+					x.labels <- c(0,aty[-1])
+					axis(1,at=aty,labels=x.labels)
+				}
 				for(j in 1:length(nodes.cont.vals))
 				{	lines(x=x.lim,
 							y=rep(nodes.cont.vals[j],2),
 							col="RED"#add.alpha("RED", 0.25)
 					)
 				}
+				points(x=if(log.axes=="x") rep(xvals[xvals.positive],nrow(nodes.yvals)) else rep(xvals,nrow(nodes.yvals)), 
+						y=if(log.axes=="x") c(t(nodes.yvals[,xvals.positive])) else c(t(nodes.yvals)),
+						col="BLUE"#add.alpha("BLUE", 0.25),pch=20,
+				)
+				if(log.axes=="x") points(x=rep(fake.zero,length(xvals.zero)*nrow(nodes.yvals)),
+						y=c(t(nodes.yvals[,xvals.zero])),
+						col="BLUE"
+					)
 				if(log.axes=="x") axis.break2(1,0.6,style="gap")
 				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 						inset=0.03,
@@ -498,7 +515,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			xvals.zero <- which(xvals==0)
 			xvals.positive <- which(xvals>0)
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
-			x.lim <- c(0.5,max(xvals[xvals.positive],na.rm=TRUE))
+			x.lim <- c(fake.zero,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
 		} 
 		else if(xaxis=="granularity")
@@ -515,24 +532,32 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# graph plots
 			plot.file <- file.path(folder,paste0("graph-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-				plot(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
-						y=if(log.axes=="x") graph.disc.memory[xvals.positive] else graph.disc.memory,
-						col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
+				plot(NULL,
 						xlab=xlab, ylab=ylab,
 						log=log.axes,
+						xaxt=if(log.axes=="x") "n" else "s",
 						xlim=x.lim,
 						ylim=c(min(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE),max(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE))
 				)
-				if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)),
-						y=graph.disc.memory[xvals.zero],
-						col="BLUE"
-					)
+				if(log.axes=="x")
+				{	aty <- axTicks(1)
+					x.labels <- c(0,aty[-1])
+					axis(1,at=aty,labels=x.labels)
+				}
 				for(j in 1:length(graph.cont.memory))
 				{	lines(x=x.lim,
 							y=rep(graph.cont.memory[j],2),
 							col="RED"#add.alpha("RED", 0.25)
 					)
 				}
+				points(x=if(log.axes=="x") xvals[xvals.positive] else xvals, 
+						y=if(log.axes=="x") graph.disc.memory[xvals.positive] else graph.disc.memory,
+						col="BLUE"#add.alpha("BLUE", 0.25),pch=20,
+				)
+				if(log.axes=="x") points(x=rep(fake.zero,length(xvals.zero)),
+						y=graph.disc.memory[xvals.zero],
+						col="BLUE"
+					)
 				if(log.axes=="x") axis.break2(1,0.6,style="gap")
 				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 						inset=0.03,
@@ -542,24 +567,32 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			# node plots
 			plot.file <- file.path(folder,paste0("nodes-",yaxis,"-vs-",xaxis,".pdf"))
 			pdf(file=plot.file)
-				plot(x=if(log.axes=="x") rep(xvals[,xvals.positive],nrow(nodes.disc.memory)) else rep(xvals,nrow(nodes.disc.memory)), 
-						y=if(log.axes=="x") c(t(nodes.disc.memory[xvals.positive])) else c(t(nodes.disc.memory)),
-						col="BLUE",#add.alpha("BLUE", 0.25),pch=20,
+				plot(NULL,
 						xlab=xlab, ylab=ylab,
 						log=log.axes,
+						xaxt=if(log.axes=="x") "n" else "s",
 						xlim=x.lim,
 						ylim=c(min(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE),max(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE))
 				)
-				if(log.axes=="x") points(x=rep(0.5,length(xvals.zero)*nrow(nodes.disc.memory)),
-						y=c(t(nodes.disc.memory[xvals.zero])),
-						col="BLUE"
-					)
+				if(log.axes=="x")
+				{	aty <- axTicks(1)
+					x.labels <- c(0,aty[-1])
+					axis(1,at=aty,labels=x.labels)
+				}
 				for(j in 1:length(nodes.cont.memory))
 				{	lines(x=x.lim,
 							y=rep(nodes.cont.memory[j],2),
 							col="RED"#add.alpha("RED", 0.25)
 					)
 				}
+				points(x=if(log.axes=="x") rep(xvals[,xvals.positive],nrow(nodes.disc.memory)) else rep(xvals,nrow(nodes.disc.memory)), 
+						y=if(log.axes=="x") c(t(nodes.disc.memory[xvals.positive])) else c(t(nodes.disc.memory)),
+						col="BLUE"#add.alpha("BLUE", 0.25),pch=20,
+				)
+				if(log.axes=="x") points(x=rep(fake.zero,length(xvals.zero)*nrow(nodes.disc.memory)),
+						y=c(t(nodes.disc.memory[xvals.zero])),
+						col="BLUE"
+					)
 				if(log.axes=="x") axis.break2(1,0.6,style="gap")
 				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
 						inset=0.03,
