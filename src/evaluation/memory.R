@@ -29,7 +29,10 @@ MEM_INTER <- 0.00002									# R profiler update rate
 MEM_SLEEP <- 2 											# sleep between to tries, in seconds
 TRY_LIMIT <- 100										# max number of tries
 DURATION_LIMIT <- 300 									# max duration for trying, in seconds
-fake.zero <- 0.4										# used when plotting with a log scale
+
+fake.zero <- 0.35										# used when plotting with a log scale
+axis.brk <- 0.45
+leg.offset <- 0.09
 
 
 
@@ -395,7 +398,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(fake.zero,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x" 
-			mem.inset <- c(0.10, 0.03)
+			mem.inset <- c(0.03+leg.offset, 0.03)
 			mem.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
@@ -426,7 +429,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						ylim=c(min(c(graph.yvals,graph.cont.val),na.rm=TRUE),max(c(graph.yvals,graph.cont.val),na.rm=TRUE))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -441,7 +444,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						y=graph.yvals[xvals.zero],
 						col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=mem.inset,
 						fill=c("BLUE","RED"))
@@ -458,7 +461,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						ylim=c(min(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE),max(c(nodes.yvals,nodes.cont.vals),na.rm=TRUE))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -476,7 +479,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						y=c(t(nodes.yvals[,xvals.zero])),
 						col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=mem.inset,
 						fill=c("BLUE","RED"))
@@ -547,7 +550,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(fake.zero,max(xvals[xvals.positive],na.rm=TRUE))			
 			log.axes <- "x" 
-			mem.inset <- c(0.10, 0.03)
+			mem.inset <- c(0.03+leg.offset, 0.03)
 			mem.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
@@ -574,7 +577,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						ylim=c(min(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE),max(c(graph.disc.memory,graph.cont.memory),na.rm=TRUE))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -592,7 +595,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						y=graph.disc.memory[xvals.zero],
 						col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=mem.inset,
 						fill=c("BLUE","RED"))
@@ -609,7 +612,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						ylim=c(min(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE),max(c(nodes.disc.memory,nodes.cont.memory),na.rm=TRUE))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -627,7 +630,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						y=c(t(nodes.disc.memory[,xvals.zero])),
 						col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=mem.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=mem.inset,
 						fill=c("BLUE","RED"))
@@ -680,44 +683,9 @@ monitor.memory <- function(n=5, type="randplanar", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-#monitor.memory(n=10, type="randplanar", repetitions=10)
-monitor.memory(n=25, type="randplanar", repetitions=10)
+monitor.memory(n=10, type="randplanar", repetitions=10)
+#monitor.memory(n=25, type="randplanar", repetitions=10)
 #monitor.memory(n=50, type="randplanar", repetitions=10)
 #monitor.memory(n=100, type="randplanar", repetitions=10)
-
-
-
-#it <- xxxx
-#d <- xxxx
-#g <- read.graph(paste0("data/randplanar/n=50/it=",it,"/disc=",d,".graphml"),format="graphml")
-#temp(g,node=xxx,disc=xxxx)
-#mem.stats <- summaryRprof(MEM_FILE, memory="stats", diff=FALSE, index=1)[[1]]
-#memuse <- (mem.stats[1]*8 + mem.stats[3]*8 + mem.stats[5]*56)/2^20
-
-#sd0 <- 100
-#lim <- 5000
-#prop <- 2
-#y <- graph.disc.memory
-#idx <- sample(x=which(y<lim),size=length(which(y<lim))/prop,replace=FALSE)
-#y[idx] <- y[idx] + rnorm(n=length(idx),mean=0,sd=sd0)
-#moy <- mean(y)
-#y[idx] <- (y[idx] - moy)/ sd(y) + moy
-#plot(avgseg,y,log="x")
-
-
-#plot(avgseg,graph.disc.memory,log="")
-#lines(avgseg,log(avgseg*10)*500,col="blue")
-#lines(avgseg,log(avgseg*1900)*300,col="red")
-#lines(avgseg,log(avgseg^0.1*10)*1300,col="green")
-#lines(avgseg,log(avgseg^0.1*5)*1700,col="green")
-#lines(avgseg,log(avgseg^0.1*1.5)*3700,col="green")
-#lines(avgseg,(log(avgseg^0.1*5)*1700+log(avgseg^0.1*1.5)*3700)/2,col="purple")
-
-
-#zero.idx <- which(avgseg==0)
-#positive.idx <- which(avgseg>0)
-#plot(avgseg[positive.idx],graph.disc.memory[positive.idx],xlim=c(0.5,max(avgseg)),ylim=c(min(graph.disc.memory),max(graph.disc.memory)),log="x")
-#points(x=rep(0.5,length(zero.idx)),y=graph.disc.memory[zero.idx])
-#axis.break2(1,0.6,style="gap")
 
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures");source("src/evaluation/memory.R")

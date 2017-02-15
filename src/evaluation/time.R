@@ -17,7 +17,10 @@ source("src/evaluation/common.R")
 
 data.folder <- "data"
 urban.folder <- file.path(data.folder,"eval")
-fake.zero <- 0.05					# used when plotting with a log scale
+
+fake.zero <- 0.35					# used when plotting with a log scale
+axis.brk <- 0.45
+leg.offset <- 0.09
 
 
 
@@ -368,7 +371,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 			x.lim <- c(fake.zero,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x" 
 			str.inset <- 0.03
-			dur.inset <- c(0.10, 0.03)
+			dur.inset <- c(0.03+leg.offset, 0.03)
 			str.leg.pos <- "topright"
 			dur.leg.pos <- "topleft"
 		} 
@@ -402,7 +405,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -418,7 +421,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						y=graph.yvals[xvals.zero],
 						col="BLUE"
 				)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=str.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=str.inset,
 						fill=c("BLUE","RED"))
@@ -436,7 +439,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 							ylim=c(min(c(nodes.yvals[j,],nodes.cont.vals[j])),max(c(nodes.yvals[j,],nodes.cont.vals[j])))
 					)
 					if(log.axes=="x")
-					{	aty <- axTicks(1)
+					{	aty <- c(fake.zero, axTicks(1)[-1])
 						x.labels <- c(0,aty[-1])
 						axis(1,at=aty,labels=x.labels)
 					}
@@ -452,7 +455,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 								y=nodes.yvals[j,xvals.zero],
 								col="BLUE"
 						)
-					if(log.axes=="x") axis.break2(1,0.6,style="gap")
+					if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 					legend(x=str.leg.pos,legend=c("Discrete average","Continuous average"),
 							inset=str.inset,
 							fill=c("BLUE","RED"))
@@ -479,7 +482,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						ylim=c(min(c(graph.yvals,graph.cont.val)),max(c(graph.yvals,graph.cont.val)))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -495,7 +498,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 							y=graph.yvals[xvals.zero],
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=dur.inset,
 						fill=c("BLUE","RED"))
@@ -512,7 +515,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						ylim=c(min(c(nodes.yvals,nodes.cont.vals)),max(c(nodes.yvals,nodes.cont.vals)))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -530,7 +533,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 							y=c(t(nodes.yvals[,xvals.zero])),
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=dur.inset,
 						fill=c("BLUE","RED"))
@@ -554,7 +557,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						xlab=xlab, ylab=ylab
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -569,7 +572,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 							y=graph.yvals[xvals.zero],
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 			dev.off()
 			
 			# node plots
@@ -583,7 +586,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						xlab=xlab, ylab=ylab
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -598,7 +601,7 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 							y=c(t(nodes.yvals[,xvals.zero])),
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 			dev.off()
 		}
 	}
@@ -672,7 +675,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 			#x.lim <- c(min(xvals[xvals.positive],na.rm=TRUE),max(xvals[xvals.positive],na.rm=TRUE))
 			x.lim <- c(fake.zero,max(xvals[xvals.positive],na.rm=TRUE))
 			log.axes <- "x"
-			dur.inset <- c(0.10, 0.03)
+			dur.inset <- c(0.03+leg.offset, 0.03)
 			dur.leg.pos <- "topleft"
 		} 
 		else if(xaxis=="granularity")
@@ -698,6 +701,11 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						xlim=x.lim,
 						ylim=c(min(c(graph.disc.durations,graph.cont.durations)),max(c(graph.disc.durations,graph.cont.durations)))
 				)
+				if(log.axes=="x")
+				{	aty <- c(fake.zero, axTicks(1)[-1])
+					x.labels <- c(0,aty[-1])
+					axis(1,at=aty,labels=x.labels)
+				}
 				for(j in 1:length(graph.cont.durations))
 				{	lines(x=x.lim,
 							y=rep(graph.cont.durations[j],2),
@@ -712,7 +720,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 							y=graph.disc.durations[xvals.zero],
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=dur.inset,
 						fill=c("BLUE","RED"))
@@ -729,7 +737,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						ylim=c(min(c(nodes.disc.durations,nodes.cont.durations)),max(c(nodes.disc.durations,nodes.cont.durations)))
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -747,7 +755,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 							y=c(t(nodes.disc.durations[,xvals.zero])),
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 				legend(x=dur.leg.pos,legend=c("Discrete average","Continuous average"),
 						inset=dur.inset,
 						fill=c("BLUE","RED"))
@@ -769,7 +777,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 					xlab=xlab, ylab=ylab
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -785,7 +793,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 							y=graph.disc.differences[xvals.zero],
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 			dev.off()
 			
 			# node plots
@@ -799,7 +807,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						xlab=xlab, ylab=ylab
 				)
 				if(log.axes=="x")
-				{	aty <- axTicks(1)
+				{	aty <- c(fake.zero, axTicks(1)[-1])
 					x.labels <- c(0,aty[-1])
 					axis(1,at=aty,labels=x.labels)
 				}
@@ -815,7 +823,7 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 							y=c(t(nodes.disc.differences[,xvals.zero])),
 							col="BLUE"
 					)
-				if(log.axes=="x") axis.break2(1,0.6,style="gap")
+				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
 			dev.off()
 		}
 	}
@@ -865,8 +873,8 @@ monitor.time <- function(n=5, type="randplanar", repetitions=10)
 	generate.overall.plots(n, type, discretizations, data.cont, data.disc)
 }
 
-#monitor.time(n=10, type="randplanar", repetitions=10)
-monitor.time(n=25, type="randplanar", repetitions=10)
+monitor.time(n=10, type="randplanar", repetitions=10)
+#monitor.time(n=25, type="randplanar", repetitions=10)
 #monitor.time(n=50, type="randplanar", repetitions=10)
 #monitor.time(n=100, type="randplanar", repetitions=10)
 
