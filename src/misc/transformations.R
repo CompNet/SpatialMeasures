@@ -134,6 +134,78 @@ add.intermediate.nodes <- function(g, granularity)
 		
 	return(g2)
 }
+add.intermediate.nodes2 <- function(g, granularity)
+{	if(granularity==0)
+		g2 <- g
+	else
+	{	# possibly process the spatial distances in the original graph
+		eatt <- list.edge.attributes(g)
+		if("dist" %in% eatt)
+			g <- distances.as.weights(g)
+		
+		# create an empty graph (same nodes, no link)
+		g2 <- delete.edges(graph=g,edges=E(g))
+		V(g2)$type <- "original"
+		
+		# consider each original link independently
+		edgelist <- get.edgelist(g)
+		for(r in 1:nrow(edgelist))
+		{	# get the nodes and their spatial distance
+			n.from <- edgelist[r,1]
+			n.to <- edgelist[r,2]
+			d <- E(g)[n.from %--% n.to]$dist
+			#cat(n.from,"-(",d,")-",n.to,"\n",sep="")
+			
+			# approximate the desired granularity
+			k <- trunc(d / granularity  + 0.000001) # workaround for some weird rounding problem
+			# check if the link should be split or not
+			if(k==0)
+			{	# just add the existing link
+				g2 <- add.edges(graph=g2, edges=c(n.from,n.to), attr=list(dist=d))
+			}
+			# split the link
+			else
+			{	delta <- d / k
+				delta.x <- (vertex_attr(g, name="x", index=n.to) - vertex_attr(g, name="x", index=n.from)) / k
+				delta.y <- (vertex_attr(g, name="y", index=n.to) - vertex_attr(g, name="y", index=n.from)) / k
+				#cat(sprintf("%.10f", d/granularity),"\n")		
+				#cat("d/g=",d/granularity," rnd=",round(d/granularity)," int=",as.integer(d/granularity)," trc=",trunc(d/granularity)," k=",k," delta=",delta," delta.x=",delta.x," delta.y=",delta.y,"\n",sep="")
+				
+				# add the corresponding nodes and links
+				prev.node <- n.from
+				if(k>1)
+				{	pos.x <- vertex_attr(g, name="x", index=n.from)
+					pos.y <- vertex_attr(g, name="y", index=n.from)
+					new.pos.x <- c()
+					new.pos.y <- c()
+					new.links <- c()
+					new.lengths <- c()
+					for(i in 1:(k-1))
+					{	# process the spatial position of the new node
+						pos.x <- pos.x + delta.x
+						new.pos.x <- c(new.pos.x, pos.x)
+						pos.y <- pos.y + delta.y
+						new.pos.y <- c(new.pos.y, pos.y)
+						# set up the new link
+						new.links <- c(new.links, prev.node, prev.node+1)
+						new.lengths <- c(new.lengths,delta)
+						prev.node <- prev.node + 1
+					}
+					# add the new nodes
+					new.node.nbr <- length(pos.x)
+					g2 <- add.vertices(graph=g2, nv=new.node.nbr, attr=list(x=pos.x, y=pos.y, type=rep("extra",new.node.nbr)))
+				}
+				# add the new links
+				new.links <- c(new.links,prev.node,n.to)
+				new.lengths <- c(new.lengths,delta)
+				g2 <- add.edges(graph=g2, edges=new.links, attr=list(dist=new.lengths))
+				
+			}
+		}
+	}
+	
+	return(g2)
+}
 
 
 
