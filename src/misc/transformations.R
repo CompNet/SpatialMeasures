@@ -173,13 +173,14 @@ add.intermediate.nodes2 <- function(g, granularity)
 				
 				# add the corresponding nodes and links
 				prev.node <- n.from
+				new.links <- c()
+				new.lengths <- c()
 				if(k>1)
-				{	pos.x <- vertex_attr(g, name="x", index=n.from)
+				{	next.node <- vcount(g2) + 1
+					pos.x <- vertex_attr(g, name="x", index=n.from)
 					pos.y <- vertex_attr(g, name="y", index=n.from)
 					new.pos.x <- c()
 					new.pos.y <- c()
-					new.links <- c()
-					new.lengths <- c()
 					for(i in 1:(k-1))
 					{	# process the spatial position of the new node
 						pos.x <- pos.x + delta.x
@@ -187,13 +188,14 @@ add.intermediate.nodes2 <- function(g, granularity)
 						pos.y <- pos.y + delta.y
 						new.pos.y <- c(new.pos.y, pos.y)
 						# set up the new link
-						new.links <- c(new.links, prev.node, prev.node+1)
+						new.links <- c(new.links, prev.node, next.node)
 						new.lengths <- c(new.lengths,delta)
-						prev.node <- prev.node + 1
+						prev.node <- next.node
+						next.node <- next.node + 1
 					}
 					# add the new nodes
-					new.node.nbr <- length(pos.x)
-					g2 <- add.vertices(graph=g2, nv=new.node.nbr, attr=list(x=pos.x, y=pos.y, type=rep("extra",new.node.nbr)))
+					new.node.nbr <- length(new.pos.x)
+					g2 <- add.vertices(graph=g2, nv=new.node.nbr, attr=list(x=new.pos.x, y=new.pos.y, type=rep("extra",new.node.nbr)))
 				}
 				# add the new links
 				new.links <- c(new.links,prev.node,n.to)
@@ -240,3 +242,17 @@ connect.triangulation <- function(g, k=NA)
 	
 	return(g)
 }
+
+#n <- 1000
+#g <- graph.empty(n=n, directed=FALSE)
+#V(g)$x <- runif(vcount(g),min=-1,max=1)
+#V(g)$y <- runif(vcount(g),min=-1,max=1)
+#g <- connect.triangulation(g)
+#g <- distances.as.weights(g)# add inter-node distances as link attributes
+#V(g)$label <- 1:vcount(g)
+#g$duration <- 0
+#g$size <- vcount(g)
+#g$granularity <- NA
+#g$avgseg <- 0
+#start.time <- Sys.time();g1 <- add.intermediate.nodes(g,0.01);end.time <- Sys.time();duration <- difftime(end.time,start.time,units="s");print(duration)
+#start.time <- Sys.time();g2 <- add.intermediate.nodes2(g,0.01);end.time <- Sys.time();duration <- difftime(end.time,start.time,units="s");print(duration)
