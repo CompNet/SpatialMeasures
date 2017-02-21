@@ -789,26 +789,26 @@ monitor.time <- function(cities)
 # "light" means: only certain nodes, and not the whole graph (appropriate for large graphs)
 cities <- list(
 	abidjan=list(TRUE,"Abidjan"),
-	alicesprings=list(TRUE,"Alice Springs"),
-	avignon=list(TRUE,"Avignon"),
-	beijin=list(TRUE,"Beijin"),
-	bordeaux=list(TRUE,"Bordeaux"),
-	dakar=list(TRUE,"Dakar"),
-	hongkong=list(TRUE,"Hong Kong"),
-	istanbul=list(TRUE,"Istanbul"),
 	karlskrona=list(TRUE,"Karlskrona"),
-	lisbon=list(TRUE,"Lisbon"),
+	soustons=list(TRUE,"Soustons"),
+	maastricht=list(TRUE,"Maastricht"),
+	troisrivieres=list(TRUE,"Trois-Rivières"),
+	alicesprings=list(TRUE,"Alice Springs"),
+	sfax=list(TRUE,"Sfax"),
+	avignon=list(TRUE,"Avignon"),
 	liverpool=list(TRUE,"Liverpool"),
 	ljubljana=list(TRUE,"Ljubljana"),
-	maastricht=list(TRUE,"Maastricht"),
+	lisbon=list(TRUE,"Lisbon"),
+	dakar=list(TRUE,"Dakar"),
+	hongkong=list(TRUE,"Hong Kong"),
+	beijin=list(TRUE,"Beijin"),
 	manhattan=list(TRUE,"Manhattan"),
 ##	newyork=list(TRUE,"New York"),
-	stpetersburg=list(TRUE,"St-Petersburg"),
+	istanbul=list(TRUE,"Istanbul"),
 	roma=list(TRUE,"Roma"),
-	sfax=list(TRUE,"Sfax"),
-	soustons=list(TRUE,"Soustons"),
-	tokyo=list(TRUE,"Tokyo"),
-	troisrivieres=list(FALSE,"Trois-Rivières")
+	bordeaux=list(TRUE,"Bordeaux"),
+	stpetersburg=list(TRUE,"St-Petersburg"),
+	tokyo=list(TRUE,"Tokyo")
 )
 
 monitor.time(cities)
