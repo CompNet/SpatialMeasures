@@ -10,30 +10,9 @@
 library("igraph")
 library("geometry")	# used for the triangulation when generating random planar graphs
 
+source("src/misc/distances.R")
+source("src/misc/log.R")
 
-
-
-############################################################################
-# Returns the distance extracted from a dist object, for the specified nodes.
-#
-# u,v: the concerned nodes.
-# d: the dist object.
-#
-# returns: the distance between u and v as represented by d.
-############################################################################
-get.dist <- function(u, v, d)
-{	if(u==v)
-		res <- 0
-	else
-	{	n <- attr(d, "Size")
-		if(u>v)
-			res <- d[n*(v-1) - v*(v-1)/2 + u-v]
-		else
-			res <- d[n*(u-1) - u*(u-1)/2 + v-u]
-	}
-	
-	return(res)
-}
 
 
 
@@ -55,9 +34,12 @@ distances.as.weights <- function(g, slow=FALSE)
 	{	# retrieve the list of links
 		el <- get.edgelist(graph=g, names=FALSE)
 		# process each one individually
-		weights <- apply(el, 1, function(nodes) 
-					sqrt((V(g)$x[nodes[1]] - V(g)$x[nodes[2]])^2
-					+ (V(g)$y[nodes[1]] - V(g)$y[nodes[2]])^2))
+		weights <- apply(el, 1, function(nodes)
+		# old way: much slower
+		#			sqrt((V(g)$x[nodes[1]] - V(g)$x[nodes[2]])^2
+		#				+ (V(g)$y[nodes[1]] - V(g)$y[nodes[2]])^2))
+					sqrt((vertex_attr(g, name="x", index=nodes[1]) - vertex_attr(g, name="x", index=nodes[2]))^2
+						+ (vertex_attr(g, name="y", index=nodes[1]) - vertex_attr(g, name="y", index=nodes[2]))^2))
 	}
 	
 	# fast but memory-expansive (for not so large graphs)
@@ -75,7 +57,7 @@ distances.as.weights <- function(g, slow=FALSE)
 	g <- set.edge.attribute(graph=g, name="dist", value=weights)
 	
 	#print(E(g)$dist)
-	#plot(g,edge.label=E(g)$dist)
+	#plot(g,edge.label=E(g)$dist) 
 	
 	return(g)
 }
@@ -91,15 +73,124 @@ distances.as.weights <- function(g, slow=FALSE)
 # g: the original graph.
 # granularity: approximate length of the edges in the returned graph (the smaller, the better).
 #			   Zero means no change at all.
+# slow: which mode to use. TRUE to select the method that uses much less memory,
+# 		but is much slower, or FALSE (the default) to use the method that needs
+# 		much more memory, but is much faster.
 #
 # returns: the same graph, with additional nodes.
 ############################################################################################
-add.intermediate.nodes <- function(g, granularity)
-{	if(granularity==0)
+add.intermediate.nodes <- function(g, granularity, slow=FALSE)
+{	disp <- TRUE
+	
+	if(granularity==0)
 		g2 <- g
 	else
 	{	# possibly process the spatial distances in the original graph
-		eatt <- list.edge.attributes(graph)
+		eatt <- list.edge.attributes(g)
+		if("dist" %in% eatt)
+			g <- distances.as.weights(g)
+		
+		# create an empty graph (same nodes, no link)
+		g2 <- delete.edges(graph=g,edges=E(g))
+		V(g2)$type <- "original"
+		
+		# create empty data structures
+		new.pos.x <- c()
+		new.pos.y <- c()
+		new.links <- c()
+		new.lengths <- c()
+		next.node <- vcount(g2) + 1
+		
+		# consider each original link independently
+		edgelist <- get.edgelist(g)
+		dcst <- nrow(edgelist)%/%10
+		for(r in 1:nrow(edgelist))
+		{	if(disp && r%%dcst==0) tlog(2,sprintf("%.2f",r/nrow(edgelist)*100),"% done")
+			
+			# get the nodes and their spatial distance
+			n.from <- edgelist[r,1]
+			n.to <- edgelist[r,2]
+			d <- E(g)[n.from %--% n.to]$dist
+			#cat(n.from,"-(",d,")-",n.to,"\n",sep="")
+			
+			# approximate the desired granularity
+			k <- trunc(d / granularity  + 0.000001) # workaround for some weird rounding problem
+			# check if the link should be split or not
+			if(k==0)
+			{	# just add the existing link
+				g2 <- add.edges(graph=g2, edges=c(n.from,n.to), attr=list(dist=d))
+			}
+			# split the link
+			else
+			{	delta <- d / k
+				delta.x <- (vertex_attr(g, name="x", index=n.to) - vertex_attr(g, name="x", index=n.from)) / k
+				delta.y <- (vertex_attr(g, name="y", index=n.to) - vertex_attr(g, name="y", index=n.from)) / k
+				#cat(sprintf("%.10f", d/granularity),"\n")		
+				#cat("d/g=",d/granularity," rnd=",round(d/granularity)," int=",as.integer(d/granularity)," trc=",trunc(d/granularity)," k=",k," delta=",delta," delta.x=",delta.x," delta.y=",delta.y,"\n",sep="")
+				
+				# add the corresponding nodes and links
+				prev.node <- n.from
+				if(slow)
+				{	new.links <- c()
+					new.lengths <- c()
+				}
+				if(k>1)
+				{	pos.x <- vertex_attr(g, name="x", index=n.from)
+					pos.y <- vertex_attr(g, name="y", index=n.from)
+					if(slow)
+					{	new.pos.x <- c()
+						new.pos.y <- c()
+					}
+					for(i in 1:(k-1))
+					{	# process the spatial position of the new node
+						pos.x <- pos.x + delta.x
+						new.pos.x <- c(new.pos.x, pos.x)
+						pos.y <- pos.y + delta.y
+						new.pos.y <- c(new.pos.y, pos.y)
+						# set up the new link
+						new.links <- c(new.links, prev.node, next.node)
+						new.lengths <- c(new.lengths,delta)
+						prev.node <- next.node
+						next.node <- next.node + 1
+					}
+					# add the new nodes
+					if(slow)
+					{	new.node.nbr <- length(new.pos.x)
+						g2 <- add.vertices(graph=g2, nv=new.node.nbr, attr=list(x=new.pos.x, y=new.pos.y, type=rep("extra",new.node.nbr)))
+					}
+				}
+				# add the new links
+				new.links <- c(new.links,prev.node,n.to)
+				new.lengths <- c(new.lengths,delta)
+				if(slow)
+					g2 <- add.edges(graph=g2, edges=new.links, attr=list(dist=new.lengths))
+			}
+		}
+		
+		# add all nodes and links at once
+		if(!slow)
+		{	new.node.nbr <- length(new.pos.x)
+			g2 <- add.vertices(graph=g2, nv=new.node.nbr, attr=list(x=new.pos.x, y=new.pos.y, type=rep("extra",new.node.nbr)))
+			g2 <- add.edges(graph=g2, edges=new.links, attr=list(dist=new.lengths))
+		}
+	}
+	
+	return(g2)
+}
+
+
+
+############################################################################################
+# Previous version of add.intermediate.nodes, kept for testing purposes.
+############################################################################################
+add.intermediate.nodes.old <- function(g, granularity)
+{	disp <- TRUE
+	
+	if(granularity==0)
+		g2 <- g
+	else
+	{	# possibly process the spatial distances in the original graph
+		eatt <- list.edge.attributes(g)
 		if("dist" %in% eatt)
 			g <- distances.as.weights(g)
 		
@@ -109,8 +200,11 @@ add.intermediate.nodes <- function(g, granularity)
 		
 		# consider each original link independently
 		edgelist <- get.edgelist(g)
+		dcst <- nrow(edgelist)%/%10
 		for(r in 1:nrow(edgelist))
-		{	# get the nodes and their spatial distance
+		{	if(disp && r%%dcst==0) tlog(2,sprintf("%.2f",r/nrow(edgelist)*100),"% done")
+			
+			# get the nodes and their spatial distance
 			n.from <- edgelist[r,1]
 			n.to <- edgelist[r,2]
 			d <- E(g)[n.from %--% n.to]$dist
@@ -153,7 +247,7 @@ add.intermediate.nodes <- function(g, granularity)
 			}
 		}
 	}
-		
+	
 	return(g2)
 }
 
@@ -190,3 +284,19 @@ connect.triangulation <- function(g, k=NA)
 	
 	return(g)
 }
+
+# test of the discretization function
+#n <- 10
+#g <- graph.empty(n=n, directed=FALSE)
+#V(g)$x <- runif(vcount(g),min=-1,max=1)
+#V(g)$y <- runif(vcount(g),min=-1,max=1)
+#g <- connect.triangulation(g)
+#g <- distances.as.weights(g)# add inter-node distances as link attributes
+#V(g)$label <- 1:vcount(g)
+#g$duration <- 0
+#g$size <- vcount(g)
+#g$granularity <- NA
+#g$avgseg <- 0
+#start.time <- Sys.time();g1 <- add.intermediate.nodes.old(g,0.01);end.time <- Sys.time();duration1 <- difftime(end.time,start.time,units="s");print(duration1)
+#start.time <- Sys.time();g2 <- add.intermediate.nodes(g,0.01,slow=TRUE);end.time <- Sys.time();duration2 <- difftime(end.time,start.time,units="s");print(duration2)
+#start.time <- Sys.time();g3 <- add.intermediate.nodes(g,0.01,slow=FALSE);end.time <- Sys.time();duration3 <- difftime(end.time,start.time,units="s");print(duration3)

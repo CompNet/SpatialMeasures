@@ -27,20 +27,29 @@ source("src/straightness/continuous.R")
 #    processed by considering all the nodes in the graph, though. If this 
 # 	 parameter is NA, then we consider all the nodes (v=V(g)).
 # e.dist: Euclidean distance between all pairs of nodes. Must be a dist object.
-#		  If missing, it is processed by the function (processing once before 
-#		  calling this function can speed up the processing, if there are
-#		  several calls).
-# g.dist: graph distance between all pairs of nodes. Same remark than for
-#		  parameter e.dist.
+#		  If missing, the function will process only the necessary distances
+#		  with respect to v. If the available memory allows it, processing all
+#		  the distances once and for all can significantly speeds things up.
+# g.dist: graph distance between all pairs of nodes, as a square matrix. If 
+#		  this parameter is missing, it is processed on the fly as explained 
+#		  for parameter e.dist.
 # slow: which mode to use. TRUE to select the method that uses much less memory,
 # 		but is much slower, or FALSE (the default) to use the method that needs
 # 		much more memory, but is much faster.
 # 
 # returns: a matrix containing length(v) rows and vcount(graph) columns, whose 
-#		   (i,j) element represents the straightness between nodes i and j.
+#		   (i,j)th element represents the straightness between nodes i and j.
 ############################################################################
 straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 {	disp <- FALSE
+	# for some reason, displaying text helps measuring the memory usage!
+#	if(disp) for(i in 1:1000) cat("x")
+	
+	# set up the number of nodes
+	if(missing(graph))
+		n <- ncol(g.dist)
+	else
+		n <- gorder(graph)
 	
 	# possibly set up v
 	if(all(is.na(v)))
@@ -50,28 +59,63 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 			v <- V(graph)
 	}
 	
-	# v2: less memory, longer processing	
-	if(slow)
-	{	# process Euclidean distances
+	# set up the distances for when we need to process all the nodes
+	if(length(v)==n)
+	{	# possibly process the Euclidean distances
 		if(missing(e.dist))
-		{	pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
-			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
+		{	if(disp) tlog(2,"Processing the Euclidean distances")
+			# since we process all nodes, we necessarily want a dist object
+			e.dist <- process.euclidean.distance(graph, v)
 		}
+		# possibly convert dist to matrix (requires more memory)
+		if(!slow)
+			e.dist <- as.matrix(e.dist)
 		
-		# process geodesic distances
+		# possibly process the geodesic distances
 		if(missing(g.dist))
-			denominators <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
-		else
-			denominators <- g.dist[v,] 
+		{	if(disp) tlog(2,"Processing the graph distances")
+			g.dist <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
+		}
+	}
+	# otherwise, set up the distances for when we focus only on certain nodes
+	else
+	{	# possibly process the Euclidean distances
+		if(missing(e.dist))
+		{	if(disp) tlog(2,"Processing the Euclidean distances for ",length(v)," node(s) / ",n)
+			if(slow)
+			{	# if v contains more than half the nodes, it's worth using dist 
+				if(length(v)>(n/2))
+					e.dist <- process.euclidean.distance(graph, V(graph))
+				# otherwise, the slower approach
+				else
+					e.dist <- process.euclidean.distance(graph, v)
+			}
+			else
+				e.dist <- process.euclidean.distance(graph, V(graph))
+		}
+		# possibly convert dist to matrix
+		if(class(e.dist)=="dist" && !slow)
+			e.dist <- as.matrix(e.dist)[v,,drop=FALSE]
 		
-		# process the ratio
-		res <- matrix(NA,nrow=nrow(denominators),ncol=ncol(denominators))
+		# possibly process the geodesic distances
+		if(missing(g.dist))
+		{	if(disp) tlog(2,"Processing the graph distances")
+			g.dist <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
+		}
+		else
+			g.dist <- g.dist[v,,drop=FALSE]
+	}
+	
+	# if the Euclidean distance is still a dist object (slower)
+	if(class(e.dist)=="dist")
+	{	if(disp) tlog(2,"Working on the dist object")
+		res <- matrix(NA,nrow=nrow(g.dist),ncol=ncol(g.dist))
 		for(i in 1:nrow(res))
 		{	for(j in 1:ncol(res))
 			{	if(j==v[i])
 					res[i,j] <- 1
 				else
-				{	val <- get.dist(v[i],j,e.dist) / denominators[i,j]
+				{	val <- get.dist(v[i],j,e.dist) / g.dist[i,j]
 					if(is.na(val))
 						res[i,j] <- 0
 					else
@@ -80,28 +124,13 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 			}
 		}
 	}
-	
-	# v1: more memory, shorter processing
+	# otherwise, if the Euclidean distance is now a matrix (faster) 
 	else
-	{	# process Euclidean distances
-		if(missing(e.dist))
-		{	if(disp) tlog(2,"Processing the Euclidean distances")
-			pos <- cbind(vertex_attr(graph, name="x"),vertex_attr(graph, name="y"))
-			e.dist <- dist(x=pos, method="euclidean", diag=FALSE, upper=TRUE, p=2)
-		}
-		numerators <- as.matrix(e.dist)[v,,drop=FALSE]
-		
-		# process geodesic distances
-		if(missing(g.dist))
-		{	if(disp) tlog(2,"Processing the graph distances")
-			denominators <- shortest.paths(graph=graph, v=v, to=V(graph), weights=E(graph)$dist)
-		}
-		else
-			denominators <- g.dist[v,,drop=FALSE]
+	{	if(disp) tlog(2,"Working on the matrices")
 		
 		# process the ratio
 		if(disp) tlog(2,"Processing the ratio")
-		res <- numerators / denominators
+		res <- e.dist / g.dist
 		
 		# straightness between a node and itself must be 1
 		if(disp) tlog(2,"Correcting self straightness")
@@ -117,6 +146,7 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 	
 	return(res)
 }
+
 
 
 ############################################################################
