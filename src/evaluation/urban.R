@@ -788,27 +788,27 @@ monitor.time <- function(cities)
 # the boolean value controls the processing: complete (FALSE) or light (TRUE)
 # "light" means: only certain nodes, and not the whole graph (appropriate for large graphs)
 cities <- list(
-	abidjan=list(TRUE,"Abidjan")
-#	alicesprings=list(TRUE,"Alice Springs"),
-#	avignon=list(TRUE,"Avignon"),
-#	beijin=list(TRUE,"Beijin"),
-#	bordeaux=list(TRUE,"Bordeaux"),
-#	dakar=list(TRUE,"Dakar"),
-#	hongkong=list(TRUE,"Hong Kong"),
-#	istanbul=list(TRUE,"Istanbul"),
-#	karlskrona=list(TRUE,"Karlskrona"),
-#	lisbon=list(TRUE,"Lisbon"),
-#	liverpool=list(TRUE,"Liverpool"),
-#	ljubljana=list(TRUE,"Ljubljana"),
-#	maastricht=list(TRUE,"Maastricht"),
-#	manhattan=list(TRUE,"Manhattan"),
-###	newyork=list(TRUE,"New York"),
-#	stpetersburg=list(TRUE,"St-Petersburg"),
-#	roma=list(TRUE,"Roma"),
-#	sfax=list(TRUE,"Sfax"),
-#	soustons=list(TRUE,"Soustons")
-#	tokyo=list(TRUE,"Tokyo"),
-#	troisrivieres=list(FALSE,"Trois-Rivières")
+	abidjan=list(TRUE,"Abidjan"),
+	alicesprings=list(TRUE,"Alice Springs"),
+	avignon=list(TRUE,"Avignon"),
+	beijin=list(TRUE,"Beijin"),
+	bordeaux=list(TRUE,"Bordeaux"),
+	dakar=list(TRUE,"Dakar"),
+	hongkong=list(TRUE,"Hong Kong"),
+	istanbul=list(TRUE,"Istanbul"),
+	karlskrona=list(TRUE,"Karlskrona"),
+	lisbon=list(TRUE,"Lisbon"),
+	liverpool=list(TRUE,"Liverpool"),
+	ljubljana=list(TRUE,"Ljubljana"),
+	maastricht=list(TRUE,"Maastricht"),
+	manhattan=list(TRUE,"Manhattan"),
+##	newyork=list(TRUE,"New York"),
+	stpetersburg=list(TRUE,"St-Petersburg"),
+	roma=list(TRUE,"Roma"),
+	sfax=list(TRUE,"Sfax"),
+	soustons=list(TRUE,"Soustons"),
+	tokyo=list(TRUE,"Tokyo"),
+	troisrivieres=list(FALSE,"Trois-Rivières")
 )
 
 monitor.time(cities)
