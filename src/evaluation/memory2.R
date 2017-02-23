@@ -423,9 +423,9 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						col="BLUE"
 					)
 				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
-				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+				legend(x="bottomright",legend=c("Continuous average","Discrete approximation"),
 						inset=mem.inset,
-						fill=c("BLUE","RED"))
+						fill=c("RED","BLUE"))
 			dev.off()
 			
 			# node plots
@@ -458,9 +458,9 @@ generate.rep.plots <- function(n=5, type="randplanar", iteration=1, disc.table, 
 						col="BLUE"
 					)
 				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
-				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+				legend(x="bottomright",legend=c("Continuous average","Discrete approximation"),
 						inset=mem.inset,
-						fill=c("BLUE","RED"))
+						fill=c("RED","BLUE"))
 			dev.off()
 		}
 	}
@@ -574,9 +574,9 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						col="BLUE"
 					)
 				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
-				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+				legend(x="bottomright",legend=c("Continuous average","Discrete approximation"),
 						inset=mem.inset,
-						fill=c("BLUE","RED"))
+						fill=c("RED","BLUE"))
 			dev.off()
 			
 			# node plots
@@ -609,9 +609,9 @@ generate.overall.plots <- function(n=10, type="randplanar", discretizations, dat
 						col="BLUE"
 					)
 				if(log.axes=="x") axis.break2(1,axis.brk,style="gap")
-				legend(x="bottomright",legend=c("Discrete average","Continuous average"),
+				legend(x="bottomright",legend=c("Continuous average","Discrete approximation"),
 						inset=mem.inset,
-						fill=c("BLUE","RED"))
+						fill=c("RED","BLUE"))
 			dev.off()
 		}
 	}

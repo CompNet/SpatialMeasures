@@ -488,7 +488,7 @@ generate.city.plots <- function(city.folder, res.tables)
 				x2=res.tables$nodes[,DISC_PROC_TIME], 
 				breaks=20,
 				x.label="Processing time (s)", 
-				series.names=c("Discrete average","Continuous average"), 
+				series.names=c("Continuous average","Discrete approximation"),
 				leg.pos="topleft"
 			)	
 	dev.off()
@@ -509,7 +509,7 @@ generate.city.plots <- function(city.folder, res.tables)
 #			x2=res.tables$nodes[,DISC_MEM_USE], 
 #			breaks=20,
 #			x.label="Memory usage (MB)", 
-#			series.names=c("Discrete average","Continuous average"), 
+#			series.names=c("Continuous average","Discrete approximation"), 
 #			leg.pos="topleft"
 #	)	
 #	dev.off()
@@ -697,9 +697,9 @@ generate.overall.plots <- function(cities)
 					pch=4,	#cross instead of circle (1)
 					col="RED"
 				)
-				legend(x=str.leg.pos,legend=c("Discrete average","Continuous average"),
+				legend(x=str.leg.pos,legend=c("Continuous average","Discrete approximation"),
 					inset=inset,
-					fill=c("BLUE","RED")
+					fill=c("RED","BLUE")
 				)
 			dev.off()
 		}
