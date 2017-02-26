@@ -45,6 +45,13 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 	# for some reason, displaying text helps measuring the memory usage!
 #	if(disp) for(i in 1:1000) cat("x")
 	
+	# check if the link lengths are present in the graph
+	if(missing(g.dist))
+	{	eatt <- list.edge.attributes(graph)
+		if(!("dist" %in% eatt))
+			stop("You need to either provide the graph distances (using parameter g.dist) or a graph possessing an edge attribute called \"dist\"")
+	}
+	
 	# set up the number of nodes
 	if(missing(graph))
 		n <- ncol(g.dist)
@@ -143,6 +150,10 @@ straightness.nodes <- function(graph, v=NA, e.dist, g.dist, slow=FALSE)
 		if(disp) tlog(2,"Correcting NA values")
 		res[is.na(res)] <- 0
 	}
+	
+	# should not happen... but still happens (rounding problem)
+	res[res<0] <- 0
+	res[res>1] <- 1
 	
 	return(res)
 }

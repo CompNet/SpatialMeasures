@@ -7,7 +7,7 @@
 # setwd("c:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/misc/generation.R")
 ############################################################################
-#library("splancs") # used to process polygon areas
+library("splancs") # used to process polygon areas (needed when generating spiderweb graphs)
 
 
 source("src/misc/transformations.R")

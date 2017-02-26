@@ -646,6 +646,10 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 		result <- c(result,str)
 	}
 	
+	# should not happen... but happen nevertheless, due to rounding errors
+	result[result<0] <- 0
+	result[result>1] <- 1
+	
 	return(result)
 }
 
@@ -744,6 +748,7 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 	# process each specified node
 	for(i in 1:length(u))
 	{	if(disp) cat("Processing node ",u[i],"\n",sep="")
+		#tlog(2,"Processing node ",i,"/",length(u))
 		
 		# if the node is an isolate, no need to go further
 		if(degree(graph,u[i])==0)
@@ -778,6 +783,10 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 		# add to the result vector
 		result <- c(result,str)
 	}
+	
+	# should not happen... but happen nevertheless, due to rounding errors
+	result[result<0] <- 0
+	result[result>1] <- 1
 	
 	return(result)
 }
@@ -1004,7 +1013,7 @@ mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, g.dis
 	# get the second link end-nodes
 	u2 <- el[e2,1]
 	v2 <- el[e2,2]
-	cat("Processing link ",e1,"=(",u1,",",v1,") vs. ",e2,"=(",u2,",",v2,")\n",sep="")
+	if(disp) cat("Processing link ",e1,"=(",u1,",",v1,") vs. ",e2,"=(",u2,",",v2,")\n",sep="")
 	
 	# process the lambdas
 	temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
@@ -1013,6 +1022,11 @@ mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, g.dis
 	
 	# process the straightness
 	result <- aux.mean.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
+
+	# should not happen... but happen nevertheless, due to rounding errors
+	result[result<0] <- 0
+	result[result>1] <- 1
+	
 	return(result)
 }
 
@@ -1102,7 +1116,9 @@ aux.mean.straightness.link.graph <- function(graph, g.dist, u1, v1, exclude.self
 #          and the points constituting the graph.
 ############################################################################
 mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self=FALSE, use.primitive=TRUE, g.dist)
-{	# init the result vector
+{	disp <- FALSE
+	
+	# init the result vector
 	result <- c()
 	el <- get.edgelist(graph)
 	
@@ -1117,7 +1133,8 @@ mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self
 	
 	# process averages based on the previous totals
 	for(i in e)
-	{	# get the link end-nodes
+	{	if(disp) cat("..Processing link ",i,"/",length(e),"\n",sep="")
+		# get the link end-nodes
 		u1 <- el[i,1]
 		v1 <- el[i,2]
 		
@@ -1127,6 +1144,10 @@ mean.straightness.links.graph <- function(graph, e=1:ecount(graph), exclude.self
 		# add to the result vector
 		result <- c(result,str)
 	}
+	
+	# should not happen... but happen nevertheless, due to rounding errors
+	result[result<0] <- 0
+	result[result>1] <- 1
 	
 	return(result)
 }
@@ -1211,5 +1232,10 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 	
 	# process the average
 	result <- total.str / denom
+
+	# should not happen... but happen nevertheless, due to rounding errors
+	result[result<0] <- 0
+	result[result>1] <- 1
+	
 	return(result)
 }

@@ -66,9 +66,10 @@ add.alpha <- function(col, alpha=1)
 # out.folder: folder containing the generated files.
 # export: whether to record only image files (FALSE) or also data files (TRUE).
 # formats: formats of the produced plot files (NA for onscreen plotting).
+# autoscale: TRUE to let igraph automatically scale the graph representation.
 # ...: other parameters, passed to the regular plot function.
 ############################################################################################
-myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), ...)
+myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), autoscale=FALSE, ...)
 {	# possibly create output folder
 	if(!is.na(filename) & !is.na(out.folder))
 		dir.create(path=out.folder,showWarnings=FALSE,recursive=TRUE)
@@ -141,23 +142,53 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 		
 		if(is.na(format) | (!is.na(filename) & !is.na(out.folder)))
 		{	if(large) 
-				plot(g,main=g$title,
+			{	if(autoscale)
+				{	plot(g,main=g$title,
 						vertex.color=vertex.color,
 						vertex.label.color="BLACK",vertex.label.cex=0.5,
 						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
 						edge.color=link.cols,edge.width=link.widths,
-						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
+						rescale=TRUE,
+						axes=FALSE,
 						...
-				) 
+					)
+				}
+				else
+				{	plot(g,main=g$title,
+						vertex.color=vertex.color,
+						vertex.label.color="BLACK",vertex.label.cex=0.5,
+						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
+						edge.color=link.cols,edge.width=link.widths,
+						rescale=FALSE,asp=1,xlim=lm,ylim=lm,
+						axes=FALSE,
+						...
+					)
+				}
+			}
 			else 
-				plot(g,main=g$title,
+			{	if(autoscale)
+				{	plot(g,main=g$title,
 						vertex.size=vertex.sizes,vertex.color=vertex.color,
 						vertex.label=vertex.label,vertex.label.cex=0.5,vertex.label.color="BLACK",
 						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
 						edge.color=link.cols,edge.width=link.widths,
-						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
+						rescale=TRUE,
+						axes=FALSE,
 						...
-				)
+					)
+				}
+				else
+				{	plot(g,main=g$title,
+						vertex.size=vertex.sizes,vertex.color=vertex.color,
+						vertex.label=vertex.label,vertex.label.cex=0.5,vertex.label.color="BLACK",
+						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
+						edge.color=link.cols,edge.width=link.widths,
+						rescale=FALSE,asp=1,xlim=lm,ylim=lm,
+						axes=FALSE,
+						...
+					)
+				}
+			}
 		}
 		
 		# add the legend
