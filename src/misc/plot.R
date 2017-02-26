@@ -7,6 +7,7 @@
 # Vincent Labatut 12/2015
 #
 # setwd("~/eclipse/workspaces/Networks/SpatialMeasures")
+# setwd("d:/eclipse/workspaces/Networks/SpatialMeasures")
 # source("src/misc/plot.R")
 ############################################################################
 library(plotrix)
@@ -66,9 +67,10 @@ add.alpha <- function(col, alpha=1)
 # out.folder: folder containing the generated files.
 # export: whether to record only image files (FALSE) or also data files (TRUE).
 # formats: formats of the produced plot files (NA for onscreen plotting).
+# autoscale: TRUE to let igraph automatically scale the graph representation.
 # ...: other parameters, passed to the regular plot function.
 ############################################################################################
-myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), ...)
+myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, out.folder=NA, export=TRUE, formats=c(NA,"png","pdf"), autoscale=FALSE, ...)
 {	# possibly create output folder
 	if(!is.na(filename) & !is.na(out.folder))
 		dir.create(path=out.folder,showWarnings=FALSE,recursive=TRUE)
@@ -131,7 +133,8 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 	# generate plots
 	for(format in formats)
 	{	if(!is.na(format) & !is.na(filename) & !is.na(out.folder))
-		{	if(format=="pdf")
+		{	format <- tolower(format)
+			if(format=="pdf")
 				pdf(file=file.path(out.folder,paste0(filename,".pdf")))
 			else if(format=="png")
 				png(filename=file.path(out.folder,paste0(filename,".png")),
@@ -141,23 +144,53 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 		
 		if(is.na(format) | (!is.na(filename) & !is.na(out.folder)))
 		{	if(large) 
-				plot(g,main=g$title,
+			{	if(autoscale)
+				{	plot(g,main=g$title,
 						vertex.color=vertex.color,
 						vertex.label.color="BLACK",vertex.label.cex=0.5,
 						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
 						edge.color=link.cols,edge.width=link.widths,
-						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
+						rescale=TRUE,
+						axes=FALSE,
 						...
-				) 
+					)
+				}
+				else
+				{	plot(g,main=g$title,
+						vertex.color=vertex.color,
+						vertex.label.color="BLACK",vertex.label.cex=0.5,
+						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
+						edge.color=link.cols,edge.width=link.widths,
+						rescale=FALSE,asp=1,xlim=lm,ylim=lm,
+						axes=FALSE,
+						...
+					)
+				}
+			}
 			else 
-				plot(g,main=g$title,
+			{	if(autoscale)
+				{	plot(g,main=g$title,
 						vertex.size=vertex.sizes,vertex.color=vertex.color,
 						vertex.label=vertex.label,vertex.label.cex=0.5,vertex.label.color="BLACK",
 						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
 						edge.color=link.cols,edge.width=link.widths,
-						rescale=FALSE,axes=TRUE,asp=1,xlim=lm,ylim=lm,
+						rescale=TRUE,
+						axes=FALSE,
 						...
-				)
+					)
+				}
+				else
+				{	plot(g,main=g$title,
+						vertex.size=vertex.sizes,vertex.color=vertex.color,
+						vertex.label=vertex.label,vertex.label.cex=0.5,vertex.label.color="BLACK",
+						vertex.frame.color=vertex.frame.color,vertex.shape=vertex.shape,
+						edge.color=link.cols,edge.width=link.widths,
+						rescale=FALSE,asp=1,xlim=lm,ylim=lm,
+						axes=FALSE,
+						...
+					)
+				}
+			}
 		}
 		
 		# add the legend
@@ -369,4 +402,62 @@ multi.hist <- function(x1, x2, breaks=10, x.label, series.names, leg.pos)
 	legend(x=leg.pos,legend=series.names,
 			inset=0.03,
 			fill=c("BLUE","RED"))
+}
+
+
+
+############################################################################################
+# Generates a bar plot comparing two centrality measures. The reference measure is used as
+# a baseline, and to order the nodes on the x axis. The comparison measure is used to process
+# the ranking difference with the reference measure, and the result appears as the bar heights.
+#
+# ref.vals: values for the reference measure (a numerical vector).
+# comp.vals: values for the comparison measure (same).
+# ref.measure: name of the reference measure.
+# comp.measure: name of the comparison measure.
+# alpha: parameter used to build the matrix (or possibly NA if none was defined).
+# folder: folder in which to generate the plots.
+# formats: format of the generated file ("PDF", "PNG", or both).
+############################################################################################
+rank.diff.barplot <- function(disc.vals, cont.vals, out.folder=NA, formats=c("pdf", "png"))
+{	disc.measure <- "Discrete Approximation"
+	cont.measure <- "Continuous average Straightness" 
+	
+	# set up node order
+	disc.rk <- rank(disc.vals,ties.method="min")
+	cont.rk <- rank(cont.vals,ties.method="min")
+	diff <- cont.rk - disc.rk
+	idx <- order(disc.vals, decreasing=TRUE)
+	
+	# setup file name
+	plot.path <- file.path(out.folder,"rank-comparison")
+	
+	# record data
+	data.file <- paste0(plot.path,".txt")
+	data <- cbind(disc.rk,cont.rk,diff)
+	colnames(data) <- c("DiscRank","ContRank","Difference")
+	write.table(x=data,file=data.file,row.names=FALSE,col.names=TRUE)
+	
+	# record plot
+	for(format in formats)
+	{	if(!is.na(format))
+		{	format <- tolower(format)
+			plot.file <- paste0(plot.path,".",format)
+			if(format=="pdf")
+				pdf(file=plot.file,bg="white")
+			else if(format=="png")
+				png(filename=plot.file,width=800,height=800,units="px",pointsize=20,bg="white")
+		}
+		barplot(diff[idx], 
+			col="RED",
+			border="BLACK",
+#			main="Rank changes between the continuous and discrete average Straightness values",
+#			ylim=c(-length(disc.vals),length(disc.vals)),
+			xlab="Nodes ordered by decreasing discrete average Straightness",
+			ylab="Rank changes obtained with the continuous average Straightness"
+		)
+		
+		if(!is.na(format))
+			dev.off()
+	}
 }
