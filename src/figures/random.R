@@ -172,6 +172,8 @@ for(i in 1:length(gl))
 		myplot.graph(g, node.str=NA, link.str=ll.str[e,], large=TRUE, filename=paste0("cont-link=",e,"-link"), out.folder=out.folder, export=FALSE, formats="pdf")
 	}
 	E(g)$marked <- FALSE
+
+	
 	
 	# check the values
 	if(length(which(is.infinite(link.str)))>0)
