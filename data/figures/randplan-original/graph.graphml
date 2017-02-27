@@ -4,10 +4,6 @@
          xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
          http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
 <!-- Created by igraph -->
-  <key id="g_duration" for="graph" attr.name="duration" attr.type="double"/>
-  <key id="g_size" for="graph" attr.name="size" attr.type="double"/>
-  <key id="g_granularity" for="graph" attr.name="granularity" attr.type="boolean"/>
-  <key id="g_avgseg" for="graph" attr.name="avgseg" attr.type="double"/>
   <key id="v_x" for="node" attr.name="x" attr.type="double"/>
   <key id="v_y" for="node" attr.name="y" attr.type="double"/>
   <key id="e_dist" for="edge" attr.name="dist" attr.type="double"/>
