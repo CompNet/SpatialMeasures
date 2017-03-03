@@ -269,9 +269,10 @@ aux.process.straightness.integral <- function(a0,b0, c0, d0,e0, f0, g1,h1, i1, g
 		error.flag <- FALSE
 		intres <- tryCatch(integrate(f=fun,lower=lb,upper=ub,abs.tol=1e-15), error=function(e) error.flag <<- TRUE)
 		if(error.flag)
-		{	cat("......",a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,"\n",sep="")
-			print(fellp2)
-#stop("Error during the numerical integration.)
+		{	# should not be needed anymore
+			#cat("......",a0,",",b0,",",c0,",",d0,",",e0,",",f0,",",g1,",",h1,",",i1,",",g2,",",h2,",",i2,",fellp2,",ell2pup,",",lb,",",ub,"\n",sep="")
+			#print(fellp2)
+			#stop("Error during the numerical integration.")
 		}
 		else
 		{	result <- intres$value
@@ -459,7 +460,6 @@ aux.total.straightness.point.link <- function(graph, g.dist, u1, v1, ellp1, u2, 
 			# process the integral
 			part1 <- 0
 			part2 <- 0
-start.time <- Sys.time()			
 			if(lambdau <= lambdav)
 			{	if(ellp1 <= lambdau)
 				{	if(disp) cat("......case ellp1 <= lambdau, lambdav\n",sep="")
@@ -506,29 +506,21 @@ start.time <- Sys.time()
 						part2 <- aux.process.straightness.antiderivative(a,b,c,d,e4,f4,ed.u2v2) - aux.process.straightness.antiderivative(a,b,c,d,e4,f4,lambda2)
 				}
 			}
-end.time <- Sys.time()
-duration <- difftime(end.time,start.time,units="s")
-#cat(duration,"")	
 			
 			# combine to get the result
 			if(disp) cat("......part1:",part1," (max:",lambda2,") part2:",part2," (max:",ed.u2v2-lambda2,")\n",sep="")
 			result <- part1 + part2
-#z<-0;while(z<10e1){z<-z+1;result<-0}
 		}
 		
 		# numerical integration (much slower)
 		else
 		{	# define the function to integrate
-start.time <- Sys.time()
 			fun <- Vectorize(function(x)
 			{	res <- aux.straightness.point.point(graph, g.dist, u1, v1, ellp1, u2, v2, ellp2=x, lambdau, lambdav, lambda2)
 				return(res)
 			})
 			# perform the approximate integration
 			result <- integrate(f=fun,lower=0,upper=ed.u2v2,abs.tol=1e-15)$value
-end.time <- Sys.time()
-duration <- difftime(end.time,start.time,units="s")
-#cat(duration,"")	
 		}
 	}
 	
@@ -696,6 +688,7 @@ aux.mean.straightness.point.graph <- function(graph, g.dist, u1, v1, ellp1, use.
 			part.str <- aux.total.straightness.point.link(graph, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
 		end.time <- Sys.time()
 		duration <- difftime(end.time,start.time,units="s")
+# should not be needed anymore
 #if(is.infinite(part.str))
 #	stop("..Infinite total straightness in aux.total.straightness.point.link")
 		if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",ed.u2v2," (duration: ",duration,"s)\n",sep="")
@@ -776,6 +769,7 @@ mean.straightness.nodes.graph <- function(graph, u=1:vcount(graph), use.primitiv
 			end.time <- Sys.time()
 			duration <- difftime(end.time,start.time,units="s")
 			if(disp) cat("Avg Straightness: ",str," (duration: ",duration,"s)\n",sep="")
+# should not be needed anymore
 #if(is.infinite(str))
 #	stop("Error: infinite straightness")
 		}
