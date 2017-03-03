@@ -91,7 +91,7 @@ You may want to apply the approach described in our paper to average other spati
 * [`geometry`](https://cran.r-project.org/web/packages/geometry/index.html) package: used to triangulate and generate planar random graphs.
 * [`plotrix`](https://cran.r-project.org/web/packages/plotrix/) package: used to generate certain plots.
 * [`osmar`](https://cran.r-project.org/web/packages/osmar/index.html) package: used to extract real-world road networks.
-* [`splancs`](ftp://cran.r-project.org/pub/R/web/packages/splancs/index.html): used when generating spiderweb-like networks.
+* [`splancs`](https://cran.r-project.org/web/packages/splancs/index.html): used when generating spiderweb-like networks.
 
 
 # To-do List
