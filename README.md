@@ -96,7 +96,6 @@ You may want to apply the approach described in our paper to average other spati
 
 # To-do List
 * Check if tolerance is now actually needed (after dealing with the specific cases).
-* Handle disconnected graphs (at least for continuous average, check if necessary for the discrete ones).
 
 
 # References

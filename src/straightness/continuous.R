@@ -604,8 +604,8 @@ mean.straightness.nodes.link <- function(graph, u=1:vcount(graph), e, use.primit
 	for(i in 1:length(u))
 	{	if(disp) cat("..Processing node ",u[i]," vs. link (",u2,",",v2,")\n",sep="")
 		
-		# if the node is an isolate, no need to go further
-		if(degree(graph,u[i])==0)
+		# if the node is not connected to the link, no need to go further
+		if(degree(graph,u[i])==0 || is.infinite(g.dist[u[i],u2]))
 			str <- 0
 		
 		# otherwise, we process the mean straightness for the node
@@ -678,20 +678,29 @@ aux.mean.straightness.point.graph <- function(graph, g.dist, u1, v1, ellp1, use.
 		#ed.u2v2 <- get.dist(u2,v2,e.dist)
 		ed.u2v2 <- g.dist[u2,v2]	# equivalent (but faster) to the above line, since the nodes are neighbors
 		
-		# process the lambdas
-		temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
-		lambdau <- temp[1]
-		lambdav <- temp[2]
+		# if the links are not connected, no need to go further
+		if(is.infinite(g.dist[u1,u2]))
+			part.str <- 0
 		
-		# get the mean straightness between the point and the link
-		start.time <- Sys.time()
-			part.str <- aux.total.straightness.point.link(graph, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
-		end.time <- Sys.time()
-		duration <- difftime(end.time,start.time,units="s")
+		# otherwise, proceed
+		else
+		{	# process the lambdas
+			temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
+			lambdau <- temp[1]
+			lambdav <- temp[2]
+		
+			# get the mean straightness between the point and the link
+			start.time <- Sys.time()
+				part.str <- aux.total.straightness.point.link(graph, g.dist, u1, v1, ellp1, u2, v2, lambdau, lambdav, use.primitive)
+			end.time <- Sys.time()
+			duration <- difftime(end.time,start.time,units="s")
 # should not be needed anymore
 #if(is.infinite(part.str))
 #	stop("..Infinite total straightness in aux.total.straightness.point.link")
-		if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",ed.u2v2," (duration: ",duration,"s)\n",sep="")
+			if(disp) cat("part.str: ",part.str," e.dist[u2,v2]:",ed.u2v2," (duration: ",duration,"s)\n",sep="")
+		}
+		
+		# update the variables
 		total.str <- total.str + part.str
 		total.lgt <- total.lgt + ed.u2v2
 	}
@@ -1009,17 +1018,24 @@ mean.straightness.link.link <- function(graph, e1, e2, use.primitive=TRUE, g.dis
 	v2 <- el[e2,2]
 	if(disp) cat("Processing link ",e1,"=(",u1,",",v1,") vs. ",e2,"=(",u2,",",v2,")\n",sep="")
 	
-	# process the lambdas
-	temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
-	lambdau <- temp[1]
-	lambdav <- temp[2]
+	# if the nodes are not connected, no need to go further
+	if(is.infinite(g.dist[u1,u2]))
+		result <- 0
 	
-	# process the straightness
-	result <- aux.mean.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
-
-	# should not happen... but happen nevertheless, due to rounding errors
-	result[result<0] <- 0
-	result[result>1] <- 1
+	# otherwise, proceed
+	else
+	{	# process the lambdas
+		temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
+		lambdau <- temp[1]
+		lambdav <- temp[2]
+	
+		# process the straightness
+		result <- aux.mean.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
+		
+		# should not happen... but happen nevertheless, due to rounding errors
+		result[result<0] <- 0
+		result[result>1] <- 1
+	}
 	
 	return(result)
 }
@@ -1061,16 +1077,27 @@ aux.mean.straightness.link.graph <- function(graph, g.dist, u1, v1, exclude.self
 		#ed.u2v2 <- get.dist(u2,v2,e.dist)
 		ed.u2v2 <- g.dist[u2,v2]	# equivalent (but faster) to the above line, since the nodes are neighbors
 		
-		# process the lambdas
-		temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
-		lambdau <- temp[1]
-		lambdav <- temp[2]
+		# if the links are not connected, no need to go further
+		if(is.infinite(g.dist[u1,u2]))
+			str <- 0
 		
-		# check if the link is the same than (u_1,v_1)
+		# otherwise, proceed
+		else
+		{	# process the lambdas
+			temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
+			lambdau <- temp[1]
+			lambdav <- temp[2]
+		
+			# check if the link is the same than (u_1,v_1)
+			if(!setequal(c(u1,v1),c(u2,v2)) || !exclude.self)
+			{	# process the total straightness
+				str <- aux.total.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
+			}
+		}
+		
+		# possibly update the result
 		if(!setequal(c(u1,v1),c(u2,v2)) || !exclude.self)
 		{	# process the total straightness
-			str <- aux.total.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
-			# add to result
 			total.str <- total.str + str
 			total.length <- total.length + ed.u1v1*ed.u2v2
 		}
@@ -1200,13 +1227,20 @@ mean.straightness.graph <- function(graph, exclude.self=FALSE, use.primitive=TRU
 				#ed.u2v2 <- get.dist(u2,v2,e.dist)
 				ed.u2v2 <- g.dist[u2,v2]	# equivalent (but faster) to the above line, since the nodes are neighbors
 				
-				# process the lambdas
-				temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
-				lambdau <- temp[1]
-				lambdav <- temp[2]
+				# if the links are not connected, no need to go further
+				if(is.infinite(g.dist[u1,u2]))
+					str <- 0
+				# otherwise, proceed
+				else
+				{	# process the lambdas
+					temp <- aux.process.lambdauv(g.dist, u1, v1, u2, v2)
+					lambdau <- temp[1]
+					lambdav <- temp[2]
+					
+					# process straightness
+					str <- aux.total.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
+				}
 				
-				# process straightness
-				str <- aux.total.straightness.link.link(graph, g.dist, u1, v1, u2, v2, lambdau, lambdav, use.primitive)
 				# add to result
 				total.str <- total.str + str
 				total.length <- total.length + ed.u1v1*ed.u2v2
