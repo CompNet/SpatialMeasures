@@ -36,11 +36,17 @@ DISC_EDIST_TIME <- "Disc-Edist-Time"
 DISC_GDIST_TIME <- "Disc-Gdist-Time"
 CONT_STRAIGHT <- "Cont-Straight"
 CONT_PROC_TIME <- "Cont-Proc-Time"
+AVG_CONT_PROC_TIME <- "Avg-Cont-Proc-Time"
+STDEV_CONT_PROC_TIME <- "Stdev-Cont-Proc-Time"
 CONT_MEM_USE <- "Cont-Mem-Use"
 DISC_STRAIGHT <- "Disc-Straight"
 DISC_PROC_TIME <- "Disc-Proc-Time"
+AVG_DISC_PROC_TIME <- "Avg-Disc-Proc-Time"
+STDEV_DISC_PROC_TIME <- "Stdev-Disc-Proc-Time"
 DISC_MEM_USE <- "Disc-Mem-Use"
 STRAIGHT_DIFFERENCE <- "Straight-Diff"
+AVG_STRAIGHT_DIFFERENCE <- "Avg-Straight-Diff"
+STDEV_STRAIGHT_DIFFERENCE <- "Stdev-Straight-Diff"
 PROP_NODE_NBR <- "Node-Nbr"
 PROP_LINK_NBR <- "Link-Nbr"
 PROP_DENSITY <- "Density"
@@ -531,8 +537,17 @@ generate.overall.plots <- function(cities)
 	city.names <- c()
 	for(city in cities)
 		city.names <- c(city.names, city[[2]])
-	# colors taken from https://www.r-bloggers.com/the-paul-tol-21-color-salute/
-	city.colors <- c("#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD", "#117777", "#44AAAA", "#77CCCC", "#117744", "#44AA77", "#88CCAA", "#777711", "#AAAA44", "#DDDD77", "#774411", "#AA7744", "#DDAA77", "#771122", "#AA4455", "#DD7788")[1:length(cities)]
+	city.colors <- get.color.palette(length(cities))
+	
+	# init overall table
+	coln <- c(
+		PROP_NODE_NBR,PROP_LINK_NBR,PROP_DENSITY,DISCRETIZATION_TIME,
+		AVG_CONT_PROC_TIME,STDEV_CONT_PROC_TIME,
+		AVG_DISC_PROC_TIME,STDEV_DISC_PROC_TIME,
+		AVG_STRAIGHT_DIFFERENCE,STDEV_STRAIGHT_DIFFERENCE
+	)
+	overall.table <- matrix(NA,nrow=length(cities),ncol=length(coln))
+	colnames(overall.table) <- coln
 	
 	# retrieve all the necessary data
 	tlog(4,"Retrieve the data for each city")
@@ -550,7 +565,12 @@ generate.overall.plots <- function(cities)
 			graph.table <- temp
 		else
 			graph.table <- rbind(graph.table, temp)
-
+		# update the overall table
+		overall.table[c,PROP_NODE_NBR] <- temp[1,PROP_NODE_NBR]
+		overall.table[c,PROP_LINK_NBR] <- temp[1,PROP_LINK_NBR]
+		overall.table[c,PROP_DENSITY] <- temp[1,PROP_DENSITY]
+		overall.table[c,DISCRETIZATION_TIME] <- temp[1,DISCRETIZATION_TIME]
+		
 		# retrieve the nodes data
 		tlog(8,"Loading the node-related data")
 		res.nodes.file <- file.path(city.folder,res.nodes.filename)
@@ -567,7 +587,20 @@ generate.overall.plots <- function(cities)
 			nodes.table <- temp
 		else
 			nodes.table <- rbind(nodes.table, temp)
+		
+		# update the overall table
+		overall.table[c,AVG_CONT_PROC_TIME] <- mean(temp[,CONT_PROC_TIME])
+		overall.table[c,STDEV_CONT_PROC_TIME] <- sd(temp[,CONT_PROC_TIME])
+		overall.table[c,AVG_DISC_PROC_TIME] <- mean(temp[,DISC_PROC_TIME])
+		overall.table[c,STDEV_DISC_PROC_TIME] <- sd(temp[,DISC_PROC_TIME])
+		overall.table[c,AVG_STRAIGHT_DIFFERENCE] <- mean(temp[,STRAIGHT_DIFFERENCE])
+		overall.table[c,STDEV_STRAIGHT_DIFFERENCE] <- sd(temp[,STRAIGHT_DIFFERENCE])
 	}
+	
+	# record the overall table
+	table.file <- file.path(urban.folder,"overall_stats.txt")
+	rownames(overall.table) <- city.names
+	write.table(overall.table,file=table.file,row.names=TRUE,col.names=TRUE)
 	
 	# generate the comparison plots
 	tlog(4,"Generate discr. perf vs. cont perf plots")
@@ -578,7 +611,9 @@ generate.overall.plots <- function(cities)
 			x.lab <- "Discrete processing time (s)"
 			y.lab <- "Continuous processing time (s)"
 			leg.pos <- "topleft"
-			inset <- 0.3
+			inset <- 0.03
+			x.lim <- c(min(nodes.table[,d.col]),max(nodes.table[,d.col]))
+			y.lim <- c(min(nodes.table[,c.col]),max(nodes.table[,c.col]))
 		}
 		else if(yaxis=="straightness")
 		{	d.col <- DISC_STRAIGHT
@@ -586,31 +621,33 @@ generate.overall.plots <- function(cities)
 			x.lab <- "Discrete average Straightness"
 			y.lab <- "Continuous average Straightness"
 			leg.pos <- "topleft"
-			inset <- 0.3
+			inset <- 0.03
+			x.lim <- c(0,1)
+			y.lim <- c(0,1)
 		}
 		else if(yaxis=="memory")
-		{	d.col <- DISC_PROC_TIME
-			c.col <- CONT_PROC_TIME
+		{	d.col <- DISC_MEM_USE
+			c.col <- CONT_MEM_USE
 			x.lab <- "Discrete memory usage (MB)"
 			y.lab <- "Continuous memory usage (MB)"
 			leg.pos <- "topleft"
-			inset <- 0.3
+			inset <- 0.03
+			x.lim <- c(min(nodes.table[,d.col]),max(nodes.table[,d.col]))
+			y.lim <- c(min(nodes.table[,c.col]),max(nodes.table[,c.col]))
 		}
 		
 		plot.file <- file.path(urban.folder,paste0("comparison-",yaxis,".pdf"))
 		pdf(file=plot.file)
-			plot(x=nodes.table[which(nodes.table[,NETWORK_ID]==1),d.col],
-				y=nodes.table[which(nodes.table[,NETWORK_ID]==1),c.col],
+			plot(NULL,
 				xlab=x.lab,ylab=y.lab,
-				col=city.colors[1]
+				xlim=x.lim,
+				ylim=y.lim
 			)
-			if(nrow(graph.table)>1)
-			{	for(net in 2:nrow(graph.table))
-				{	points(x=nodes.table[which(nodes.table[,NETWORK_ID]==net),d.col],
-						y=nodes.table[which(nodes.table[,NETWORK_ID]==net),c.col],
-						col=city.colors[net]
-					)
-				}
+			for(net in 1:nrow(graph.table))
+			{	points(x=nodes.table[which(nodes.table[,NETWORK_ID]==net),d.col],
+					y=nodes.table[which(nodes.table[,NETWORK_ID]==net),c.col],
+					col=city.colors[net]
+				)
 			}
 			legend(x=leg.pos,legend=city.names,
 				inset=inset,
@@ -746,7 +783,8 @@ generate.overall.plots <- function(cities)
 # city: name of the graph.
 ############################################################################
 monitor.time <- function(cities)
-{	for(c in 1:length(cities))
+{	
+	for(c in 1:length(cities))
 	{	city <- names(cities)[c]
 		light.process <- cities[[c]][[1]]
 		tlog("Processing city ",city,if(light.process) " (light process)" else " (complete process)")
@@ -779,7 +817,7 @@ monitor.time <- function(cities)
 	}
 	
 	# generate plots considering all cities
-#	generate.overall.plots(cities)
+	generate.overall.plots(cities)
 }
 
 
