@@ -19,28 +19,28 @@ source("src/straightness/discrete.R")
 
 
 
-graph.types <- c(
-	"abidjan",
-	"karlskrona",
-	"soustons",
-	"maastricht",
-	"troisrivieres",
-	"alicesprings",
-	"sfax",
-	"avignon",
-	"liverpool",
-	"ljubljana",
-	"lisbon",
-	"dakar",
-	"hongkong",
-	"beijin",
-	"manhattan",
+cities <- list(
+	abidjan=2103,
+	karlskrona=2091,
+	soustons=3092,
+	maastricht=3296,
+	troisrivieres=7032,
+	alicesprings=483,
+	sfax=1565,
+	avignon=18756,
+	liverpool=7612,
+	ljubljana=30766,
+	lisbon=283,
+	dakar=1006,
+	hongkong=26602,
+	beijin=49588,
+	manhattan=10098,
 ##	"newyork",
-	"istanbul",
-	"roma",
-	"bordeaux",
-	"stpetersburg",
-	"tokyo"
+	istanbul=62899,
+	roma=52599,
+	bordeaux=63565,
+	stpetersburg=105809,
+	tokyo=76391
 )
 
 data.folder <- "data"
@@ -53,107 +53,109 @@ urban.folder <- file.path(data.folder,"urban")
 # Process all the average straightness variants
 ########################################
 # we suppose the graphs were already extracted before (see src/misc/extraction.R)
-for(gtype in graph.types)
-{	tlog("Process city ",gtype)
+for(c in 1:length(cities))
+{	city <- names(cities)[c]
+	node <- cities[[c]]
+	tlog("Process city ",city)
 	
 	########################################
 	# Load the (previously created) graph
 	########################################
-	tlog(2,"Load the ",gtype," graph")
-	out.folder <- file.path(urban.folder,gtype)
+	tlog(2,"Load the ",city," graph")
+	out.folder <- file.path(urban.folder,city)
 	g <- read.graph(file.path(out.folder,"graph.graphml"),format="graphml")
 	
 	
 	
-	########################################
-	# process the graph distance values, or load them if previously processed
-	########################################
-	dist.file <- file.path(out.folder,"g-dist-original.data")
-	if(file.exists(dist.file))
-	{	tlog(2,"Loading cached graph distances")
-		load(dist.file)
-		tlog(4,"Graph distances loaded")
-	}
-	else
-	{	tlog(2,"Processing graph distances")
-		g.dist <- shortest.paths(graph=g, weights=E(g)$dist)
-		tlog(4,"Recording graph distances")
-		save(g.dist,file=dist.file)
-	}
-	
-	
-	
-	########################################
-	# Process the node-graph discrete averages
-	########################################
-	out.file <- file.path(out.folder,"disc-node-graph.txt")
-	# load the cached average straightness values
-	if(file.exists(out.file))
-	{	tlog(2,"Load the discrete average straightness between each node and the rest of the graph")
-		disc.node.str <- as.matrix(read.table(file=out.file,header=FALSE))[,1]
-	}
-	# process the average straightness values
-	else
-	{	tlog(2,"Process the discrete average straightness between each node and the rest of the graph")
-		disc.node.str <- mean.straightness.nodes(graph=g, v=V(g))
-		# record them as text files
-		tlog(2,"Record the numerical results for later consultation")
-		write.table(x=disc.node.str,file=out.file,row.names=FALSE,col.names=FALSE)
-	}
-	
-	# plot them
-	tlog(2,"Generate the corresponding plots")
-	myplot.graph(g, node.str=disc.node.str, link.str=NA, large=FALSE, filename="disc-node-graph", out.folder=out.folder, export=FALSE, formats="pdf", autoscale=TRUE)
-	
-	
-	
-	########################################
-	# Process the node-graph continuous averages
-	########################################
-	out.file <- file.path(out.folder,"cont-node-graph.txt")
-	# load the cached average straightness values
-	if(file.exists(out.file))
-	{	tlog(2,"Load the continuous average straightness between each node and the rest of the graph")
-		node.str <- as.matrix(read.table(file=out.file,header=FALSE))
-	}
-	# process the average straightness values
-	else
-	{	# process the values
-		tlog(2,"Process the continuous average straightness between each node and the rest of the graph")
-		node.str <- mean.straightness.nodes.graph(graph=g, g.dist=g.dist)
-		# record them as text files
-		tlog(4,"Record the numerical results for later consultation")
-		write.table(x=node.str,file=out.file,row.names=FALSE,col.names=FALSE)
-	}
-	
-	# plot them
-	tlog(2,"Generate the corresponding plots")
-	myplot.graph(g, node.str=node.str, link.str=NA, large=FALSE, filename="cont-node-graph", out.folder=out.folder, export=FALSE, formats="pdf", autoscale=TRUE)
-	
-	
-	
-	########################################
-	# Process the link-graph continuous averages
-	########################################
-	out.file <- file.path(out.folder,"cont-link-graph.txt")
-	# load the cached average straightness values
-	if(file.exists(out.file))
-	{	tlog(2,"Load the continuous average straightness between each link and the rest of the graph")
-		link.str <- as.matrix(read.table(file=out.file,header=FALSE))
-	}
-	# process the average straightness values
-	else
-	{	# process the values
-		tlog(2,"Process the continuous average straightness between each link and the rest of the graph")
-		link.str <- mean.straightness.links.graph(graph=g, g.dist=g.dist)
-		# record them as text files
-		tlog(4,"Record the numerical results for later consultation")
-		write.table(x=link.str,file=out.file,row.names=FALSE,col.names=FALSE)
-	}
-	
-	# plot them
-	tlog(2,"Generate the corresponding plots")
-	myplot.graph(g, node.str=NA, link.str=link.str, large=FALSE, filename="cont-link-graph", out.folder=out.folder, export=FALSE, formats="pdf", autoscale=FALSE)
+#	########################################
+#	# process the graph distance values, or load them if previously processed
+#	########################################
+#	dist.file <- file.path(out.folder,"g-dist-original.data")
+#	if(file.exists(dist.file))
+#	{	tlog(2,"Loading cached graph distances")
+#		load(dist.file)
+#		tlog(4,"Graph distances loaded")
+#	}
+#	else
+#	{	tlog(2,"Processing graph distances")
+#		g.dist <- shortest.paths(graph=g, weights=E(g)$dist)
+#		tlog(4,"Recording graph distances")
+#		save(g.dist,file=dist.file)
+#	}
+#	
+#	
+#	
+#	########################################
+#	# Process the node-graph discrete averages
+#	########################################
+#	out.file <- file.path(out.folder,"disc-node-graph.txt")
+#	# load the cached average straightness values
+#	if(file.exists(out.file))
+#	{	tlog(2,"Load the discrete average straightness between each node and the rest of the graph")
+#		disc.node.str <- as.matrix(read.table(file=out.file,header=FALSE))[,1]
+#	}
+#	# process the average straightness values
+#	else
+#	{	tlog(2,"Process the discrete average straightness between each node and the rest of the graph")
+#		disc.node.str <- mean.straightness.nodes(graph=g, v=V(g))
+#		# record them as text files
+#		tlog(2,"Record the numerical results for later consultation")
+#		write.table(x=disc.node.str,file=out.file,row.names=FALSE,col.names=FALSE)
+#	}
+#	
+#	# plot them
+#	tlog(2,"Generate the corresponding plots")
+#	myplot.graph(g, node.str=disc.node.str, link.str=NA, large=FALSE, filename="disc-node-graph", out.folder=out.folder, export=FALSE, formats="pdf", autoscale=TRUE)
+#	
+#	
+#	
+#	########################################
+#	# Process the node-graph continuous averages
+#	########################################
+#	out.file <- file.path(out.folder,"cont-node-graph.txt")
+#	# load the cached average straightness values
+#	if(file.exists(out.file))
+#	{	tlog(2,"Load the continuous average straightness between each node and the rest of the graph")
+#		node.str <- as.matrix(read.table(file=out.file,header=FALSE))
+#	}
+#	# process the average straightness values
+#	else
+#	{	# process the values
+#		tlog(2,"Process the continuous average straightness between each node and the rest of the graph")
+#		node.str <- mean.straightness.nodes.graph(graph=g, g.dist=g.dist)
+#		# record them as text files
+#		tlog(4,"Record the numerical results for later consultation")
+#		write.table(x=node.str,file=out.file,row.names=FALSE,col.names=FALSE)
+#	}
+#	
+#	# plot them
+#	tlog(2,"Generate the corresponding plots")
+#	myplot.graph(g, node.str=node.str, link.str=NA, large=FALSE, filename="cont-node-graph", out.folder=out.folder, export=FALSE, formats="pdf", autoscale=TRUE)
+#	
+#	
+#	
+#	########################################
+#	# Process the link-graph continuous averages
+#	########################################
+#	out.file <- file.path(out.folder,"cont-link-graph.txt")
+#	# load the cached average straightness values
+#	if(file.exists(out.file))
+#	{	tlog(2,"Load the continuous average straightness between each link and the rest of the graph")
+#		link.str <- as.matrix(read.table(file=out.file,header=FALSE))
+#	}
+#	# process the average straightness values
+#	else
+#	{	# process the values
+#		tlog(2,"Process the continuous average straightness between each link and the rest of the graph")
+#		link.str <- mean.straightness.links.graph(graph=g, g.dist=g.dist)
+#		# record them as text files
+#		tlog(4,"Record the numerical results for later consultation")
+#		write.table(x=link.str,file=out.file,row.names=FALSE,col.names=FALSE)
+#	}
+#	
+#	# plot them
+#	tlog(2,"Generate the corresponding plots")
+#	myplot.graph(g, node.str=NA, link.str=link.str, large=FALSE, filename="cont-link-graph", out.folder=out.folder, export=FALSE, formats="pdf", autoscale=FALSE)
 	
 	
 	
@@ -251,6 +253,19 @@ for(gtype in graph.types)
 #		error("Straightness pb in nl.str")
 #	if(length(which(is.infinite(ll.str)))>0)
 #		error("Straightness pb in ll.str")
+	
+	
+	
+	########################################
+	# generate node centric plot
+	########################################
+	nl.str <- rep(NA,ecount(g)) 
+	for(e in 1:ecount(g))
+	{	tlog("Process link ",e,"/",ecount(g))
+		nl.str[e] <- mean.straightness.nodes.link(graph=g, u=node, e=e)
+	}
+	V(g)$marked <- 1:vcount(g)==node
+	myplot.graph(g, node.str=NA, link.str=nl.str, large=FALSE, filename=paste0("cont-node=",node,"-links"), out.folder=out.folder, export=FALSE, formats="pdf", autoscale=FALSE)
 }
 
 
@@ -258,9 +273,9 @@ for(gtype in graph.types)
 ########################################
 # Check if the values are within the theoretical ranges (used when debugging)
 ########################################
-#for(gtype in graph.types)
-#{	tlog("Processing graph type ",gtype)
-#	out.folder <- file.path(urban.folder,gtype)
+#for(city in names(cities))
+#{	tlog("Processing graph type ",city)
+#	out.folder <- file.path(urban.folder,city)
 #	for(d in c("cont-node-graph","cont-link-graph","cont-node-link","cont-link-link"))
 #	{	tlog(2,"Processing ",d)
 #		data <- as.matrix(read.table(file=file.path(out.folder,paste0(d,".txt")),header=FALSE))

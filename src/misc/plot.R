@@ -113,7 +113,7 @@ myplot.graph <- function(g, node.str=NA, link.str=NA, large=TRUE, filename=NA, o
 	{	cscale <- colorRamp(c("BLUE","CYAN","YELLOW","RED"))
 		link.cols <- apply(cscale(link.str), 1, function(x) rgb(x[1]/255,x[2]/255,x[3]/255))
 		#link.widths <- 4*link.str
-		link.widths <- rep(3,ecount(g))
+		link.widths <- rep(3,ecount(g)) #1
 	}
 
 	# mark certain links
