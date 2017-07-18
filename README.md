@@ -76,10 +76,10 @@ If you just want to apply the measures to your own graph, then you need to use t
 * `mean.straightness.links.graph(g, e)`: average Straightness between link `e` and the rest of graph `g`.
 * `mean.straightness.graph(g)`: average Straightness between each pair of points constituting graph `g`.
 
-Note the specified graph must be an `igraph` object, and its nodes must be described by their position in a 2D space taking.
+Note the specified graph must be an `igraph` object, and its nodes must be described by their position in a 2D space.
 For this purpose, the graph must contain two nodal attributes called `x` and `y`. See the `igraph` documentation to know how to define such attributes.
 
-Also, note you only need the `R` script `src/straightness/continuous.R` to process the variants of the continuous average straightness on your graphs. The rest of the scripts is just there for plotting, testing, evaluating, comparing, etc. You need to uncomment the function `get.dist` in `continuous.R`, though.
+Also, note you only need the `R` script `src/straightness/continuous.R` to process the variants of the continuous average straightness on your graphs. The rest of the scripts is just there for plotting, testing, evaluating, comparing, etc. You need to uncomment the function `get.dist` in `continuous.R`, if you want to use it in a standalone way, though.
   
 
 # Extension
@@ -99,5 +99,5 @@ You may want to apply the approach described in our paper to average other spati
 
 
 # References
-* **[Lbt'17]** Labatut, V. Continuous Average Straightness in Spatial Graphs, Submitted to [Journal of Complex Networks](https://academic.oup.com/comnet), 2017.
+* **[Lbt'17]** Labatut, V. Continuous Average Straightness in Spatial Graphs, Accepted by [Journal of Complex Networks](https://academic.oup.com/comnet), 2017.
 **<URL goes here>**
