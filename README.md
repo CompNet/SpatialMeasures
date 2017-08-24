@@ -99,4 +99,4 @@ You may want to apply the approach described in our paper to average other spati
 
 
 # References
-* **[Lbt'17]** Labatut, V. Continuous Average Straightness in Spatial Graphs, Accepted by [Journal of Complex Networks](https://academic.oup.com/comnet), cnx033, 2017. DOI: [10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) [arXiv version](https://arxiv.org/abs/1708.00743) - [HAL version](https://hal.archives-ouvertes.fr/hal-01571212)
+* **[Lbt'17]** Labatut, V. Continuous Average Straightness in Spatial Graphs, Accepted by [Journal of Complex Networks](https://academic.oup.com/comnet), cnx033, 2017. DOI: [10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [arXiv version](https://arxiv.org/abs/1708.00743) - [HAL version](https://hal.archives-ouvertes.fr/hal-01571212)
