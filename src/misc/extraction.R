@@ -81,9 +81,11 @@ cities <- list(
 #	idx <- match(V(g)$name,city.sub$nodes$attrs[,"id"])
 #	V(g)$x <- city.sub$nodes$attrs[idx,"lon"]*1000			# multiply by 1000 so that the network can be browsed in Gephi
 #	V(g)$y <- city.sub$nodes$attrs[idx,"lat"]*1000
+#	V(g)$lng <- city.sub$nodes$attrs[idx,"lon"]
+#	V(g)$lat <- city.sub$nodes$attrs[idx,"lat"]
 #	
 #	# filter the nodes located out of the box
-#	idx <- which(V(g)$x<cities[[name]][1] || V(g)$y<cities[[name]][3] || V(g)$x>cities[[name]][3] || V(g)$y>cities[[name]][4])
+#	idx <- which(V(g)$lng<cities[[name]][1] | V(g)$lat<cities[[name]][2] | V(g)$lng>cities[[name]][3] | V(g)$lat>cities[[name]][4])
 #	print(length(idx))
 #	g <- delete_vertices(graph=g, v=idx)
 #
