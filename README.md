@@ -1,4 +1,4 @@
-# SpatialMeasures v.0.2
+SpatialMeasures v.0.2
 =======
 *Continuous average Straightness for spatial graphs*
 
