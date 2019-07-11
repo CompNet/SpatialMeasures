@@ -17,14 +17,14 @@ This set of R scripts was designed to process several variants of the *Straightn
 
 First, this toolbox can process the Straightness using the traditional approach, i.e. considering only paths connecting two nodes. It can process the Straightness between two specific nodes, or the Straightness averaged over certain pairs of nodes in the graph (including all pairs).
 
-Second, this toolbox can also compute the average Straightness through a *continuous* approach (by opposition to the *discrete* traditional approach), and incidentally this is the point of the article [Lbt'17]. The Straightness is generalized to deal with point-to-point paths, i.e. paths connecting a location on a link to another such position (by opposition to nodes, which are necessarily located on the ends of links). Based on this, we can average the Straightness by integration over the link. This allows deriving the following continuous average variants:
+Second, this toolbox can also compute the average Straightness through a *continuous* approach (by opposition to the *discrete* traditional approach), and incidentally this is the point of the article [L'18]. The Straightness is generalized to deal with point-to-point paths, i.e. paths connecting a location on a link to another such position (by opposition to nodes, which are necessarily located on the ends of links). Based on this, we can average the Straightness by integration over the link. This allows deriving the following continuous average variants:
 * Average Straightness between a point and an link (or rather: all the points on this link);
 * Average Straightness between a point and the rest of the graph (or rather: all the points constituting this graph);
 * Average Straightness between two links (or rather: all pairs of points located on these links, each point being on a different one);
 * Average Straightness between a link and the rest of the graph (or rather: all the points located on the link on one side, and all the points constituting the graph on the other side);
 * Average Straightness over the graph (or rather: between all the pairs of points constituting the graph).
 
-Besides the functions used to process the average measures themselves, the scripts also allow to replicate the different experiments conducted in the article [Lbt'17].
+Besides the functions used to process the average measures themselves, the scripts also allow to replicate the different experiments conducted in the article [L'18].
 
 
 # Data
@@ -36,7 +36,7 @@ We also experiment on a few real-world networks. These are all road networks ret
 # Organization
 Here are the folders composing the project:
 * Folder `src`: contains the source code (R scripts).
-  * Folder `evaluation`: scripts used to evaluate the time and memory usage (see [Lbt'17]).
+  * Folder `evaluation`: scripts used to evaluate the time and memory usage (see [L'18]).
   * Folder `figures`: scripts used to produce some of the figures presented in the article, and process certain of their properties.
   * Folder `misc`: scripts used for extracting, generating, modifying and plotting the graphs.
   * Folder `straightness`: scripts used to process the discrete and continuous average variants of the average Straightness.
@@ -56,7 +56,7 @@ Here are the folders composing the project:
    * [`osmar`](https://cran.r-project.org/web/packages/osmar/index.html): only if you want to extract new road networks via the `src/misc/extraction.R script` (tested with version 1.1-7)
    * [`splancs`](https://cran.r-project.org/web/packages/splancs/index.html): only if you want to generate spiderweb-like networks via the `src/figures/regular.R script` (tested with version 2.01-39)
 3. Download this project from GitHub and unzip the archive.
-4. If you want to apply the scripts on the real-world road networks from the article [Lbt'17], download the `graph` archive from [Figshare](https://doi.org/10.6084/m9.figshare.4721407) and unzip it so that it overwrites the `data/urban` folder. 
+4. If you want to apply the scripts on the real-world road networks from the article [L'18], download the `graph` archive from [Figshare](https://doi.org/10.6084/m9.figshare.4721407) and unzip it so that it overwrites the `data/urban` folder. 
 
 
 # Use
@@ -65,7 +65,7 @@ In order to replicate the experiments from the article, perform the following op
 1. Open the `R` console.
 2. Set the current projetct directory as the working directory, using `setwd("my/path/to/the/project/SpatialMeasures")`.
 3. Run one of the following scripts:
-   * `src/figures/regular.R`, `src/figures/random.R` or `src/figures/urban.R` to generate the graph figures from the article [Lbt'17].
+   * `src/figures/regular.R`, `src/figures/random.R` or `src/figures/urban.R` to generate the graph figures from the article [L'18].
    * `src/evaluation/time.R`, `src/evaluation/memory.R` or `src/evaluation/urban.R` to produce the plots/tables related to performance.
    * `src/evaluation/urban.R`
 
@@ -99,4 +99,4 @@ You may want to apply the approach described in our paper to average other spati
 
 
 # References
-* **[Lbt'17]** Labatut, V. Continuous Average Straightness in Spatial Graphs, Accepted by [Journal of Complex Networks](https://academic.oup.com/comnet), cnx033, 2017. DOI: [10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [arXiv version](https://arxiv.org/abs/1708.00743) - [HAL version](https://hal.archives-ouvertes.fr/hal-01571212)
+* **[L'17]** V. Labatut. *Continuous Average Straightness in Spatial Graphs*, Journal of Complex Networks, 18(6):2, 269-296cnx033, 2018. [doi: 10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [⟨hal-01571212⟩](https://hal.archives-ouvertes.fr/hal-01571212)
