@@ -48,7 +48,7 @@ produce.random.graph <- function(gtype)
 	net.file <- file.path(out.folder,"graph.graphml")
 	
 	if(gtype=="randplan-original")
-	{	g <- graph.empty(n=20, directed=FALSE)
+	{	g <- graph.empty(n=50, directed=FALSE)
 		V(g)$x <- runif(vcount(g),min=-1,max=1)
 		V(g)$y <- runif(vcount(g),min=-1,max=1)
 		g <- connect.triangulation(g)
@@ -318,6 +318,44 @@ for(gtype in graph.types)
 	}
 }
 
+
+
+########################################
+# Additional computation for my HDR
+########################################
+for(gtype in graph.types)
+{	cat("Processing ",gtype,"\n",sep="")
+	
+	# load the (previously created) graph
+	tlog("Load the ",gtype," graph")
+	out.folder <- file.path(figures.folder, gtype)
+	g <- read.graph(file.path(out.folder,"graph.graphml"),format="graphml")
+	tlog(2,"Number of nodes: ",vcount(g))
+	
+	# discretize the edges
+	gran <- max(E(g)$dist)/10
+	g2 <- add.intermediate.nodes(g, granularity=gran, slow=FALSE)
+	
+	# compute all node-to-node straightness values
+	vals1 <- straightness.nodes(graph=g, v=V(g))
+	vals2 <- straightness.nodes(graph=g2, v=V(g2))
+	
+	# plot these values as a histogram
+	h1 <- hist(vals1, freq=FALSE, plot=FALSE, breaks=seq(0,1,1/40))
+	h2 <- hist(vals2, freq=FALSE, plot=FALSE, breaks=seq(0,1,1/40))
+	pdf(file.path(out.folder,"histo.pdf"))
+	if(max(h1$density)>max(h2$density))
+	{	plot(h1, col=rgb(0,0,1,1/4), xlab="Straightness", main=NA, xlim=c(0.4,1), freq=FALSE)
+		plot(h2, col=rgb(1,0,0,1/4), xlim=c(0.4,1), add=TRUE, freq=FALSE)
+	}else
+	{	plot(h2, col=rgb(1,0,0,1/4), xlab="Straightness", main=NA, xlim=c(0.4,1), freq=FALSE)
+		plot(h1, col=rgb(0,0,1,1/4), xlim=c(0.4,1), add=TRUE, freq=FALSE)
+	}
+	legend(x="topleft", legend=c("Vertex-to-vertex","Point-to-point"), fill=c(rgb(0,0,1,1/4), rgb(1,0,0,1/4)))
+	dev.off()
+	
+	readline(prompt="Press [enter] to continue")
+}
 
 
 

@@ -164,7 +164,7 @@ process.continuous.straightness <- function(n=5, type="randplanar", iteration=1,
 		for(i in 1:vcount(g))
 		{	# process the straightness
 			start.time <- Sys.time()
-				value <- mean.straightness.nodes.graph(graph=g, u=i)
+				value <- mean.straightness.nodes.graph(graph=g, v=i)
 			end.time <- Sys.time()
 			values <- c(values,value)
 			duration <- difftime(end.time,start.time,units="s")

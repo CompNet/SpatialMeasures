@@ -67,6 +67,7 @@ distances.as.weights <- function(g, slow=FALSE)
 ############################################################################################
 # From the existing graph, builds a new one by adding extra nodes on existing edges. These
 # nodes are added so that the resulting edges are not longer than a given granularity value.
+# 
 # Note that if the original graph does not have the edge attribute dist indicating the 
 # spatial length position of each link, it is automatically added.
 # 

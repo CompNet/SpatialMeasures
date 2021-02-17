@@ -20,7 +20,7 @@ source("src/straightness/continuous.R")
 #  1) Get the spatial distance between each pair of nodes.
 #  2) Get the spatial length of the shortest path between each pair of nodes.
 #  3) Divide the first by the second.
-# If the node are not connected by some path, their straightness is zero.
+# If the nodes are not connected by some path, their straightness is zero.
 #
 # graph: the graph to process. Can be omitted if both distances are specified.
 # v: ids of the nodes whose straightness must be returned. The values are
