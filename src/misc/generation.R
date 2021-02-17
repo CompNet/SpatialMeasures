@@ -228,14 +228,14 @@ produce.hexagon.graph <- function(m, area=1)
 
 
 ############################################################################################
-# Generates a graph of octogons.
+# Generates a graph of octagons.
 #
-# m: number of octogons in one row/column.
+# m: number of octagons in one row/column.
 # area: area covered by the network (by default: 1).
 #
-# returns: a graph made of octogons, with approximately the specified area.
+# returns: a graph made of octagons, with approximately the specified area.
 ############################################################################################
-produce.octogon.graph <- function(n, area=1)
+produce.octagon.graph <- function(n, area=1)
 {	# init scale
 	side <- sqrt(area / (n^2*2*(1+sqrt(2))+(n-1)^2))
 	h <- side / sqrt(2)
@@ -256,8 +256,8 @@ produce.octogon.graph <- function(n, area=1)
 	# set graph attributes
 	g$area <- area
 	g$side <- side
-	g$name <- "octogons"
-	g$title <- paste("Octogons n=",n,sep="") 
+	g$name <- "octagons"
+	g$title <- paste("Octagons n=",n,sep="") 
 	g <- distances.as.weights(g)
 	
 	return(g)
@@ -275,7 +275,7 @@ produce.octogon.graph <- function(n, area=1)
 #
 # returns: the created graph.
 ############################################################################################
-generate.radiocentric.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FALSE)
+generate.radioconcentric.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FALSE)
 {	# init
 	n <- spire.nbr * ray.nbr + 1
 	x.coords <- rep(NA,n)
@@ -325,9 +325,9 @@ generate.radiocentric.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empt
 #
 # returns: a radioconcentric graph with approximately the specified area.
 ############################################################################################
-produce.radiocentric.graph <- function(r, s, area=1)
+produce.radioconcentric.graph <- function(r, s, area=1)
 {	# generate graph
-	g <- generate.radiocentric.graph(ray.nbr=r, spire.nbr=s)
+	g <- generate.radioconcentric.graph(ray.nbr=r, spire.nbr=s)
 	
 	# translate to (0,0)
 	dx <- min(V(g)$x)
@@ -358,7 +358,7 @@ produce.radiocentric.graph <- function(r, s, area=1)
 
 
 ############################################################################################
-# Generates an orbitele graph.
+# Generates an orb-web graph.
 #
 # ray.nbr: total number of rays in the graph.
 # spire.nbr: approximate number of spires connected to one ray.
@@ -367,7 +367,7 @@ produce.radiocentric.graph <- function(r, s, area=1)
 #
 # returns: the created graph.
 ############################################################################################
-generate.orbitele.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FALSE)
+generate.orbweb.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FALSE)
 {	# init
 #	n <- spire.nbr * ray.nbr + 1
 	x.coords <- c()
@@ -403,7 +403,7 @@ generate.orbitele.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FA
 	
 	# build graph
 	g <- graph.empty(n=length(x.coords),directed=directed)
-	g$name <- "orbitele"
+	g$name <- "orbweb"
 	if(!empty)
 		g <- add.edges(graph=g,edges=links)
 	V(g)$x <- x.coords
@@ -416,17 +416,17 @@ generate.orbitele.graph <- function(ray.nbr, spire.nbr, directed=FALSE, empty=FA
 
 
 ############################################################################################
-# Generates an orbitele graph.
+# Generates an orbweb graph.
 #
 # r: number of rays.
 # s: number of spires.
 # area: area covered by the network (by default: 1).
 #
-# returns: an orbitele graph with approximately the specified area.
+# returns: an orbweb graph with approximately the specified area.
 ############################################################################################
-produce.orbitele.graph <- function(r, s, area=1)
+produce.orbweb.graph <- function(r, s, area=1)
 {	# generate graph
-	g <- generate.orbitele.graph(ray.nbr=r, spire.nbr=s)
+	g <- generate.orbweb.graph(ray.nbr=r, spire.nbr=s)
 	
 	# translate to (0,0)
 	dx <- min(V(g)$x)
@@ -447,8 +447,8 @@ produce.orbitele.graph <- function(r, s, area=1)
 	g$area <- area
 	g$rays <- r
 	g$spires <- s
-	g$name <- "orbitele"
-	g$title <- paste("Orbitele rays=",r," spires=",s,sep="") 
+	g$name <- "orbweb"
+	g$title <- paste("Orb-web rays=",r," spires=",s,sep="") 
 	g <- distances.as.weights(g)
 	
 	return(g)

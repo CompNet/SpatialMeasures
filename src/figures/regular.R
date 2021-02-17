@@ -21,9 +21,9 @@ source("src/straightness/discrete.R")
 
 graph.types <- c(
 	"hexagons",
-	"octogons",
-	"orbitele",
-	"radiocentric",
+	"octagons",
+	"orbweb",
+	"radioconcentric",
 	"squares",
 	"triangles"
 #	"randplan-original",
@@ -81,7 +81,7 @@ produce.random.graph <- function(gtype)
 
 
 ########################################
-# Generate the graphs
+# Generates the graphs
 # Note: this part of the script is separated from the rest so that it can be easily disabled, 
 # if the graphs have already been generated. 
 ########################################
@@ -99,19 +99,19 @@ for(gtype in graph.types)
 			g <- produce.hexagon.graph(m=7,area=7)
 			write.graph(g,net.file,format="graphml")
 		}
-		else if(gtype=="octogons")
-		{	tlog("Generate a graph of octogons")
-			g <- produce.octogon.graph(n=7,area=15)
+		else if(gtype=="octagons")
+		{	tlog("Generate a graph of octagons")
+			g <- produce.octagon.graph(n=7,area=15)
 			write.graph(g,net.file,format="graphml")
 		}
-		else if(gtype=="orbitele")
-		{	tlog("Generate a spider graph")
-			g <- produce.orbitele.graph(r=8,s=7,area=20)
+		else if(gtype=="orbweb")
+		{	tlog("Generate an orb-web graph")
+			g <- produce.orbweb.graph(r=8,s=7,area=20)
 			write.graph(g,net.file,format="graphml")
 		}
-		else if(gtype=="radiocentric")
+		else if(gtype=="radioconcentric")
 		{	tlog("Generate a radio-concentric graph")
-			g <- produce.radiocentric.graph(r=8,s=10,area=20)
+			g <- produce.radioconcentric.graph(r=8,s=10,area=20)
 			write.graph(g,net.file,format="graphml")
 		}
 		else if(gtype=="squares")
