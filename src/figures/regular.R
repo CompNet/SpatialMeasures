@@ -331,11 +331,13 @@ for(gtype in graph.types)
 	out.folder <- file.path(figures.folder, gtype)
 	g <- read.graph(file.path(out.folder,"graph.graphml"),format="graphml")
 	tlog(2,"Number of nodes: ",vcount(g))
+	myplot.graph(g, large=FALSE, filename=paste0("neutral"), out.folder=out.folder, export=FALSE, formats="pdf", autoscale=FALSE)
 	
 	# discretize the edges
 	gran <- max(E(g)$dist)/10
 	g2 <- add.intermediate.nodes(g, granularity=gran, slow=FALSE)
 	
+	#########################
 	# compute all node-to-node straightness values
 	vals1 <- straightness.nodes(graph=g, v=V(g))
 	vals2 <- straightness.nodes(graph=g2, v=V(g2))
@@ -343,18 +345,46 @@ for(gtype in graph.types)
 	# plot these values as a histogram
 	h1 <- hist(vals1, freq=FALSE, plot=FALSE, breaks=seq(0,1,1/40))
 	h2 <- hist(vals2, freq=FALSE, plot=FALSE, breaks=seq(0,1,1/40))
-	pdf(file.path(out.folder,"histo.pdf"))
+	pdf(file.path(out.folder,"histo_straightness.pdf"))
+		if(max(h1$density)>max(h2$density))
+		{	plot(h1, col=rgb(0,0,1,1/4), xlab="Straightness", main=NA, xlim=c(0.4,1), freq=FALSE)
+			plot(h2, col=rgb(1,0,0,1/4), xlim=c(0.4,1), add=TRUE, freq=FALSE)
+		}else
+		{	plot(h2, col=rgb(1,0,0,1/4), xlab="Straightness", main=NA, xlim=c(0.4,1), freq=FALSE)
+			plot(h1, col=rgb(0,0,1,1/4), xlim=c(0.4,1), add=TRUE, freq=FALSE)
+		}
+		legend(x="topright", legend=c("Vertex-to-vertex","Point-to-point"), fill=c(rgb(0,0,1,1/4), rgb(1,0,0,1/4)))
+	dev.off()
+	
+	# display average straightness
+	tlog(2,"Average v2v straightness: ",mean(vals1))
+	tlog(2,"Average p2p straightness: ",mean(vals2))
+
+	#########################
+	# compute all node-to-node betweenness values
+	vals1 <- betweenness(graph=g, v=V(g), directed=FALSE, weights=E(g)$dist, normalized=TRUE)
+	vals2 <- betweenness(graph=g2, v=V(g2), directed=FALSE, weights=E(g2)$dist, normalized=TRUE)
+	tlog(2,"Betweenness: min=",min(c(vals1,vals2)), " max=",max(c(vals1,vals2)))	
+	
+	# plot these values as a histogram
+	h1 <- hist(vals1, freq=FALSE, plot=FALSE, breaks=seq(0,0.4,0.4/40))
+	h2 <- hist(vals2, freq=FALSE, plot=FALSE, breaks=seq(0,0.4,0.4/40))
+	pdf(file.path(out.folder,"histo_betweenness.pdf"))
 	if(max(h1$density)>max(h2$density))
-	{	plot(h1, col=rgb(0,0,1,1/4), xlab="Straightness", main=NA, xlim=c(0.4,1), freq=FALSE)
-		plot(h2, col=rgb(1,0,0,1/4), xlim=c(0.4,1), add=TRUE, freq=FALSE)
+	{	plot(h1, col=rgb(0,0,1,1/4), xlab="Straightness", main=NA, xlim=c(0,0.4), freq=FALSE)
+		plot(h2, col=rgb(1,0,0,1/4), xlim=c(0,0.4), add=TRUE, freq=FALSE)
 	}else
-	{	plot(h2, col=rgb(1,0,0,1/4), xlab="Straightness", main=NA, xlim=c(0.4,1), freq=FALSE)
-		plot(h1, col=rgb(0,0,1,1/4), xlim=c(0.4,1), add=TRUE, freq=FALSE)
+	{	plot(h2, col=rgb(1,0,0,1/4), xlab="Straightness", main=NA, xlim=c(0,0.4), freq=FALSE)
+		plot(h1, col=rgb(0,0,1,1/4), xlim=c(0,0.4), add=TRUE, freq=FALSE)
 	}
 	legend(x="topleft", legend=c("Vertex-to-vertex","Point-to-point"), fill=c(rgb(0,0,1,1/4), rgb(1,0,0,1/4)))
 	dev.off()
 	
-	readline(prompt="Press [enter] to continue")
+	# display average straightness
+	tlog(2,"Average v2v betweenness: ",mean(vals1))
+	tlog(2,"Average p2p betweenness: ",mean(vals2))
+	
+#	readline(prompt="Press [enter] to continue")
 }
 
 
