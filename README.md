@@ -30,7 +30,7 @@ Besides the functions used to process the average measures themselves, the scrip
 # Data
 Most of the data is generated randomly and recorded in the `data` folder (see the *Organization* section for more details).
 
-We also experiment on a few real-world networks. These are all road networks retrieved from [OpenStreetMap](https://www.openstreetmap.org), using the script `src/misc/extraction.R`. These networks are available on [Figshare](https://doi.org/10.6084/m9.figshare.4721407), as explained in the *Installation* section.
+We also experiment on a few real-world networks. These are all road networks retrieved from [OpenStreetMap](https://www.openstreetmap.org), using the script `src/misc/extraction.R`. These networks are available on [Zenodo](https://doi.org/10.5281/zenodo.6815109), as explained in the *Installation* section.
 
 
 # Organization
@@ -56,7 +56,7 @@ Here are the folders composing the project:
    * [`osmar`](https://cran.r-project.org/web/packages/osmar/index.html): only if you want to extract new road networks via the `src/misc/extraction.R script` (tested with version 1.1-7)
    * [`splancs`](https://cran.r-project.org/web/packages/splancs/index.html): only if you want to generate spiderweb-like networks via the `src/figures/regular.R script` (tested with version 2.01-39)
 3. Download this project from GitHub and unzip the archive.
-4. If you want to apply the scripts on the real-world road networks from the article [L'18], download the `graph` archive from [Figshare](https://doi.org/10.6084/m9.figshare.4721407) and unzip it so that it overwrites the `data/urban` folder. 
+4. If you want to apply the scripts on the real-world road networks from the article [L'18], download the `graph` archive from [Zenodo](https://doi.org/10.5281/zenodo.6815109) and unzip it so that it overwrites the `data/urban` folder. 
 
 
 # Use
