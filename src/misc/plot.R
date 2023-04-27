@@ -473,8 +473,8 @@ rank.diff.barplot <- function(disc.vals, cont.vals, out.folder=NA, formats=c("pd
 	cont.measure <- "Continuous average Straightness" 
 	
 	# set up node order
-	disc.rk <- rank(disc.vals,ties.method="min")
-	cont.rk <- rank(cont.vals,ties.method="min")
+	disc.rk <- rank(max(disc.vals)-disc.vals,ties.method="min")
+	cont.rk <- rank(max(cont.vals)-cont.vals,ties.method="min")
 	diff <- cont.rk - disc.rk
 	idx <- order(disc.vals, decreasing=TRUE)
 	
