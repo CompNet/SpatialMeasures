@@ -2,7 +2,7 @@ SpatialMeasures v.0.2
 =======
 *Continuous average Straightness for spatial graphs*
 
-* Copyright 2016-17 Vincent Labatut 
+* Copyright 2016-18 Vincent Labatut 
 
 SpatialMeasures is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation. For source availability and license information see `licence.txt`
 
@@ -24,7 +24,9 @@ Second, this toolbox can also compute the average Straightness through a *contin
 * Average Straightness between a link and the rest of the graph (or rather: all the points located on the link on one side, and all the points constituting the graph on the other side);
 * Average Straightness over the graph (or rather: between all the pairs of points constituting the graph).
 
-Besides the functions used to process the average measures themselves, the scripts also allow to replicate the different experiments conducted in the article [L'18].
+Besides the functions used to process the average measures themselves, the scripts also allow to replicate the different experiments conducted in the article [[L'18]](#references).
+
+**Citation:** if you use this software, please cite reference [[L'18]](#references). 
 
 
 # Data
@@ -99,4 +101,4 @@ You may want to apply the approach described in our paper to average other spati
 
 
 # References
-* **[L'17]** V. Labatut. *Continuous Average Straightness in Spatial Graphs*, Journal of Complex Networks, 6(2):269-296, 2018. [doi: 10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [⟨hal-01571212⟩](https://hal.archives-ouvertes.fr/hal-01571212)
+* **[L'18]** V. Labatut. *Continuous Average Straightness in Spatial Graphs*, Journal of Complex Networks, 6(2):269-296, 2018. [doi: 10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [⟨hal-01571212⟩](https://hal.archives-ouvertes.fr/hal-01571212)
