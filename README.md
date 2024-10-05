@@ -26,7 +26,19 @@ Second, this toolbox can also compute the average Straightness through a *contin
 
 Besides the functions used to process the average measures themselves, the scripts also allow to replicate the different experiments conducted in the article [[L'18]](#references).
 
-**Citation:** if you use this software, please cite reference [[L'18]](#references). 
+If you use this software, please cite reference [[L'18]](#references):
+```bibtex
+@Article{Labatut2016,
+  author     = {Labatut, Vincent},
+  title      = {Continuous Average Straightness in Spatial Graphs},
+  journal    = {Journal of Complex Networks},
+  year       = {2018},
+  volume     = {6},
+  number     = {2},
+  pages      = {269-296},
+  doi        = {10.1093/comnet/cnx033},
+}
+```
 
 
 # Data
@@ -101,4 +113,4 @@ You may want to apply the approach described in our paper to average other spati
 
 
 # References
-* **[L'18]** V. Labatut. *Continuous Average Straightness in Spatial Graphs*, Journal of Complex Networks, 6(2):269-296, 2018. [doi: 10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [⟨hal-01571212⟩](https://hal.archives-ouvertes.fr/hal-01571212)
+* **[L'18]** V. Labatut. *Continuous Average Straightness in Spatial Graphs*, Journal of Complex Networks, 6(2):269-296, 2018. doi: [10.1093/comnet/cnx033](https://doi.org/10.1093/comnet/cnx033) - [⟨hal-01571212⟩](https://hal.archives-ouvertes.fr/hal-01571212)
